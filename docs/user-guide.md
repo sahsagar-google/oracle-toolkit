@@ -29,7 +29,7 @@ published: True
     - [Validating Media](#validating-media)
   - [Prerequisite configuration](#prerequisite-configuration)
     - [Data mount configuration](#data-mount-configuration)
-    - [ASM disk groups configuration](#asm-disk-groups-configuration)
+    - [ASM disk group configuration](#asm-disk-group-configuration)
     - [Specifying LVM logical volumes](#specifying-lvm-logical-volumes)
   - [Configuring Installations](#configuring-installations)
     - [Configuration defaults](#configuration-defaults)
@@ -1205,9 +1205,9 @@ The following example shows a properly formatted JSON data mount configuration f
 ]
 ```
 
-### ASM disk groups configuration
+### ASM disk group configuration
 
-In the ASM disk groups configuration, specify the disk group names, the disk
+In the ASM disk group configuration, specify the disk group names, the disk
 names, and the associated block devices (the actual devices, not partitions) in a
 valid JSON format.
 
@@ -1218,7 +1218,7 @@ name defaults to `ask_disk_config.json`. Alternatively, pass the file content di
 as a JSON using `--ora-asm-disks-json` parameter. If both are present, 
 `--ora-asm-disks-json` takes precedence.
 
-The following example shows a properly formatted JSON ASM disk groups configuration file:
+The following example shows a properly formatted JSON ASM disk group configuration file:
 
 ```json
 [
@@ -1664,7 +1664,7 @@ RECO</td>
 <td>Default disk group for FRA files for initial database.</td>
 </tr>
 <tr>
-<td>ASM disk groups configuration</td>
+<td>ASM disk group configuration</td>
 <td><p><pre>
 ORA_ASM_DISKS
 --ora-asm-disks
@@ -1672,17 +1672,17 @@ ORA_ASM_DISKS
 <td>user defined<br>
 asm_disk_config.json</td>
 <td>Name of an ASM configuration file that contains ASM disk groups definitions in
-valid JSON format. See <a href="#asm-disk-groups-configuration">ASM disk groups configuration</a>.</td>
+valid JSON format. See <a href="#asm-disk-group-configuration">ASM disk group configuration</a>.</td>
 </tr>
 <tr>
-<td>ASM disk groups configuration</td>
+<td>ASM disk group configuration</td>
 <td><p><pre>
 ORA_ASM_DISKS_JSON
 --ora-asm-disks-json
 </pre></p></td>
 <td>user defined<br></td>
 <td>ASM disk groups definition in a valid JSON format. 
-See <a href="#asm-disk-groups-configuration">ASM disk groups configuration</a>.</td>
+See <a href="#asm-disk-group-configuration">ASM disk group configuration</a>.</td>
 </tr>
 </tbody>
 </table>

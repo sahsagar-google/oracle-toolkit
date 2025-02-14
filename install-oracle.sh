@@ -960,10 +960,10 @@ ANSIBLE_PARAMS="-i ${INVENTORY_FILE} ${ANSIBLE_PARAMS}"
 ANSIBLE_EXTRA_PARAMS="${*}"
 
 if [[ -n "${ORA_ASM_DISKS_JSON}" ]]; then
-  ANSIBLE_EXTRA_PARAMS=${ANSIBLE_EXTRA_PARAMS}" -e '{\"asm_disk_input\": ${ORA_ASM_DISKS_JSON}}'"
+  ANSIBLE_EXTRA_PARAMS="${ANSIBLE_EXTRA_PARAMS} -e '{\"asm_disk_input\":${ORA_ASM_DISKS_JSON}}'"
 fi
 if [[ -n "${ORA_DATA_MOUNTS_JSON}" ]]; then
-  ANSIBLE_EXTRA_PARAMS=${ANSIBLE_EXTRA_PARAMS}" -e '{\"data_mounts_input\": ${ORA_DATA_MOUNTS_JSON}}'"
+  ANSIBLE_EXTRA_PARAMS="${ANSIBLE_EXTRA_PARAMS} -e '{\"data_mounts_input\":${ORA_DATA_MOUNTS_JSON}}'"
 fi
 
 echo "Ansible params: ${ANSIBLE_EXTRA_PARAMS}"
