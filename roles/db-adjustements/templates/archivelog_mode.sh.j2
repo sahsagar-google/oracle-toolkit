@@ -2,7 +2,7 @@ source oraenv <<< {{ oracle_sid }}
 
 srvctl_status="$(srvctl status database -d {{ db_name }})"
 
-if [[ "${srvctl_status}" == "Database is running." ]]; then
+if [[ "${srvctl_status}" == "is running" ]]; then
   srvctl stop db -d {{ db_name }} -o immediate
 else
   echo "shutdown immediate" | sqlplus -s -L / as sysdba
