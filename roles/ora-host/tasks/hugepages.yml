@@ -51,18 +51,3 @@
     msg: "WARNING: A reboot is required to disable transparent huge pages"
     verbosity: 0
   when: checkTHPreboot.stdout == "reboot"
-
-# Setting vm.hugetlb_shm_group to the ID of the "oinstall" group to allow its members to create
-# SysV shared memory segment using hugetlb page.
-# By default only the root user has permissions to create shared memory segments.
-# This is needed to prevent the occurrence of "ORA-27125: unable to create shared memory segment" error.
-- name: hugepages | Set hugetlb_shm_group to the ID of the oinstall group
-  sysctl:
-    name: vm.hugetlb_shm_group
-    value: "{{ oracle_groups | selectattr('group', 'match', 'oinstall') | map(attribute='gid') | first }}"
-    state: present
-    reload: true
-  become: true
-  when:
-    - ansible_distribution == 'RedHat'
-    - ansible_distribution_major_version == '9'
