@@ -15,9 +15,7 @@
 ---
 - name: Shut down RAC clusterware
   # Regrettably we can't use ansible's service module, as Oracle's init scripts don't report status
-  shell: service ohasd stop
-  args:
-    warn: false
+  shell: /etc/init.d/init.ohasd stop
   become: true
   register: service_stop
   ignore_errors: true
