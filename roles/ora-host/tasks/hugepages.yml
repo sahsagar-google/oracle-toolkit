@@ -13,12 +13,12 @@
 # limitations under the License.
 
 ---
-- name: get Hugepagesize from memory
+- name: hugepages | get Hugepagesize from memory
   shell: set -o pipefail; ( cat /proc/meminfo | ( grep Hugepagesize || true ) | cut -d " " -f8 ) || true
   register: v_Hugepagesize
   changed_when: false
 
-- name: Update the vm.nr_hugepages sysctl value
+- name: hugepages | Update the vm.nr_hugepages sysctl value
   sysctl:
     name: "vm.nr_hugepages"
     value: "{{ (((ansible_memtotal_mb + 1) * (ram_pct_used | int) / 100) * 1024 / (v_Hugepagesize.stdout | int)) | round(0,'ceil') | int }}"
@@ -27,37 +27,27 @@
     reload: true
     ignoreerrors: true
 
-- name: Check transparent hugepage
+- name: hugepages | Capture transparent hugepage status
   shell: ( cat /sys/kernel/mm/transparent_hugepage/enabled ) || true
-  become: true
-  become_user: root
   register: checkTPH
   ignore_errors: true
   changed_when: false
 
-- debug:
-    var: checkTPH
-
-- name: Update Grub default config
-  shell: grubby --args="transparent_hugepage=never" --update-kernel=ALL
-  when: checkTPH.stdout == "[always] madvise never" or checkTPH.stdout == "always [madvise] never"
-  register: grubbyTPH
-
-- debug:
-    var: grubbyTPH
-
-- name: Temporary run-time disabling of THP
+- name: hugepages | Update Grub default config and disable at run-time
   shell: |
+    grubby --args="transparent_hugepage=never" --update-kernel=ALL
     echo 'never' > /sys/kernel/mm/transparent_hugepage/enabled
     echo 'never' > /sys/kernel/mm/transparent_hugepage/defrag
   when: checkTPH.stdout == "[always] madvise never" or checkTPH.stdout == "always [madvise] never"
 
-- name: Check if THP shows as used and recommend reboot if AnonHugePages in /proc/meminfo is nonzero
-  shell: grep -q '^AnonHugePages:\ *0\ kB$' /proc/meminfo || echo reboot
+- name: hugepages | Check THPs are allocated
+  shell: grep -q -E '^AnonHugePages:[[:space:]]+0[[:space:]]kB$' /proc/meminfo || echo reboot
   register: checkTHPreboot
   ignore_errors: true
   changed_when: false
 
-- debug:
+- name: hugepages | Recommend reboot if THPs are allocated
+  debug:
     msg: "WARNING: A reboot is required to disable transparent huge pages"
+    verbosity: 0
   when: checkTHPreboot.stdout == "reboot"

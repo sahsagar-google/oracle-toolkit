@@ -456,6 +456,46 @@
   become_user: root
   shell: awk '/^oracle/ {print $1}' /proc/modules | sudo xargs -r modprobe -r
 
+- name: Reset kernel sysctl values to EL defaults
+  sysctl:
+    name: "{{ item.parameter }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_set: true
+    reload: true
+    ignoreerrors: true
+  with_items:
+    - parameter: "kernel.sem"
+      value: "32000 1024000000 500 32000"
+    - parameter: "kernel.shmall"
+      value: 18446744073692774399
+    - parameter: "kernel.shmmax"
+      value: 18446744073692774399
+    - parameter: "kernel.shmmni"
+      value: 4096
+    - parameter: "kernel.panic_on_oops"
+      value: 1
+    - parameter: "kernel.panic"
+      value: 10
+    - parameter: "fs.file-max"
+      value: 1524502
+    - parameter: "fs.aio-max-nr"
+      value: 65536
+    - parameter: "net.ipv4.ip_local_port_range"
+      value: "32768 60999"
+    - parameter: "net.core.rmem_default"
+      value: 212992
+    - parameter: "net.core.rmem_max"
+      value: 212992
+    - parameter: "net.core.wmem_default"
+      value: 212992
+    - parameter: "net.core.wmem_max"
+      value: 212992
+    - parameter: "vm.nr_hugepages"
+      value: 0
+    - parameter: "vm.hugetlb_shm_group"
+      value: 0
+
 - name: Remove users
   become: true
   become_user: root

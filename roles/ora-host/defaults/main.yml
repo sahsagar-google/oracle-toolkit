@@ -126,6 +126,7 @@ sysctl_params:
   - net.core.wmem_default
   - net.core.wmem_max
   - vm.nr_hugepages
+  - vm.hugetlb_shm_group
 
 # Kernel parameters to set:
 sysctl_param_values:
@@ -153,6 +154,8 @@ sysctl_param_values:
     value: 262144
   - parameter: "net.core.wmem_max"
     value: 1048576
+  - parameter: "vm.hugetlb_shm_group"
+    value: "{{ oracle_groups | selectattr('group', 'match', 'oinstall') | map(attribute='gid') | first }}"  # MOS Doc ID 2242978.1
 
 resource_limits:
   - name: nofile
