@@ -32,6 +32,8 @@
     mode: u=rw,go=
     owner: "{{ ssh_user }}"
     group: "{{ user_group }}"
+    private_key_format: "pkcs1"
+    backend: "cryptography"
   register: ssh_key
   tags: ssh-keys
 
