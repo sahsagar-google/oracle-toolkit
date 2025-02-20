@@ -16,13 +16,13 @@
 - name: Populate variables
   hosts: dbasm
   tasks:
-  - include_role:
-      name: common
-      tasks_from: populate-vars.yml
+    - include_role:
+        name: common
+        tasks_from: populate-vars.yml
   tags: populate-vars
 - hosts: dbasm
   remote_user: "{{ grid_user }}"
-  become: yes
+  become: true
   become_user: root
   pre_tasks:
     - name: Verify that Ansible on control node meets the version requirements
@@ -31,15 +31,15 @@
         fail_msg: "You must update Ansible to at least 2.8 to use these playbooks"
         success_msg: "Ansible version is {{ ansible_version.full }}, continuing"
   roles:
-   - role: gi-setup
-     when:
-       - install_gi|bool
-       - cluster_type in ("NONE", "DG")
+    - role: gi-setup
+      when:
+        - install_gi|bool
+        - cluster_type in ("NONE", "DG")
   tags: gi-setup
 
 - hosts: dbasm
   remote_user: "{{ oracle_user }}"
-  become: yes
+  become: true
   become_user: root
   pre_tasks:
     - name: Verify that Ansible on control node meets the version requirements
@@ -48,12 +48,11 @@
         fail_msg: "You must update Ansible to at least 2.8 to use these playbooks"
         success_msg: "Ansible version is {{ ansible_version.full }}, continuing"
   roles:
-   - role: rdbms-setup
-     when:
-       - install_rdbms|bool
-       - cluster_type in ("NONE", "DG")
+    - role: rdbms-setup
+      when:
+        - install_rdbms|bool
+        - cluster_type in ("NONE", "DG")
   tags: rdbms-setup
-
 
 - hosts: dbasm
   tasks:
@@ -86,7 +85,7 @@
 
 - hosts: dbasm[0]
   remote_user: "{{ grid_user }}"
-  become: yes
+  become: true
   become_user: root
   tasks:
     - name: rac-gi-install | defaults from common
@@ -95,12 +94,12 @@
     - name: rac-gi-install | GI installation
       include_role:
         name: rac-gi-setup
-        #if 11.2 or 12.1 then rac-gi-install-<oracle_ver>.yml otherwise rac-gi-install.yml
-        tasks_from: rac-gi-install{% if oracle_ver_base in ('11.2','12.1') %}-{{ oracle_ver }}{% endif %}.yml
-        #tasks_from: rac-gi-install.yml
-        public: yes
+        # if 11.2 or 12.1 then rac-gi-install-<oracle_ver>.yml otherwise rac-gi-install.yml
+        tasks_from: rac-gi-install{% if oracle_ver_base in ('11.2', '12.1') %}-{{ oracle_ver }}{% endif %}.yml
+        # tasks_from: rac-gi-install.yml
+        public: true
       loop:
-        - "{{ gi_software  | json_query('[?version==`' + oracle_ver + '`].files[*]') | join() }}"
+        - "{{ gi_software | default([]) | json_query('[?version==`' + oracle_ver + '`].files[*]') | join() }}"
       loop_control:
         loop_var: osw_files
       when:
@@ -126,7 +125,7 @@
 
 - hosts: dbasm[0]
   remote_user: "{{ oracle_user }}"
-  become: yes
+  become: true
   become_user: root
   tasks:
     - name: rac-db-install | defaults from common
@@ -135,9 +134,9 @@
     - name: rac-db-install | RDBMS installation
       include_role:
         name: rac-db-setup
-        #if 11.2 or 12.1 then rac-db-install-<oracle_ver>.yml otherwise rac-db-install.yml
-        tasks_from: rac-db-install{% if oracle_ver_base in ('11.2','12.1') %}-11.2-12.1{% endif %}.yml
-        public: yes
+        # if 11.2 or 12.1 then rac-db-install-<oracle_ver>.yml otherwise rac-db-install.yml
+        tasks_from: rac-db-install{% if oracle_ver_base in ('11.2', '12.1') %}-11.2-12.1{% endif %}.yml
+        public: true
       loop:
         - "{{ rdbms_software | json_query('[?version==`' + oracle_ver + '`].files[*]') | join() }}"
       loop_control:
@@ -145,3 +144,10 @@
       when:
         - cluster_type == "RAC"
   tags: rac-db
+
+- hosts: dbasm
+  tasks:
+    - include_role:
+        name: patch-vulns
+        tasks_from: main
+  tags: patch-vulns

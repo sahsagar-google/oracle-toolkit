@@ -14,28 +14,38 @@
 
 ---
 - name: populate-vars | Resolve software release
-  #if release set to latest then get most recent release from gi_patches array
-  #if nothing returned then set to "base" in next task
   set_fact:
-    oracle_rel: "{% if not ansible_loop.first %}{% if item is version(oracle_rel, '>=') %}{{ item }}{% else %}{{ oracle_rel }}{% endif %}{% else %}{{ item }}{% endif %}"
-  loop: "{{ gi_patches | selectattr('base', 'match', oracle_ver) | map(attribute='release') | list }}"
-  loop_control:
-    extended: yes
+    oracle_rel: "{{ found_rel | trim }}"
+  vars:
+    found_rel: >-
+      {% if oracle_rel == "latest" %}
+        {{ (gi_patches | selectattr('base', 'equalto', oracle_ver) | list | last | default({})).release | default('base') }}
+      {% else %}
+        {% set matched_patch = gi_patches | selectattr('base', 'equalto', oracle_ver) | selectattr('release', 'equalto', oracle_rel) | list | first %}
+        {{ matched_patch.release | default((gi_patches | selectattr('base', 'equalto', oracle_ver) | list | last | default({})).release) if matched_patch is defined else (gi_patches | selectattr('base', 'equalto', oracle_ver) | list | last | default({})).release }}
+      {% endif %}
   when:
+    - not free_edition
     - oracle_rel is defined
     - oracle_rel != "base"
   tags: oracle-rel
 
-- name: populate-vars | Set base if no release found
+- name: populate-vars | Resolve Free Edition software release
   set_fact:
-    oracle_rel: "{% if oracle_rel is search('latest') %}base{% else %}{{ oracle_rel }}{% endif %}"
+    oracle_ver: "{{
+      (oracle_rel == 'latest') and (free_versions | last) or
+      (oracle_rel == 'base') and (free_versions | first) or
+      (oracle_rel in free_versions) and oracle_rel or
+      (free_versions | last)
+    }}"
+  vars:
+    free_versions: "{{ rdbms_software | selectattr('edition', 'equalto', 'FREE') | map(attribute='version') | sort | list }}"
   when:
-    - oracle_rel is defined
-    - oracle_rel != "base"
+    - free_edition
+    - oracle_ver == "23.0.0.0.0"
   tags: oracle-rel
 
 - name: populate-vars | Show resolved release
   debug:
-    var:
-      oracle_rel
+    var: oracle_rel
   tags: oracle-rel

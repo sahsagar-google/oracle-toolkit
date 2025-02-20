@@ -14,21 +14,21 @@
 
 ---
 - block:
-  - name: swlib | Create swlib folder
-    file:
-      path: "{{ swlib_path }}"
-      state: directory
-      mode: ug=rwx,o=r
-      owner: "{{ ansible_ssh_user }}"
-      group: dba
-    when: swlib_mount_type != "nfs"
-  - name: swlib | NFS mount
-    include_tasks: nfs.yml
-    when: swlib_mount_type == "nfs"
-  - name: swlib | gcsfuse mount
-    include_tasks: gcsfuse.yml
-    when: swlib_mount_type == "gcsfuse"
-  become: yes
+    - name: swlib | Create swlib folder
+      file:
+        path: "{{ swlib_path }}"
+        state: directory
+        mode: ug=rwx,o=r
+        owner: "{{ ansible_ssh_user }}"
+        group: dba
+      when: swlib_mount_type != "nfs"
+    - name: swlib | NFS mount
+      include_tasks: nfs.yml
+      when: swlib_mount_type == "nfs"
+    - name: swlib | gcsfuse mount
+      include_tasks: gcsfuse.yml
+      when: swlib_mount_type == "gcsfuse"
+  become: true
   become_user: root
 
 - name: swlib | gcscopy

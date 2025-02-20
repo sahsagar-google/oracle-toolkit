@@ -11,7 +11,7 @@ start_ts="$($ts)"                        # Start timestamp
 log_dir="{{ logs_dir }}"                 # A directory for the logs
 conn_str="{% if oracle_ver == "11.2.0.4.0" %}/{% else %}/ AS SYSBACKUP{% endif %}" # Oracle connection string
 backup_dest="{{ backup_dest }}"          # Backup destination path
-reco_diskgroup="+{{ reco_diskgroup }}"   # Fast recovery area diskgroup
+fra_dest="{{ reco_destination }}"        # Fast recovery area location
 export NLS_DATE_FORMAT="YYYY-MM-DD HH24:MI:SS"
 #
 if [[ $# -ne 4 ]]; then
@@ -19,7 +19,7 @@ if [[ $# -ne 4 ]]; then
   exit 1
 fi
 #
-# A tag for the logfile and output file depending on the backup level
+# A tag for the log file and output file depending on the backup level
 #
 if [[ "${rman_level}" = "0" ]]; then
   type="FULL"                            # Full backup
@@ -36,29 +36,36 @@ if [[ ! -d "${log_dir}" ]]; then
     printf "\n\t%s\n\n" "ERROR -- $($ts) -- Impossible to create ${log_dir}; we wont be able to log this backup."
   fi
 fi
-if [[ $backup_dest == "/"* ]]; then
+# If FRA is not a file system, add the ASM "+" sign (if not already added)
+if [[ "${fra_dest:0:1}" != "/" && "${fra_dest:0:1}" != "+" ]]; then
+  fra_dest="+${fra_dest}"
+fi
+if [[ "${backup_dest:0:1}" == "/" ]]; then
   # Filesystem destination
   autobackup_format="${backup_dest}/${ora_inst_name}_%F"
   channel_format="${backup_dest}/${ora_inst_name}_${type}_level_${rman_level}_%U"
 else
-  # ASM destination;  no need for format specifiers
+  # ASM destination, no need for format specifiers; Add the ASM "+" sign (if not already added)
+  if [[ "${backup_dest:0:1}" != "+" ]]; then
+    backup_dest="+${backup_dest}"
+  fi
   autobackup_format="${backup_dest}"
   channel_format="${backup_dest}"
 fi
 #
-# We can now build the output file and logfile names
+# We can now build the output file and log file names
 #
 outfile="${log_dir}/rman_${start_ts}_${type}.out"
 logfile="${log_dir}/rman_${start_ts}_${type}.log"
 #
-# Set the oracle env
+# Set the Oracle env
 #
 export ORACLE_SID="${ora_inst_name}"
-source oraenv <<< "${ora_inst_name}" > /dev/null 2>&1
+source oraenv <<<"${ora_inst_name}" >/dev/null 2>&1
 #
 # RMAN backup
 #
-if "${ORACLE_HOME}/bin/rman" >> "${outfile}" << EOF
+if "${ORACLE_HOME}/bin/rman" >>"${outfile}" <<EOF
   set echo on
   spool log to '${logfile}'
   connect target '${conn_str}'
@@ -68,7 +75,7 @@ if "${ORACLE_HOME}/bin/rman" >> "${outfile}" << EOF
 
   configure controlfile autobackup format for device type disk to '${autobackup_format}';
   configure channel device type disk format '${channel_format}';
-  configure snapshot controlfile name to '${reco_diskgroup}/snapcf_${ora_inst_name}.f';
+  configure snapshot controlfile name to '${fra_dest}/snapcf_${ora_inst_name}.f';
 
   configure archivelog deletion policy to backed up ${arch_redundancy} times to disk;
   configure retention policy to redundancy ${retention_redundancy};

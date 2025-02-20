@@ -21,20 +21,16 @@
         that: "ansible_version.full is version_compare('2.8', '>=')"
         fail_msg: "You must update Ansible to at least 2.8 to use these playbooks"
         success_msg: "Ansible version is {{ ansible_version.full }}, continuing"
-    - name: Confirm JSON parsing works
-      assert:
-        that: "{{ '{}' | json_query('[0]') == None }}"
-      register: test_json
-      ignore_errors: true
-    - name: Check for JSON parse failure
-      fail:
-        msg: "Python jmespath is missing; please install the python2-jmespath package on control node."
-      when: test_json.failed
-  vars:
-    allow_install_on_vm: false
+    - block:
+        - name: Confirm JSON parsing works
+          assert:
+            that: "{{ '{}' | json_query('[0]') == None }}"
+      rescue:
+        - name: Check for JSON parse failure
+          fail:
+            msg: "You probably need to install Python jmespath on the control node"
 
   tasks:
-
     - name: Test connectivity to target instance via ping
       ping:
       register: pingrc
@@ -49,20 +45,11 @@
 
     - name: Collect facts from target
       setup:
- 
-    - name: Platform verification
-      fail:
-        msg: "The system may not be provisioned on VM by default. Use the allow_install_on_vm option for VM testing"
-      when:
-        - ansible_system_vendor == "Google"
-        - ansible_virtualization_type == "kvm"
-        - ansible_virtualization_role == "guest"
-        - allow_install_on_vm == false
 
     - name: Test privilege escalation on target
       raw: sudo -u root whoami
       register: rawrc
-      changed_when: False
+      changed_when: false
 
     - name: Fail if unable to sudo to root on target
       assert:

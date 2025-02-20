@@ -16,10 +16,10 @@
 - name: Open listener port in firewall
   firewalld:
     port: "{{ listener_port }}/tcp"
-    permanent: yes
-    immediate: yes
+    permanent: true
+    immediate: true
     state: enabled
-  become: yes
+  become: true
   register: firewall_output
   failed_when:
     - "'firewall is not currently running' not in firewall_output.msg"
@@ -28,7 +28,7 @@
   tags: lsnr-create
 
 - name: Test whether port is free
-  become: yes
+  become: true
   become_user: root
   shell: "set -o pipefail; netstat -lnpt | ( grep {{ listener_port }} || true ) | wc -l"
   changed_when: false
@@ -37,7 +37,7 @@
   tags: lsnr-create
 
 - name: Check if listener has already been created
-  become: yes
+  become: true
   become_user: root
   shell: "set -o pipefail; ps -ef | ( grep [t]ns ||true ) | ( grep -w {{ listener_name }} || true ) | wc -l"
   changed_when: false
@@ -55,8 +55,8 @@
   when: create_listener
   tags: lsnr-create
 
-- name: Create listener
-  become: yes
+- name: Create listener via srvctl
+  become: true
   become_user: "{{ grid_user }}"
   shell: |
     export PATH={{ grid_home }}/bin:${PATH}
@@ -65,7 +65,11 @@
     srvctl config listener -l {{ listener_name }}
     srvctl status listener -l {{ listener_name }}
   register: lsnr_output
-  when: create_listener and lsnr_port_check.stdout == "0" and lsnr_name_check.stdout == "0"
+  when:
+    - create_listener
+    - lsnr_port_check.stdout == "0"
+    - lsnr_name_check.stdout == "0"
+    - not free_edition
   tags: lsnr-create
 
 - name: Listener creation output
@@ -73,6 +77,39 @@
     msg:
       - "{{ lsnr_output.cmd }}"
       - "{{ lsnr_output.stdout_lines }}"
-    #verbosity: 1
-  when: create_listener and lsnr_port_check.stdout == "0" and lsnr_name_check.stdout == "0"
+      # verbosity: 1
+  when: lsnr_output.cmd is defined
+  tags: lsnr-create
+
+- name: Create listener via netca
+  become: true
+  become_user: "{{ oracle_user }}"
+  shell: |
+    set -o pipefail
+    {{ oracle_home }}/bin/netca                                      \
+      /orahome {{ oracle_home }}                                     \
+      /instype typical                                               \
+      /inscomp client,oraclenet,javavm,server,ano                    \
+      /insprtcl tcp                                                  \
+      /cfg local                                                     \
+      /authadp NO_VALUE                                              \
+      /responseFile {{ oracle_home }}/network/install/netca_typ.rsp  \
+      /silent                                                        \
+      /listenerparameters DEFAULT_SERVICE={{ oracle_sid }}           \
+      /lisport {{ listener_port }}
+  register: lsnr_output_netca
+  when:
+    - create_listener
+    - lsnr_port_check.stdout == "0"
+    - lsnr_name_check.stdout == "0"
+    - free_edition
+  tags: lsnr-create
+
+- name: Listener creation output from netca
+  debug:
+    msg:
+      - "{{ lsnr_output_netca.cmd }}"
+      - "{{ lsnr_output_netca.stdout_lines }}"
+      # verbosity: 1
+  when: lsnr_output_netca.cmd is defined
   tags: lsnr-create

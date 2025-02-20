@@ -1,4 +1,4 @@
-# Copyright 2020 Google LLC
+# Copyright 2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,12 @@
 # limitations under the License.
 
 ---
-# Default value for RAM percentage that we are using for shmmax
-#ram_pct_used: "{% if memory_pct is defined %}{{ memory_pct }}{% else %}70{% endif %}"
-ram_pct_used: 65
+- name: Install Oracle RPM
+  package:
+    name: "{{ swlib_path }}/{{ item }}"
+    state: present
+    lock_timeout: "{{ pkg_mgr_lock_timeout }}"
+    disable_gpg_check: true
+  with_items: "{{ osw.files }}"
+  register: rpm_install
+  tags: rdbms-setup

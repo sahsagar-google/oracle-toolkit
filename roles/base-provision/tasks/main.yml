@@ -16,8 +16,8 @@
 - name: Validate OS family and version
   assert:
     that:
-      - "ansible_os_family == '{{ os_family_supported }}'"
-      - "ansible_distribution_version is version_compare('{{ os_min_supported_version }}', '>=')"
+      - "ansible_os_family == os_family_supported"
+      - "ansible_distribution_version is version_compare(os_min_supported_version, '>=')"
   tags: oscheck
 
 - name: Validate architecture
@@ -27,13 +27,14 @@
 
 - name: Ensure yum is not running, send Ctrl-C if it is
   shell: pidof -x /usr/bin/yum /bin/yum | xargs -t -r -n 1 kill -INT
+  when: install_os_packages
   tags: os_packages
 
 - name: Remove ntpd package
   package:
     name: ntp
     state: absent
-    lock_timeout: 180
+    lock_timeout: "{{ pkg_mgr_lock_timeout }}"
   tags: ntp
 
 - name: Remove ntp conf
@@ -64,16 +65,17 @@
   package:
     name: "{{ required_packages }}"
     state: present
-    lock_timeout: 180
+    lock_timeout: "{{ pkg_mgr_lock_timeout }}"
+  when: install_os_packages
   tags: os_packages
 
 - name: Add ntp preferred server
   blockinfile:
     path: /etc/chrony.conf
     marker: "# {mark} ANSIBLE MANAGED BLOCK"
-    insertafter: '^server '
+    insertafter: "^server "
     block: "server {{ ntp_preferred }} prefer iburst"
-    state: "{{ (ntp_preferred != \"\" ) | ternary('present', 'absent') }}"
+    state: "{{ (ntp_preferred != \"\") | ternary('present', 'absent') }}"
   notify: restart chronyd
   tags: ntp
 
@@ -81,7 +83,7 @@
   service:
     name: chronyd
     state: started
-    enabled: yes
+    enabled: true
   tags: ntp
 
 - name: Generate /etc/hosts
@@ -134,7 +136,7 @@
 - name: Add fqdn to /etc/hosts if needed
   lineinfile:
     path: /etc/hosts
-    regexp: '.*{{ ansible_fqdn }}$'
+    regexp: ".*{{ ansible_fqdn }}$"
     line: "{{ ansible_ssh_host }} {{ ansible_hostname }} {{ ansible_fqdn }}"
     state: present
   when: cluster_type in ("NONE", "DG")

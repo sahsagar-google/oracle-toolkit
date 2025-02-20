@@ -14,5 +14,4 @@
 
 ---
 dependencies:
-  - { role: common }
-  - { role: hugepages }
+  - role: common

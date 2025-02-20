@@ -14,12 +14,12 @@
 
 ---
 - name: nfs | Install NFS mount utility
-  become: yes
+  become: true
   become_user: root
-  yum:
+  package:
     name: nfs-utils
     state: present
-    lock_timeout: 180
+    lock_timeout: "{{ pkg_mgr_lock_timeout }}"
   when: ansible_os_family == "RedHat"
 
 - name: nfs | Ensure rpcbind is running as configured.
@@ -30,7 +30,7 @@
   when: ansible_os_family == "RedHat"
 
 - name: nfs | Mount NFS share (swlib)
-  become: yes
+  become: true
   become_user: root
   mount:
     fstype: nfs

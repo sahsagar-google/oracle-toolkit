@@ -16,10 +16,10 @@
 - name: Open listener port in firewall
   firewalld:
     port: "{{ hostvars[groups['dbasm'].0]['scan_port'] }}/tcp"
-    permanent: yes
-    immediate: yes
+    permanent: true
+    immediate: true
     state: enabled
-  become: yes
+  become: true
   register: firewall_output
   failed_when:
     - "'firewall is not currently running' not in firewall_output.msg"
@@ -28,7 +28,7 @@
   tags: lsnr-firewall
 
 - name: Test whether port is free
-  become: yes
+  become: true
   become_user: root
   shell: "set -o pipefail; netstat -lnpt | ( grep {{ hostvars[groups['dbasm'].0]['scan_port'] }} || true ) | wc -l"
   changed_when: false
@@ -48,28 +48,28 @@
 - name: Allow local networks for RAC
   firewalld:
     zone: public
-    rich_rule: rule family=ipv4 source address="{{ item.value.ipv4.network }}/{{ item.value.ipv4.netmask}}" accept
-    permanent: yes
-    immediate: yes
+    rich_rule: rule family=ipv4 source address="{{ item.value.ipv4.network }}/{{ item.value.ipv4.netmask }}" accept
+    permanent: true
+    immediate: true
     state: enabled
-  become: yes
+  become: true
   register: firewall_op_localnw
   failed_when:
     - "'firewall is not currently running' not in firewall_op_localnw.msg"
     - "'Permanent and Non-Permanent(immediate) operation' not in firewall_op_localnw.msg"
   when: not disable_firewall|bool
   with_items:
-    - "{{ ansible_facts | dict2items | selectattr('value.ipv4.network', 'defined') |list }}"
+    - "{{ ansible_facts | dict2items | selectattr('value.ipv4.network', 'defined') | list }}"
   tags: lsnr-firewall
 
 - name: Allow HAIP networks
   firewalld:
     zone: public
     rich_rule: rule family=ipv4 source address="169.254.0.0/16" accept
-    permanent: yes
-    immediate: yes
+    permanent: true
+    immediate: true
     state: enabled
-  become: yes
+  become: true
   register: firewall_op_haipnw
   failed_when:
     - "'firewall is not currently running' not in firewall_op_haipnw.msg"

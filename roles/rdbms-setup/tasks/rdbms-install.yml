@@ -15,17 +15,19 @@
 ---
 - name: rdbms-install | Set facts
   set_fact:
-    install_unzip_path: "{% if oracle_ver_base in ('19.3','18.0') %}{{ oracle_home }}{% else %}{{ swlib_unzip_path }}{% endif %}"
-    runinstaller_loc: "{% if oracle_ver_base in ('19.3','18.0') %}{{ oracle_home }}{% else %}{{ swlib_unzip_path }}/database{% endif %}"
+    install_unzip_path: "{% if oracle_ver_base in ('21.3', '19.3', '18.0') %}{{ oracle_home }}{% else %}{{ swlib_unzip_path }}{% endif %}"
+    runinstaller_loc: "{% if oracle_ver_base in ('21.3', '19.3', '18.0') %}{{ oracle_home }}{% else %}{{ swlib_unzip_path }}/database{% endif %}"
   tags: rdbms-setup
 
 - name: rdbms-install | Installer confirmations
   debug:
     msg:
-      - "Installing from file : {{ osw.files }}"
-      - "Unzipping into dir   : {{ install_unzip_path }}"
-      - "Using installer dir  : {{ runinstaller_loc }}"
-    #verbosity: 1
+      - "Installing from file(osw.files)          : {{ osw.files }}"
+      - "Unzipping into dir(install_unzip_path)   : {{ install_unzip_path }}"
+      - "installer dir(runinstaller_loc)          : {{ runinstaller_loc }}"
+      - "Src (swlib_path)                         : {{ swlib_path }}"
+      - "Dest (swlib_unzip_path)                  : {{ swlib_unzip_path }}"
+      # verbosity: 1
   tags: rdbms-setup
 
 - name: rdbms-install | Set variable for release patch
@@ -40,28 +42,28 @@
   unarchive:
     src: "{{ swlib_path }}/{{ item.patchfile }}"
     dest: "{{ swlib_unzip_path }}"
-    remote_src: yes
+    remote_src: true
     owner: "{{ oracle_user }}"
     group: "{{ oracle_group }}"
   with_items:
     - "{{ rdbms_patches }}"
   when: item.release == oracle_rel
-  become: yes
+  become: true
   tags: rdbms-setup,sw-unzip
 
 - name: rdbms-install | Unzipping software
-  become: yes
+  become: true
   become_user: "{{ oracle_user }}"
   unarchive:
     src: "{{ swlib_path }}/{{ item }}"
     dest: "{{ install_unzip_path }}"
-    remote_src: yes
+    remote_src: true
   with_items:
     - "{{ osw.files }}"
   tags: rdbms-setup,sw-unzip
 
 - name: rdbms-install | Create RDBMS response file script
-  become: yes
+  become: true
   become_user: "{{ oracle_user }}"
   template:
     src: db_install.rsp.sh.j2
@@ -69,13 +71,13 @@
   tags: rdbms-setup
 
 - name: rdbms-install | Run RDBMS response file script
-  become: yes
+  become: true
   become_user: "{{ oracle_user }}"
   command: "sh {{ swlib_unzip_path }}/db_install.rsp.sh"
   tags: rdbms-setup
 
 - name: rdbms-install | Script cleanup
-  become: yes
+  become: true
   become_user: "{{ oracle_user }}"
   file:
     path: "{{ swlib_unzip_path }}/db_install.rsp.sh"
@@ -86,55 +88,68 @@
   unarchive:
     src: "{{ swlib_path }}/{{ item.patchfile }}"
     dest: "{{ oracle_home }}"
-    remote_src: yes
+    remote_src: true
   with_items:
     - "{{ opatch_patches }}"
   when:
     - item.release == oracle_ver
     - item.category == "OPatch"
     - oracle_rel != "base"
-  become: yes
+  become: true
   become_user: "{{ oracle_user }}"
   tags: rdbms-setup,update-opatch-db
 
-- name: rdbms-install | Set installer command
+- name: rdbms-install | Set DB installer command
   set_fact:
-    installer_command: "{{ runinstaller_loc }}/runInstaller -silent -waitforcompletion -responseFile {{ swlib_unzip_path }}/db_install.rsp {{ rel_patch | default('') }} {{ prereq_option }}"
+    db_installer_cmd: "{{ runinstaller_loc }}/runInstaller -silent -waitforcompletion -responseFile {{ swlib_unzip_path }}/db_install.rsp {{ rel_patch | default('') }} {{ prereq_option | default('') }}"
   tags: rdbms-setup
 
 - name: rdbms-install | Information
   debug:
-    msg: "Using installer cmd: {{ installer_command }}"
+    msg: "Using installer cmd: {{ db_installer_cmd }}"
   tags: rdbms-setup
 
-- name: rdbms-install | Run runInstaller
-  become: yes
-  become_user: "{{ oracle_user }}"
-  command: "{{ installer_command }}"
-  register: install_db_software
-  failed_when: "('Successfully Setup Software' not in install_db_software.stdout) or
-                (install_db_software.rc not in [0,6,250])"
+- name: rdbms-install | Set CV_ASSUME_DISTID to OEL7 when installing on RHEL8  # MOS Note 2878100.1
+  set_fact:
+    cv_distid: "{{ 'OEL7' if ansible_os_family == 'RedHat'
+                           and (ansible_distribution_major_version | int) >= 8
+                           and (oracle_ver_base | float) <= 19.3
+                           else '' }}"
   tags: rdbms-setup
+
+- name: rdbms-install | Run DB installer
+  become: true
+  become_user: "{{ oracle_user }}"
+  command: "{{ db_installer_cmd }}"
+  environment:
+    CV_ASSUME_DISTID: "{{ cv_distid }}"
+  register: db_install_result
+  failed_when: >
+    ('Successfully Setup Software' not in db_install_result.stdout) or
+    (db_install_result.rc not in [0,6,250])
+  tags: rdbms-install
 
 - name: rdbms-install | runInstaller output
   debug:
     msg:
-      - "{{ install_db_software.cmd }}"
-      - "{{ install_db_software.stdout_lines }}"
-    #verbosity: 1
+      - "{{ db_install_result.cmd }}"
+      - "{{ db_install_result.stdout_lines }}"
   tags: rdbms-setup
 
 - name: rdbms-install | Apply one-off and OJVM patches
-  become: yes
+  become: true
   become_user: "{{ oracle_user }}"
   command: "{{ oracle_home }}/OPatch/{{ item.method }} -silent -oh {{ oracle_home }} {{ swlib_unzip_path }}/{{ item.patchnum }}{{ item.patch_subdir }}"
+  environment:
+    PATH: "{{ oracle_home }}/perl/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
+    PERL5LIB: "{{ oracle_home }}/perl/lib"
   with_items:
     - "{{ rdbms_patches }}"
   when:
     - item.release == oracle_rel
   register: apply_oneoff
-  failed_when: "('OPatch succeeded' not in apply_oneoff.stdout) or
-                (apply_oneoff.rc not in [0,6,250])"
+  failed_when: "('OPatch succeeded' not in apply_oneoff.stdout and 'OPatch completed with warnings' not in apply_oneoff.stdout)
+                or (apply_oneoff.rc | int not in [0, 6, 250])"
   tags: rdbms-setup,opatch
 
 - name: rdbms-install | opatch output
@@ -147,27 +162,27 @@
   tags: rdbms-setup,opatch
 
 - name: rdbms-install | Run script orainstRoot.sh
-  become: yes
+  become: true
   become_user: root
   command: "{{ oracle_base }}/../oraInventory/orainstRoot.sh"
-  ignore_errors: yes
-  when: "'skipped' not in install_db_software.stdout"
+  ignore_errors: true
+  when: "'skipped' not in db_install_result.stdout"
   tags: rdbms-setup
 
 - name: rdbms-install | Run script root.sh
-  become: yes
+  become: true
   become_user: root
   command: "{{ oracle_home }}/root.sh"
-  when: "'skipped' not in install_db_software.stdout"
+  when: "'skipped' not in db_install_result.stdout"
   tags: rdbms-setup
 
 - name: rdbms-install | Complete plugin configuration
-  become: yes
+  become: true
   become_user: "{{ oracle_user }}"
   command: "{{ runinstaller_loc }}/runInstaller -executeConfigTools -silent {{ prereq_option }} -responseFile {{ swlib_unzip_path }}/db_install.rsp"
-  ignore_errors: yes
+  ignore_errors: true
   register: install_db_plugins
   when: oracle_ver not in ['11.2.0.4.0','12.1.0.2.0']
-  failed_when: "(install_db_plugins.rc not in [0,6]) and
+  failed_when: "(install_db_plugins.rc not in [0,6,250]) and
                 ('The Installer has detected that there are no config tools to execute for the specified Oracle home' not in install_db_plugins.stdout)"
   tags: rdbms-setup

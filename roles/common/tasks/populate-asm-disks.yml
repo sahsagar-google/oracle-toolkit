@@ -1,0 +1,68 @@
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+- name: Identify the first partition of the block device based on its persistent identifier (/dev/disk/by-id/)
+  ansible.builtin.shell: >
+    set -o pipefail;
+    part_path="";
+    case "{{ item.blk_device }}" in
+      # If the block device is specified by a persistent identifier, append '-part1' to form the path to the first partition.
+      /dev/disk/by-id/*)
+        part_path="{{ item.blk_device }}"-part1;
+        ;;
+      # Skip /dev/mapper devices since they are typically managed by LVM and do not require partitioning (partitioning logical LVM volumes is not practical).
+      /dev/mapper/*)
+        part_path="";
+        ;;
+      # For other devices (E.g.: /dev/sda, /dev/nvme0n1), find the corresponding /dev/disk/by-id/ path and add '-part1' to denote the first partition.
+      /dev/*)
+        by_id_link=$(find /dev/disk/by-id/ -type l -exec sh -c 'echo $1 $(readlink -f $1)' _ {} \; | awk -v dev="{{ item.blk_device }}" '$2==dev {print $1}' | grep -vE '/dev/disk/by-id/(nvme-|scsi-|wwn-)' | head -n 1);
+        part_path="${by_id_link}"-part1;
+        ;;
+    esac;
+    if [[ -e "$part_path" ]] && [[ "$part_path" != "" ]]; then
+      echo "$part_path"
+    else
+      echo ""
+    fi
+  loop: "{{ asm_disks | json_query('[].disks[]') }}"
+  register: disk_paths
+  tags: populate-asm-disks
+
+- name: Update asm_disks with partition paths
+  vars:
+    blk_device_to_partition: >-
+      {%- set mapping = {} -%}
+      {%- for res in disk_paths.results -%}
+        {%- if res.stdout != '' -%}
+          {%- set _ = mapping.update({res.item.blk_device: res.stdout}) -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {{ mapping }}
+  set_fact:
+    asm_disks: >-
+      {%- set updated_disk_groups = [] -%}
+      {%- for group in asm_disks -%}
+        {%- set updated_disks = [] -%}
+        {%- for disk in group.disks -%}
+          {%- set part_result = blk_device_to_partition.get(disk.blk_device, '') -%}
+          {%- set updated_disk = disk | combine({'first_partition_id': part_result}) -%}
+          {{ updated_disks.append(updated_disk) }}
+        {%- endfor -%}
+        {%- set updated_group = group | combine({'disks': updated_disks}) -%}
+        {{ updated_disk_groups.append(updated_group) }}
+      {%- endfor -%}
+      {{ updated_disk_groups }}
+  tags: populate-asm-disks

@@ -17,16 +17,17 @@
 ### into this test script
 ### context / reference: (internal) at: http://b/202240337#comment22
 
-# set up ssh from pod to BMX host
+# set up ssh from pod to database server
 # using sydney for initial testing
-bms_host=172.16.30.1
+# Keep permissions at 100755 to allow tests to run
+oracle_host=10.100.1.1
 install -d -m 0700 ~/.ssh
-ssh-keyscan "${bms_host}" > ~/.ssh/known_hosts
+ssh-keyscan "${oracle_host}" > ~/.ssh/known_hosts
 
 # install pre-reqs
 pip install jmespath
 cp /etc/files_needed_for_tk/google-cloud-sdk.repo /etc/yum.repos.d/google-cloud-sdk.repo
-yum install google-cloud-sdk -y
+yum --disablerepo=* --enablerepo=google-cloud-sdk -y install google-cloud-sdk
 
 # run the cleanup script
 pwd
@@ -45,9 +46,9 @@ fi
 
 # run the install script
 ./install-oracle.sh --ora-swlib-bucket gs://bmaas-testing-oracle-software \
---instance-ssh-user ansible9 --instance-ssh-key /etc/files_needed_for_tk/id_rsa_bms_tk_key \
+--instance-ssh-user ansible1 --instance-ssh-key /etc/files_needed_for_tk/id_rsa_bms_tk_key \
 --backup-dest "+RECO" --ora-swlib-path /u01/oracle_install --ora-version 19 --ora-swlib-type gcs \
 --ora-asm-disks /etc/files_needed_for_tk/nonrac-asm.json \
 --ora-data-mounts /etc/files_needed_for_tk/nonrac-datamounts.json --cluster-type NONE \
---ora-data-diskgroup DATA --ora-reco-diskgroup RECO --ora-db-name orcl \
---ora-db-container false --instance-ip-addr 172.16.30.1 --instance-hostname linuxserver44.orcl
+--ora-data-destination DATA --ora-reco-destination RECO --ora-db-name orcl \
+--ora-db-container false --instance-ip-addr 10.100.1.1 --instance-hostname g278813163-s366

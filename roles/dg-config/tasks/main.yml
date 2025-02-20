@@ -15,7 +15,7 @@
 ---
 - name: DG | SQL to add standby logs
   set_fact:
-    sql_for_dg:  |
+    sql_for_dg: |
       alter system set dg_broker_start = true sid='*';
       alter system set standby_file_management = auto sid='*';
       begin
@@ -57,7 +57,7 @@
     ORACLE_SID: "{{ oracle_sid }}"
     PATH: "{{ oracle_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
   delegate_to: primary1
-  become: yes
+  become: true
   become_user: "{{ oracle_user }}"
   register: db_change
   tags: dg-create
@@ -72,7 +72,7 @@
     ORACLE_HOME: "{{ oracle_home }}"
     ORACLE_SID: "{{ oracle_sid }}"
     PATH: "{{ oracle_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
-  become: yes
+  become: true
   become_user: "{{ oracle_user }}"
   register: db_change
   tags: dg-create
@@ -84,7 +84,7 @@
     owner: "{{ oracle_user }}"
     group: "{{ oracle_group }}"
   delegate_to: primary1
-  become: yes
+  become: true
   become_user: "{{ oracle_user }}"
   tags: dg-create
 
@@ -99,13 +99,14 @@
     ORACLE_SID: "{{ oracle_sid }}"
     PATH: "{{ oracle_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
   delegate_to: primary1
-  become: yes
+  become: true
   become_user: "{{ oracle_user }}"
   register: dg_create
   tags: dg-create
 
 - name: DG | DG creation output
-  debug: var=dg_create.stdout_lines
+  debug:
+    var: dg_create.stdout_lines
   tags: dg-create
 
 - name: DG | Wait for DG to be enabled
@@ -122,13 +123,14 @@
     ORACLE_HOME: "{{ oracle_home }}"
     ORACLE_SID: "{{ oracle_sid }}"
     PATH: "{{ oracle_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
-  become: yes
+  become: true
   become_user: "{{ oracle_user }}"
   register: dg_create
   tags: dg-create
 
 - name: DG | DG verbose output
-  debug: var=dg_create.stdout_lines
+  debug:
+    var: dg_create.stdout_lines
   tags: dg-create
 
 - name: DG | Show standby database configuration
@@ -141,7 +143,7 @@
     ORACLE_HOME: "{{ oracle_home }}"
     ORACLE_SID: "{{ oracle_sid }}"
     PATH: "{{ oracle_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
-  become: yes
+  become: true
   become_user: "{{ oracle_user }}"
   register: dg_standby
   tags: dg-create
@@ -158,7 +160,7 @@
     ORACLE_SID: "{{ oracle_sid }}"
     PATH: "{{ oracle_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
   when: "'database instance restart required' in dg_standby.stdout"
-  become: yes
+  become: true
   become_user: "{{ oracle_user }}"
   tags: dg-create
 
@@ -174,7 +176,7 @@
     ORACLE_SID: "{{ oracle_sid }}"
     PATH: "{{ oracle_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
   when: "'database instance restart required' in dg_standby.stdout"
-  become: yes
+  become: true
   become_user: "{{ oracle_user }}"
   register: dg_standby
   tags: dg-create
@@ -192,7 +194,7 @@
     ORACLE_HOME: "{{ oracle_home }}"
     ORACLE_SID: "{{ oracle_sid }}"
     PATH: "{{ oracle_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
-  become: yes
+  become: true
   become_user: "{{ oracle_user }}"
   register: db_config
   failed_when:
