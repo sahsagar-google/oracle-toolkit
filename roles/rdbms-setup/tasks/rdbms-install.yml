@@ -136,6 +136,21 @@
       - "{{ db_install_result.stdout_lines }}"
   tags: rdbms-setup
 
+- name: rdbms-install | Re-update DB OPatch post-install
+  unarchive:
+    src: "{{ swlib_path }}/{{ item.patchfile }}"
+    dest: "{{ oracle_home }}"
+    remote_src: true
+  with_items:
+    - "{{ opatch_patches }}"
+  when:
+    - item.release == oracle_ver
+    - item.category == "OPatch"
+    - oracle_rel != "base"
+  become: true
+  become_user: "{{ oracle_user }}"
+  tags: rdbms-setup,update-opatch-db
+
 - name: rdbms-install | Apply one-off and OJVM patches
   become: true
   become_user: "{{ oracle_user }}"
