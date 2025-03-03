@@ -1,40 +1,35 @@
-# Oracle Toolkit for GCP - GCE User Guide
+# Oracle Toolkit for Google Cloud - Compute VM User Guide
 
-The Oracle Toolkit for GCP fully supports running on Google Compute Engine (GCE) "instances" (or virtual machines). The only restriction is Oracle RAC, which due to it's shared storage, and networking requirements, is only deployable with this toolkit to Google Bare Metal Solution (BMS). However, this toolkit does support installing and configuring all other editions and configurations on GCE instances.
-
-This includes using Oracle Grid Infrastructure (GI) and Automatic Storage Management (ASM), with single-instance databases.
+The Oracle Toolkit for Google Cloud fully supports running on Google Compute Virtual Machines (also commonly referred to as "instances"). This includes using Oracle Grid Infrastructure (GI) and Automatic Storage Management (ASM), with single-instance databases.
 
 ## Things to do in Advance - Prerequisites
 
 Outside of the scope of this document is the setup of Google Cloud foundational components such as Cloud IAM, networking (VPCs and subnets), Google Cloud Storage (GCS) buckets and cloud security. Setting up the required Google Cloud project and billing account is similarly outside of the scope of this document.
 
-The remainder of this guide assumes that those foundational components are in place.
+## Benefits of Using Google Cloud Compute VMs
 
-## What's Different with GCE?
-
-Running Oracle Databases on Google Cloud Engine (GCE) VMs has many advantages. Including but not limited to:
+Running Oracle Databases on Google Cloud Engine VMs has many advantages. Including but not limited to:
 
 - General Google Cloud benefits such as a wide variety of regions and zones, predictable costs, consumption based charges, and rapid provisioning/decommissioning of infrastructure.
 - Dynamically sizable VM instances: change VM shapes, even for existing VM instances, as required.
 - The inherent snapshotting, cloning, and replication benefits of using Google Cloud Persistent Disks and/or Hyperdisks for software and database (ASM) storage.
 - Easy to reference block devices from Linux via the Google `/dev/disk/by-id` device aliases
 
-For multi-node RAC configurations, deploying on Google BMS is recommended.
-
 ## Initial Requirements
 
-All that's typically required to get started is an **Ansible Control Node** and the Google Cloud CLI - specifically, the **gcloud** utility. (Or Terraform as an alternative to **glcoud**.)
+All that's typically required to get started is an Ansible [Control Node](https://docs.ansible.com/ansible/2.9/user_guide/basic_concepts.html#control-node) and the Google Cloud CLI - specifically, the **gcloud** utility. (Or Terraform as an alternative to **glcoud**.)
 
 Usually both pieces of software are on the same computer, but they don't have to be. The Ansible Control Node can be an administrator's physical workstation (i.e. laptop), another cloud VM, or could even be the Google Cloud Cloud Shell. However, due to the somewhat ephemeral nature of Cloud Shell, this option is probably not recommended.
 
-Google Cloud instances for running Oracle Databases can be provisioned using:
+Google Cloud VMs (where the Oracle software will be installed and the databases created) are the Ansible [Managed Nodes](https://docs.ansible.com/ansible/2.9/user_guide/basic_concepts.html#control-node) and can be provisioned using a variety of tools and interfaces including:
 
-1. The Google Cloud Web Console:
-   - For consistency, ease of deployment, and repeatability (without error), this option is generally not recommended
+1. The Google Cloud Web Console
 1. Terraform:
-   - Covered in detail in the complementary document [Terraform Infrastructure Provisioning for Oracle Toolkit for GCP Deployments](../terraform/README.md)
+   - Covered in detail in the complementary document [Terraform Infrastructure Provisioning for Oracle Toolkit for Google Cloud](../terraform/README.md)
 1. Google Cloud CLI (**gcloud**) commands:
-   - This guide will focus on this option
+   - This guide will focus on this option as it provides consistency, ease of deployment, and repeatability
+
+Several other options for creating Compute Engines VMs exist and are explained in the [Compute Engine client libraries](https://cloud.google.com/compute/docs/api/libraries) documentation.
 
 ### Ansible Control Node Provisioning & Setup
 
@@ -48,7 +43,7 @@ For example, in Debian-based Linux distributions:
 sudo apt update && sudo apt install -y ansible
 ```
 
-Similarly, in Enterprise Linux derivative distributions:
+Similarly, in Enterprise Linux derivative distributions, Ansible is usually installed from the Fedora [Extra Packages for Enterprise Linux (EPEL)](https://docs.fedoraproject.org/en-US/epel/) repository:
 
 ```bash
 sudo yum install -y epel-release
@@ -66,15 +61,7 @@ pip3 install jmespath
 pip3 list | grep jmespath
 ```
 
-Then either clone, or download the Oracle Toolkit for Google from it's source site.
-
-For example, to clone the public repo, assuming that the `git` package is installed on your Ansible Control Node use:
-
-```bash
-git clone https://github.com/google/oracle-toolkit.git
-```
-
-Or alternatively, to download, without Git, simply use:
+Then download to your Ansible Control Node the Oracle Toolkit for Google Cloud from it's source site:
 
 ```bash
 wget https://github.com/google/oracle-toolkit/archive/refs/heads/master.zip && \
@@ -83,20 +70,26 @@ wget https://github.com/google/oracle-toolkit/archive/refs/heads/master.zip && \
   mv oracle-toolkit-master oracle-toolkit
 ```
 
-## GCE Instance Provisioning
+## Compute Engine VM Provisioning
 
-GCE instances for running Oracle databases can be provisioned using Terraform by following the steps outlined in the [Terraform Infrastructure Provisioning for Oracle Toolkit for GCP Deployments](../terraform/README.md) guide.
+Compute Engine VMs for running Oracle databases can be provisioned using Terraform by following the steps outlined in the [Terraform Infrastructure Provisioning for Oracle Toolkit for Google Cloud](../terraform/README.md) guide.
 
-Alternatively, they can be provisioned quickly and efficiently using the **gcloud** utility from the Google Cloud CLI. To install the **gcloud** utility follow the [Install the gcloud CLI](https://cloud.google.com/sdk/docs/install) instructions.
+Alternatively, they can be provisioned quickly and efficiently using the **gcloud** utility from the Google Cloud CLI. Most Google Cloud VM images already have the Google Cloud CLI pre-installed. However if you are using your own custom OS image, you may want to install the **gcloud** utility by following the [Install the gcloud CLI](https://cloud.google.com/sdk/docs/install) instructions.
 
-Before provisioning actual GCE instances, fundamentals such as the Google Cloud project, region, zone, network, and subnet should be chosen. For convenience in future commands, it is easiest to set these as environment variables:
+Before provisioning actual VM instances, fundamentals such as the Google Cloud project, region, zone, network, and subnet should be chosen.
+
+Choose your VM's region and zone based on business requirements such as geography and location, technical requirements such as networking and latency, and cost. Machine and storage costs vary between regions, see the [VM instance pricing](https://cloud.google.com/compute/vm-instance-pricing) for additional information.
+
+If creating networks and subnets for experimental resources, then just using [Auto mode IPv4 ranges](https://cloud.google.com/vpc/docs/subnets#ip-ranges) will suffice. If adding to an existing enterprise VPN then consult with your network architect to choose the most appropriate subnet.
+
+For convenience in future commands, it is easiest to set environment variables:
 
 ```bash
-PROJECT_ID=PROJECT_ID
-REGION_ID=REGION
-ZONE_ID=ZONE
-NETWORK_ID=NETWORK
-SUBNET_ID=SUBNET
+PROJECT_ID="PROJECT_ID"
+REGION_ID="REGION"
+ZONE_ID="ZONE"
+NETWORK_ID="NETWORK"
+SUBNET_ID="SUBNET"
 
 gcloud config set project ${PROJECT_ID}
 ```
@@ -119,26 +112,27 @@ Choose a supported operating system image (either one of the Google Cloud public
 
 > **NOTE:** Some operating systems such as Red Hat Enterprise Linux may have additional licensing costs. See the [Premium images](https://cloud.google.com/compute/disks-image-pricing?hl=en#section-1) section of Google documentation for additional details.
 
+Using an Oracle compatible [custom OS image](https://cloud.google.com/compute/docs/images#custom_images) is also supported. Including [Oracle Linux](https://cloud.google.com/compute/docs/images#oracle_linux).
+
 For example, if choosing a Red Hat Enterprise Linux (RHEL) 8 image:
 
 ```bash
 IMAGE_FILE="$(gcloud compute images describe-from-family rhel-8 --project=rhel-cloud --format json | jq -r '.selfLink')"
 ```
 
-### Database Server (GCE Instance) Provisioning
+### Database Server (Compute Engine VM) Provisioning
 
 With these prerequisites in place, the VM can be easily configured using the Google Cloud CLI **gcloud** utility.
 
 For example (review command carefully and adjust as required before using):
 
 ```bash
-VM_NAME=INSTANCE_NAME
+VM_NAME="INSTANCE_NAME"
 
 gcloud compute instances create ${VM_NAME} \
-  --project=${PROJECT_ID} \
   --zone=${ZONE_ID} \
   --machine-type=${MACHINE_TYPE} \
-  --network-interface=network-tier=STANDARD,stack-type=IPV4_ONLY,subnet=${SUBNET_ID} \
+  --network-interface=network-tier=PREMIUM,stack-type=IPV4_ONLY,subnet=${SUBNET_ID} \
   --create-disk=auto-delete=yes,boot=yes,device-name=${VM_NAME}-boot-disk,image=${IMAGE_FILE},mode=rw,provisioned-iops=3300,provisioned-throughput=290,size=64G,type=hyperdisk-balanced
 ```
 
@@ -148,20 +142,35 @@ A boot disk size of `64G` is typically sufficient for most installations, howeve
 
 After provisioning, consider networking, cloud firewalls, and private vs public IP addresses for the new instance. Ingress from the Ansible Control Node is mandatory and egress to the internet (for package installation), whether directly or indirectly through a Google Cloud Router and NAT Gateway, is typically required.
 
-If necessary, the assigned IP address can be obtained from the Google Cloud web console, the VM instance itself, or using the **gcloud** command:
+Opening TCP ingress to the Oracle Listener port **1521** is usually required on database servers. To add to your VPN firewall, use a command similar to (review and customize as required):
+
+```bash
+gcloud compute firewall-rules create oracle-listener \
+  --description="Ingress to the Oracle Listener port" \
+  --network=${NETWORK_ID} \
+  --direction=INGRESS \
+  --priority="PRIORITY_VALUE" \
+  --allow=tcp:1521 \
+  --source-ranges='SOURCE_CIDR' \
+  --target-tags=oracle
+```
+
+If necessary, the assigned IP address, which will be used when running the toolkit, can be obtained from the Google Cloud web console, the VM instance itself, or using the **gcloud** command:
 
 ```bash
 INSTANCE_IP_ADDR=$(gcloud compute instances describe ${VM_NAME} --zone=${ZONE_ID} --format="value(networkInterfaces[0].networkIP)")
 ```
 
-### Adding Google Cloud Disks (Block Storage)
+### Adding Block Storage Devices
 
-GCE Block Storage devices including Persistent Disks (PD) or Hyperdisks can be added in virtually any size with any performance characteristic. To be used as additional Linux journald file systems such as `/u01` and `/u02` or for ASM storage. As many disks of whatever shapes and sizes is required can be added.
+Compute Engine block storage devices including Persistent Disks (PD) or Hyperdisks can be added in virtually any size with any performance characteristic. To help decide what is required for your environment, refer to the Google documentation [Choose a disk type](https://cloud.google.com/compute/docs/disks) and [Configure disks to meet performance requirements](https://cloud.google.com/compute/docs/disks/performance).
 
-To create a cloud disk, first choose a disk name:
+Block storage devices can be used as additional Linux journald file systems such as `/u01` or for ASM storage. As many disks of whatever shapes and sizes is required can be added.
+
+To create a block storage device, first choose a disk name:
 
 ```bash
-DISK_NAME=DISK_NAME
+DISK_NAME="DISK_NAME"
 ```
 
 Then choose the disk size and performance characteristics (customize as necessary):
@@ -184,9 +193,11 @@ Repeat as necessary. For example, adding as many block storage devices are requi
 
 ### Recoding Block Storage in JSON Format for Toolkit Usage
 
-The Oracle Toolkit for GCP requires block storage (or disk) information in JSON format - provided either via JSON configuration files, or as command line arguments to the installation shell script.
+The Oracle Toolkit for Google Cloud requires block storage (or disk) information in JSON format - provided either via JSON configuration files, or as command line arguments to the installation shell script.
 
 Consequently, after creating each, it's usually convenient to record their metadata and property as a JSON object.
+
+> **NOTE:** the [jq](https://jqlang.org/) command line utility (for processing and manipulating JSON content) is beneficial and is not included in most Linux distributions by default but can be easily installed using `sudo apt update && sudo apt install -y jq or `sudo yum install -y jq` depending on your Linux family.
 
 For example, for ASM disks:
 
@@ -221,7 +232,7 @@ If required, create an ssh key pair using your internal standards (i.e. for encr
 ssh-keygen -q -b 4096 -t rsa -N '' -C 'oracle-toolkit-for-oracle' -f "${HOME}/.ssh/id_rsa_oracle_toolkit" <<<y
 ```
 
-Then copy the desired public key to your newly created GCE VM instance:
+Then copy the desired public key to your newly created Compute Engine VM. Specifics on how to copy may be site specific, may rely on Google Cloud [Identity-Aware Proxy](https://cloud.google.com/security/products/iap)(IAP) or may use a command similar to the following (assuming your ID is already setup with a password):
 
 ```bash
 ssh-copy-id -i "${HOME}/.ssh/id_rsa_oracle_toolkit" ${INSTANCE_IP_ADDR}
@@ -229,7 +240,9 @@ ssh-copy-id -i "${HOME}/.ssh/id_rsa_oracle_toolkit" ${INSTANCE_IP_ADDR}
 
 ### Toolkit Execution
 
-Overall, running the toolkit against a GCE VM instance is really no different to running against a BMS physical or virtualized server. Assuming that the required block storage disk details have been properly specified in the required JSON configuration files and using the `--ora-data-mounts` and `--ora-asm-disks`, or are specified as command line arguments using the `--ora-data-mounts-json` and `--ora-asm-disks-json` arguments.
+Overall, running the toolkit against a Google Compute Engine VM instance is really no different to running against a BMS physical or virtualized server. Assuming that the required block storage disk details have been properly specified in the required JSON configuration files and using the `--ora-data-mounts` and `--ora-asm-disks`, or are specified as command line arguments using the `--ora-data-mounts-json` and `--ora-asm-disks-json` arguments.
+
+Also, ensure that the required software media has been properly staged as per the User Guide section [Staging the Oracle installation media](https://github.com/pythian/gto-prv/blob/master/docs/user-guide.md#staging-the-oracle-installation-media).
 
 While GI and ASM are fully supported, the quickest and easiest start is usually to deploy Free Edition for familiarity with the toolkit and it's operation. Then complement with full EE or SE2 installations.
 
@@ -261,19 +274,23 @@ Or to create an Enterprise Edition database:
 
 ### Cleanup
 
-The one key difference from BMS is that GCE instances can be destroyed quickly and easily in a variety of ways, including using **gcloud**. For example:
+The one key difference from BMS is that Compute Engine VMs can be destroyed quickly and easily in a variety of ways, including using **gcloud**. For example:
 
 ```bash
 gcloud compute instances delete ${VM_NAME} --zone=${ZONE_ID}
 ```
 
+Since the block storage devices ("disks") were added using the `set-disk-auto-delete` they will automatically be removed when the VM is deleted. If you did not use this option when creating the disks, you will need to remove them manually.
+
 ## Integration with Other Google Cloud Services
 
 ### Monitoring and Logging
 
-Oracle databases on GCE instances are "self-managed" and therefore have no _automatically integrated_ connections to other Google Cloud services such as the Logging or Monitoring services. (Automatic integration is included with other, "fully-managed" services such as the Exadata and ADM offerings through the [Oracle on Google Cloud](https://cloud.google.com/solutions/oracle).)
+Oracle databases on Compute Engine VMs are "self-managed" and therefore have no _automatically integrated_ connections to other Google Cloud services such as the Logging or Monitoring services. (Automatic integration is included with other, "fully-managed" services such as the Exadata and ADM offerings through the [Oracle on Google Cloud](https://cloud.google.com/solutions/oracle).)
 
-However, when running in GCE instances, some integration options are available including using the Google Cloud Ops Agent to collect Oracle Database metrics and log data for use in Google Cloud Metrics Explorer and Logs Explorer. For setup and configuration details, refer to the [Oracle Database](https://cloud.google.com/logging/docs/agent/ops-agent/third-party/oracledb) documentation for Google Cloud Observability integration with third party apps. This toolkit does not automatically setup this component.
+However, when running in Compute Engine VMs, some integration options are available including using the Google Cloud Ops Agent to collect Oracle Database metrics and log data for use in Google Cloud Metrics Explorer and Logs Explorer. For setup and configuration details, refer to the [Oracle Database](https://cloud.google.com/logging/docs/agent/ops-agent/third-party/oracledb) documentation for Google Cloud Observability integration with third party apps. This toolkit does not automatically setup this component.
+
+Additionally, other observability options such as the [workloadagent](https://github.com/GoogleCloudPlatform/workloadagent) may be added in the future.
 
 ### Backups
 

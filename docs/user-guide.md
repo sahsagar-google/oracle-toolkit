@@ -220,7 +220,7 @@ this guide.
 
 For additional information about using this toolkit on GCE virtual machines
 (instances) specifically, including details on infrastructure provisioning,
-refer to the [Oracle Toolkit for GCP - GCE User Guide](gce-user-guide.md).
+refer to the [Oracle Toolkit for Google Cloud - Compute VM User Guide](compute-vm-user-guide.md).
 
 The toolkit supports the following major releases of Oracle Database and applies
 the most recent quarterly patches, also known as Oracle Release Updates or
