@@ -80,6 +80,7 @@
   tags: patch-grid,sw-unzip
 
 - name: (RDBMS) Get database role
+  tags: patch-grid,patch-rdbms
   block:
     - name: Get database role from sqlplus
       shell: |
@@ -98,7 +99,6 @@
     - name: Set boolean standby_db variable
       set_fact:
         standby_db: "{{ db_role.stdout is search('PHYSICAL STANDBY') | bool }}"
-  tags: patch-grid,patch-rdbms
 
 - name: (GI) Apply patch
   include_tasks: opatch_apply.yml
