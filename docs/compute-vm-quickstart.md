@@ -1,13 +1,13 @@
-# Quickstart for Using the Oracle Toolkit for GCP on GCE
+# Quickstart for Using the Oracle Toolkit for Google Cloud on Compute VMs
 
-This document serves as a quickstart guide and simple reference for using the Oracle Toolkit for GCP on Google Compute Enging (GCE). It is an abridged version of the more comprehensive [Oracle Toolkit for GCP - GCE User Guide](gce-user-guide.md).
+This document serves as a quickstart guide and simple reference for using the Oracle Toolkit for Google Cloud on Compute VMs. It is an abridged version of the more comprehensive [Oracle Toolkit for Google Cloud - Compute VM User Guide](compute-vm-user-guide.md).
 
 ## Prerequisite Assumptions
 
 This document assumes that you have:
 
 1. Provisioned your Ansible Control Node, installed Ansible and JMESpath on it, and downloaded the toolkit.
-1. Setup Google Cloud foundational components such as IAM, networking, GSC storage buckets with the required media staged, and security aspects.
+1. Setup Google Cloud foundational components such as IAM, networking, Google Cloud Storage buckets with the required media staged, and security aspects.
 1. Have either Terraform or the Google Cloud CLI and specifically the **gcloud** utility installed.
 
 If you need additional details to setup any of these prerequisites, refer to Google documentation such as [Google Cloud quickstarts and tutorials](https://cloud.google.com/docs/tutorials) and specifically [Install the gcloud CLI](https://cloud.google.com/sdk/docs/install).
@@ -28,7 +28,7 @@ SUBNET_ID=SUBNET
 gcloud config set project ${PROJECT_ID}
 ```
 
-### Create the GCE Instance and Block Storage Devices
+### Create the Compute VM and Block Storage Devices
 
 Specify some instance specific characteristics such as the VM shape, name, and OS image:
 
@@ -82,7 +82,7 @@ Example command:
 ssh-keygen -q -b 4096 -t rsa -N '' -C 'oracle-toolkit-for-oracle' -f "${HOME}/.ssh/id_rsa_oracle_toolkit" <<<y
 ```
 
-Then copy your pre-existing, or newly created public key to your newly created GCE VM instance. Example command:
+Then copy your pre-existing, or newly created public key to your newly created Compute VM. Example command:
 
 ```bash
 ssh-copy-id -i "${HOME}/.ssh/id_rsa_oracle_toolkit" ${INSTANCE_IP_ADDR}
@@ -112,7 +112,7 @@ The required database infrastructure can also be provisioned, including executio
 
 To deploy using Terraform:
 
-1. Edit the [terraform/backend.tf](../terraform/backend.tf) document and update the backend GCS `bucket` and `prefix` values indicating where your Terraform state file is stored.
+1. Edit the [terraform/backend.tf](../terraform/backend.tf) document and update the backend Cloud Storage `bucket` and `prefix` values indicating where your Terraform state file is stored.
 2. Edit the [terraform/main.tf](../terraform/main.tf) document and customize all key-value pairs as necessary. Including adding and resizing ASM disks as required.
 
 Then run the Terraform using:
@@ -131,4 +131,4 @@ And if required, remove using:
 terraform destroy
 ```
 
-For full details, refer to the [Terraform Infrastructure Provisioning for Oracle Toolkit for GCP Deployments](../terraform/README.md) document.
+For full details, refer to the [Terraform Infrastructure Provisioning](../terraform/README.md) guide for this toolkit.

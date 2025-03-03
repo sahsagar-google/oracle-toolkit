@@ -70,7 +70,7 @@ additional details and comprehensive explanations of the toolkit, scripting,
 options, and usage scenarios. All commands run from the "control node".
 
 > **NOTE:** If deploying a single-instance database on GCE, refer to the
-[Quickstart for Using the Oracle Toolkit for GCP on GCE](gce-quickstart.md)
+[Quickstart for Using the Oracle Toolkit for Google Cloud on Compute VMs](compute-vm-quickstart.md)
 document for additional information on provisioning GCE infrastructure and
 getting started with this toolkit.
 
