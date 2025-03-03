@@ -44,6 +44,7 @@
   tags: rac-opatch
 
 - name: rac-opatch | If patch to apply then variable is true
+  tags: rac-opatch
   block:
     - name: check is apply is needed
       set_fact:
@@ -51,7 +52,6 @@
     - name: show the variable value
       debug:
         msg: "apply needed? - {{ apply_needed }}"
-  tags: rac-opatch
 
 - name: rac-opatch | GI opatch analyze output
   debug:
