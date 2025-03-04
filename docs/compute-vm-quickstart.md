@@ -19,23 +19,24 @@ If you need additional details to setup any of these prerequisites, refer to Goo
 Before beginning, infrastructure locality and networking aspects must be defined and captured (i.e. into shell environment variables for convenience):
 
 ```bash
-PROJECT_ID=PROJECT_ID
-REGION_ID=REGION
-ZONE_ID=ZONE
-NETWORK_ID=NETWORK
-SUBNET_ID=SUBNET
+PROJECT_ID="PROJECT_ID"
+REGION_ID="REGION"
+ZONE_ID="ZONE"
+NETWORK_ID="NETWORK"
+SUBNET_ID="SUBNET"
 
 gcloud config set project ${PROJECT_ID}
 ```
 
 ### Create the Compute VM and Block Storage Devices
 
-Specify some instance specific characteristics such as the VM shape, name, and OS image:
+Specify some instance specific characteristics such as the VM shape, name, and OS project and image family:
 
 ```bash
 MACHINE_TYPE="c4-standard-4"
-IMAGE_FILE="$(gcloud compute images describe-from-family rhel-8 --project=rhel-cloud --format json | jq -r '.selfLink')"
-VM_NAME=INSTANCE_NAME
+IMAGE_PROJECT="rhel-cloud"
+IMAGE_FAMILY="rhel-8"
+VM_NAME="INSTANCE_NAME"
 ```
 
 > **NOTE:** Some operating systems such as Red Hat Enterprise Linux may have additional licensing costs. See the [Premium images](https://cloud.google.com/compute/disks-image-pricing?hl=en#section-1) section of Google documentation for additional details.
@@ -44,11 +45,11 @@ Create the instance (add network tags by appending the `--tags TAG` option as re
 
 ```bash
 gcloud compute instances create ${VM_NAME} \
-  --project=${PROJECT_ID} \
   --zone=${ZONE_ID} \
   --machine-type=${MACHINE_TYPE} \
-  --network-interface=network-tier=STANDARD,stack-type=IPV4_ONLY,subnet=${SUBNET_ID} \
-  --create-disk=auto-delete=yes,boot=yes,device-name=${VM_NAME}-boot-disk,image=${IMAGE_FILE},mode=rw,provisioned-iops=3300,provisioned-throughput=290,size=64G,type=hyperdisk-balanced
+  --network-interface=network-tier=PREMIUM,stack-type=IPV4_ONLY,subnet=${SUBNET_ID} \
+  --image-project=${IMAGE_PROJECT} \
+  --image-family=${IMAGE_FAMILY}
 ```
 
 Capture the IP address of the newly created instance:
@@ -79,7 +80,8 @@ If required, generate a new and dedicated ssh key-pair (using your internal or o
 Example command:
 
 ```bash
-ssh-keygen -q -b 4096 -t rsa -N '' -C 'oracle-toolkit-for-oracle' -f "${HOME}/.ssh/id_rsa_oracle_toolkit" <<<y
+mkdir -p "${HOME}/.ssh" && chmod 0700 "${HOME}/.ssh"
+ssh-keygen -q -b 4096 -t rsa -N '' -C 'oracle-toolkit-for-oracle' -f "${HOME}/.ssh/id_rsa_oracle_toolkit"
 ```
 
 Then copy your pre-existing, or newly created public key to your newly created Compute VM. Example command:
