@@ -1,6 +1,14 @@
-# Oracle Toolkit for Google Cloud - Compute VM User Guide
+# Oracle Toolkit for Google Cloud - Compute Engine VM User Guide
 
-The Oracle Toolkit for Google Cloud fully supports running on Google Compute Virtual Machines (also commonly referred to as "instances"). This includes using Oracle Grid Infrastructure (GI) and Automatic Storage Management (ASM), with single-instance databases.
+The Oracle Toolkit for Google Cloud fully supports running on Google Compute Engine Virtual Machines (also commonly referred to as "instances"). This includes using Oracle Grid Infrastructure (GI) and Automatic Storage Management (ASM), with single-instance databases.
+
+Running this toolkit will require:
+
+1. An Ansible [control node](https://docs.ansible.com/ansible/2.9/user_guide/basic_concepts.html#control-node) - where this toolkit will run.
+1. An Oracle Database server (which will be the Ansible [managed node](https://docs.ansible.com/ansible/2.9/user_guide/basic_concepts.html#managed-nodes) or "managed host") where the software will be installed to/configured.
+1. A place to source the required Oracle software from. As covered in the main user guide, section [Downloading and staging the Oracle Software](user-guide.md#downloading-and-staging-the-oracle-software).
+
+This document covers these items in more detail, in the context of running the toolkit and database on Google Cloud Compute Engine VMs.
 
 ## Things to do in Advance - Prerequisites
 
@@ -43,11 +51,10 @@ For example, in Debian-based Linux distributions:
 sudo apt update && sudo apt install -y ansible
 ```
 
-Similarly, in Enterprise Linux derivative distributions, Ansible is usually installed from the Fedora [Extra Packages for Enterprise Linux (EPEL)](https://docs.fedoraproject.org/en-US/epel/) repository:
+Similarly, in Enterprise Linux derivative distributions:
 
 ```bash
-sudo yum install -y epel-release
-sudo yum install -y ansible
+sudo yum install -y ansible-core
 ```
 
 Install jmespath (for the same Python3 version that Ansible is using). For example, installing into a Python virtual environment:
@@ -60,6 +67,8 @@ pip3 install --upgrade pip
 pip3 install jmespath
 pip3 list | grep jmespath
 ```
+
+> **BACKGROUND:** A Python "virtual environment" is a self-contained directory and isolated Python environment. Allowing you to add packages with less dependency complications, version conflicts, and without changing the system Python environment.
 
 Then download to your Ansible Control Node the Oracle Toolkit for Google Cloud from it's source site:
 
@@ -90,6 +99,7 @@ REGION_ID="REGION"
 ZONE_ID="ZONE"
 NETWORK_ID="NETWORK"
 SUBNET_ID="SUBNET"
+NETWORK_TAGS="NETWORK_TAGS"
 
 gcloud config set project ${PROJECT_ID}
 ```
@@ -110,7 +120,7 @@ MACHINE_TYPE="c4-standard-4"
 
 Choose a supported operating system image (either one of the Google Cloud public images, or your own if uploaded and prepared separately).
 
-> **NOTE:** Some operating systems such as Red Hat Enterprise Linux may have additional licensing costs. See the [Premium images](https://cloud.google.com/compute/disks-image-pricing?hl=en#section-1) section of Google documentation for additional details.
+> **NOTE:** Some operating systems such as Red Hat Enterprise Linux have additional licensing costs. See the [Premium images](https://cloud.google.com/compute/disks-image-pricing?hl=en#section-1) section of Google documentation for additional details.
 
 Using an Oracle compatible [custom OS image](https://cloud.google.com/compute/docs/images#custom_images) is also supported. Including [Oracle Linux](https://cloud.google.com/compute/docs/images#oracle_linux).
 
@@ -134,11 +144,12 @@ gcloud compute instances create ${VM_NAME} \
   --zone=${ZONE_ID} \
   --machine-type=${MACHINE_TYPE} \
   --network-interface=network-tier=PREMIUM,stack-type=IPV4_ONLY,subnet=${SUBNET_ID} \
+  --tags=${NETWORK_TAGS} \
   --image-project=${IMAGE_PROJECT} \
   --image-family=${IMAGE_FAMILY}
 ```
 
-Include other optional components such as `--tags` and `--metadata=startup-script-url` if, and as required.
+Include other optional components such as `--metadata=startup-script-url` if, and as required.
 
 A boot disk size of `64G` is typically sufficient for most installations, however customize this size to a larger value if your use case requires.
 
@@ -241,36 +252,48 @@ Then copy the desired public key to your newly created Compute Engine VM. Specif
 ssh-copy-id -i "${HOME}/.ssh/id_rsa_oracle_toolkit" ${INSTANCE_IP_ADDR}
 ```
 
+Or, if appropriate in your environment, use Google Cloud metadata-based SSH keys - see the [Add SSH keys to VMs](https://cloud.google.com/compute/docs/connect/add-ssh-keys) documentation for additional details.
+
 ### Toolkit Execution
 
 Overall, running the toolkit against a Google Compute Engine VM instance is really no different to running against a BMS physical or virtualized server. Assuming that the required block storage disk details have been properly specified in the required JSON configuration files and using the `--ora-data-mounts` and `--ora-asm-disks`, or are specified as command line arguments using the `--ora-data-mounts-json` and `--ora-asm-disks-json` arguments.
 
 Also, ensure that the required software media has been properly staged as per the User Guide section [Staging the Oracle installation media](https://github.com/pythian/gto-prv/blob/master/docs/user-guide.md#staging-the-oracle-installation-media).
 
+Define a variable for the bucket location and verify with:
+
+```bash
+BUCKET_NAME="BUCKET_NAME"
+
+bash ./check-swlib.sh --ora-swlib-bucket ${BUCKET_NAME}
+```
+
+Optionally, add the version you wish to install to the above command using the `--ora-version` argument.
+
 While GI and ASM are fully supported, the quickest and easiest start is usually to deploy Free Edition for familiarity with the toolkit and it's operation. Then complement with full EE or SE2 installations.
 
 For example, the simplest command to create a Free Edition database:
 
 ```bash
-./install-oracle.sh \
+bash ./install-oracle.sh \
   --instance-ip-addr ${INSTANCE_IP_ADDR} \
   --instance-ssh-key "${HOME}/.ssh/id_rsa_oracle_toolkit" \
   --ora-edition free \
-  --ora-swlib-bucket gs://BUCKET_NAME \
-  --ora-data-mounts-json '[{"purpose":"software","blk_device":"/dev/disk/by-id/google-oracle-disk-1","name":"u01","fstype":"xfs","mount_point":"/u01","mount_opts":"nofail"}]' \
+  --ora-swlib-bucket gs://${BUCKET_NAME} \
+  --ora-data-mounts-json '[{"purpose":"software","blk_device":"/dev/disk/by-id/google-oracle-u01","name":"u01","fstype":"xfs","mount_point":"/u01","mount_opts":"nofail"}]' \
   --backup-dest /opt/oracle/fast_recovery_area/FREE
 ```
 
 Or to create an Enterprise Edition database:
 
 ```bash
-./install-oracle.sh \
+bash ./install-oracle.sh \
   --instance-ip-addr ${INSTANCE_IP_ADDR} \
   --instance-ssh-key "${HOME}/.ssh/id_rsa_oracle_toolkit" \
   --ora-version 19 \
-  --ora-swlib-bucket gs://BUCKET_NAME \
+  --ora-swlib-bucket gs://${BUCKET_NAME} \
   --ora-swlib-path /u01/oracle_install \
-  --ora-data-mounts-json '[{"purpose":"software","blk_device":"/dev/disk/by-id/google-oracle-disk-1","name":"u01","fstype":"xfs","mount_point":"/u01","mount_opts":"nofail"}]' \
+  --ora-data-mounts-json '[{"purpose":"software","blk_device":"/dev/disk/by-id/google-oracle-u01","name":"u01","fstype":"xfs","mount_point":"/u01","mount_opts":"nofail"}]' \
   --ora-asm-disks-json '[{"diskgroup":"DATA","disks":[{"blk_device":"/dev/disk/by-id/google-oracle-asm-data-1","name":"DATA1"}]},{"diskgroup":"RECO","disks":[{"blk_device":"/dev/disk/by-id/google-oracle-asm-reco-1","name":"RECO1"}]}]' \
   --ora-db-name ORCL
 ```
@@ -297,4 +320,4 @@ Additionally, other observability options such as the [workloadagent](https://gi
 
 ### Backups
 
-This toolkit includes some initial RMAN backup scripts which can be used to write both FULL DATABASE and ARCHIVELOG RMAN backups to various destinations including local file system storage, an ASM disk group, or even a Google Cloud Storage (GCS) bucket. For backup script setup, refer to the main [user guide](../docs/user-guide.md).
+This toolkit includes some initial RMAN backup scripts which can be used to write both FULL DATABASE and ARCHIVELOG RMAN backups to various destinations including local file system storage, an ASM disk group, or even a Google Cloud Storage (GCS) bucket. For backup script setup, refer to the main [user guide](user-guide.md#database-backup-configuration).
