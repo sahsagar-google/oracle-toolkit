@@ -114,10 +114,11 @@ Choose a supported operating system image (either one of the Google Cloud public
 
 Using an Oracle compatible [custom OS image](https://cloud.google.com/compute/docs/images#custom_images) is also supported. Including [Oracle Linux](https://cloud.google.com/compute/docs/images#oracle_linux).
 
-For example, if choosing a Red Hat Enterprise Linux (RHEL) 8 image:
+For example, if choosing a Red Hat Enterprise Linux (RHEL) 8 image, set environment variables such as:
 
 ```bash
-IMAGE_FILE="$(gcloud compute images describe-from-family rhel-8 --project=rhel-cloud --format json | jq -r '.selfLink')"
+IMAGE_PROJECT="rhel-cloud"
+IMAGE_FAMILY="rhel-8"
 ```
 
 ### Database Server (Compute Engine VM) Provisioning
@@ -133,7 +134,8 @@ gcloud compute instances create ${VM_NAME} \
   --zone=${ZONE_ID} \
   --machine-type=${MACHINE_TYPE} \
   --network-interface=network-tier=PREMIUM,stack-type=IPV4_ONLY,subnet=${SUBNET_ID} \
-  --create-disk=auto-delete=yes,boot=yes,device-name=${VM_NAME}-boot-disk,image=${IMAGE_FILE},mode=rw,provisioned-iops=3300,provisioned-throughput=290,size=64G,type=hyperdisk-balanced
+  --image-project=${IMAGE_PROJECT} \
+  --image-family=${IMAGE_FAMILY}
 ```
 
 Include other optional components such as `--tags` and `--metadata=startup-script-url` if, and as required.
@@ -229,7 +231,8 @@ Before the toolkit can be used, ssh connectivity must be established with an ssh
 If required, create an ssh key pair using your internal standards (i.e. for encryption algorithm, comment standards, etc). Example command to create a new key-pair for usage with this toolkit using common settings:
 
 ```bash
-ssh-keygen -q -b 4096 -t rsa -N '' -C 'oracle-toolkit-for-oracle' -f "${HOME}/.ssh/id_rsa_oracle_toolkit" <<<y
+mkdir -p "${HOME}/.ssh" && chmod 0700 "${HOME}/.ssh"
+ssh-keygen -q -b 4096 -t rsa -N '' -C 'oracle-toolkit-for-oracle' -f "${HOME}/.ssh/id_rsa_oracle_toolkit"
 ```
 
 Then copy the desired public key to your newly created Compute Engine VM. Specifics on how to copy may be site specific, may rely on Google Cloud [Identity-Aware Proxy](https://cloud.google.com/security/products/iap)(IAP) or may use a command similar to the following (assuming your ID is already setup with a password):
