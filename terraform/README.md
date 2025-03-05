@@ -62,7 +62,7 @@ Additionally, you will need:
 
 ## Project Directory Structure
 
-The recommended project directory structure is as follows:
+The project directory structure is as follows:
 
 ```plaintext
 repo-root/
