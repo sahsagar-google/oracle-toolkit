@@ -1,4 +1,4 @@
-# Copyright 2020 Google LLC
+# Copyright 2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,8 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 ---
-# Default value for RAM percentage that we are using for shmmax
-# ram_pct_used: "{% if memory_pct is defined %}{{ memory_pct }}{% else %}70{% endif %}"
-ram_pct_used: 65
+ahf_extract_path: "/u01/AHF"
+orachk_script_dir: "/u01/orachk"
+orachk_rpt_filename: "/tmp/orachk-zipfile.txt"
+# Default is to NOT uninstall AHF
+uninstall_ahf: false
+# default is to NOT run orachk
+run_orachk: false

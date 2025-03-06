@@ -15,9 +15,7 @@
 ---
 - name: Shut down RAC clusterware
   # Regrettably we can't use ansible's service module, as Oracle's init scripts don't report status
-  shell: service ohasd stop
-  args:
-    warn: false
+  shell: /etc/init.d/init.ohasd stop
   become: true
   register: service_stop
   ignore_errors: true
@@ -55,6 +53,10 @@
     - not free_edition
 
 - name: Free Edition cleanup steps
+  become: true
+  become_user: root
+  when: free_edition
+  ignore_errors: true
   block:
     - include_role:
         name: common
@@ -111,10 +113,11 @@
         - free_edition_rpm_packages.stdout | length > 0
 
     - name: Remove found RPMs via DNF (and run scriptlets)
-      dnf:
+      package:
         name: "{{ item }}"
         state: absent
         autoremove: true
+        lock_timeout: "{{ pkg_mgr_lock_timeout }}"
       register: dnf_remove
       with_items: "{{ free_edition_rpm_packages.stdout_lines }}"
       when:
@@ -160,11 +163,6 @@
         - "/usr/share/licenses/oracle-database-preinstall-{{ free_edition_name }}"
         - "/var/log/oracle-database-free-{{ free_edition_name }}"
         - "/var/log/oracle-database-preinstall-{{ free_edition_name }}"
-
-  ignore_errors: true
-  become: true
-  become_user: root
-  when: free_edition
 
 - name: De-configure CRS (non-RAC)
   command: "{{ grid_home }}/perl/bin/perl -I {{ grid_home }}/perl/lib -I {{ grid_home }}/crs/install {{ grid_home }}/crs/install/roothas.pl -deconfig -force -verbose"
@@ -326,10 +324,10 @@
 - name: (asmlib) remove oracleasm packages
   become: true
   become_user: root
-  yum:
+  package:
     name: "*oracleasm*"
     state: absent
-    lock_timeout: 180
+    lock_timeout: "{{ pkg_mgr_lock_timeout }}"
   when: asm_disk_management == "asmlib"
   register: remove_oracleasm
 
@@ -393,6 +391,14 @@
     tasks_from: populate-swap-partition-id.yml
 
 - name: Disable and remove swap
+  become: true
+  become_user: root
+  when:
+    - swap_blk_device is defined
+    - swap_partition_id is defined
+    - swap_blk_device|length > 0
+  ignore_errors: true
+  tags: remove-swap
   block:
     - name: Turn swap off
       command: "swapoff {{ swap_partition_id }}"
@@ -408,13 +414,6 @@
         path: /etc/fstab
         regexp: "^{{ swap_blk_device }}"
         state: absent
-  become: true
-  when:
-    - swap_blk_device is defined
-    - swap_partition_id is defined
-    - swap_blk_device|length > 0
-  ignore_errors: true
-  tags: remove-swap
 
 - name: Refresh kernel partition table view
   become: true
@@ -454,6 +453,46 @@
   become: true
   become_user: root
   shell: awk '/^oracle/ {print $1}' /proc/modules | sudo xargs -r modprobe -r
+
+- name: Reset kernel sysctl values to EL defaults
+  sysctl:
+    name: "{{ item.parameter }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_set: true
+    reload: true
+    ignoreerrors: true
+  with_items:
+    - parameter: "kernel.sem"
+      value: "32000 1024000000 500 32000"
+    - parameter: "kernel.shmall"
+      value: 18446744073692774399
+    - parameter: "kernel.shmmax"
+      value: 18446744073692774399
+    - parameter: "kernel.shmmni"
+      value: 4096
+    - parameter: "kernel.panic_on_oops"
+      value: 1
+    - parameter: "kernel.panic"
+      value: 10
+    - parameter: "fs.file-max"
+      value: 1524502
+    - parameter: "fs.aio-max-nr"
+      value: 65536
+    - parameter: "net.ipv4.ip_local_port_range"
+      value: "32768 60999"
+    - parameter: "net.core.rmem_default"
+      value: 212992
+    - parameter: "net.core.rmem_max"
+      value: 212992
+    - parameter: "net.core.wmem_default"
+      value: 212992
+    - parameter: "net.core.wmem_max"
+      value: 212992
+    - parameter: "vm.nr_hugepages"
+      value: 0
+    - parameter: "vm.hugetlb_shm_group"
+      value: 0
 
 - name: Remove users
   become: true

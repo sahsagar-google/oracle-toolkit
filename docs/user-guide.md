@@ -17,7 +17,7 @@ published: True
     - [Requirements and Prerequisites](#requirements-and-prerequisites)
       - [Control node requirements](#control-node-requirements)
       - [Target server requirements](#target-server-requirements)
-  - [Installing the toolkit](#installing-the-toolkit)
+  - [Installing the oracle-toolkit](#installing-the-oracle-toolkit)
   - [Downloading and staging the Oracle Software](#downloading-and-staging-the-oracle-software)
     - [Downloading the Oracle installation software](#downloading-the-oracle-installation-software)
       - [Downloading Patches from My Oracle Support](#downloading-patches-from-my-oracle-support)
@@ -28,8 +28,8 @@ published: True
       - [NFS share](#nfs-share)
     - [Validating Media](#validating-media)
   - [Prerequisite configuration](#prerequisite-configuration)
-    - [Data mount configuration file](#data-mount-configuration-file)
-    - [ASM disk group configuration file](#asm-disk-group-configuration-file)
+    - [Data mount configuration](#data-mount-configuration)
+    - [ASM disk group configuration](#asm-disk-group-configuration)
     - [Specifying LVM logical volumes](#specifying-lvm-logical-volumes)
   - [Configuring Installations](#configuring-installations)
     - [Configuration defaults](#configuration-defaults)
@@ -48,8 +48,9 @@ published: True
   - [Oracle Database Free Edition Specific Details and Changes](#oracle-database-free-edition-specific-details-and-changes)
     - [Free Edition Version Details](#free-edition-version-details)
     - [Sample Invocations for Oracle Database Free Edition](#sample-invocations-for-oracle-database-free-edition)
-    - [Example Toolkit Execution for Free Edition](#example-toolkit-execution-for-free-edition)
+    - [Example Oracle Toolkit Execution for Free Edition](#example-oracle-toolkit-execution-for-free-edition)
   - [Post installation tasks](#post-installation-tasks)
+    - [Validate the Oracle installation with ORAchk](#validate-the-oracle-installation-with-orachk)
     - [Reset passwords](#reset-passwords)
     - [Validate the environment](#validate-the-environment)
       - [Listing Oracle ASM devices](#listing-oracle-asm-devices)
@@ -64,9 +65,9 @@ published: True
 
 ## Command quick reference for single instance deployments
 
-Sample commands for a simple quick-start and basic toolkit usage for an Oracle
+Sample commands for a simple quick-start and basic oracle-toolkit usage for an Oracle
 "single instance" database. Refer to the remainder of this document for
-additional details and comprehensive explanations of the toolkit, scripting,
+additional details and comprehensive explanations of the oracle-toolkit, scripting,
 options, and usage scenarios. All commands run from the "control node".
 
 1. Validate media specifying GCS storage bucket and optionally database:
@@ -83,7 +84,7 @@ options, and usage scenarios. All commands run from the "control node".
    ssh ${INSTANCE_SSH_USER:-`whoami`}@${INSTANCE_IP_ADDR} sudo -u root hostname
    ```
 
-1. Review toolkit parameters:
+1. Review oracle-toolkit parameters:
 
    ```bash
    ./install-oracle.sh --help
@@ -120,13 +121,16 @@ Initial steps similar to those of the Single Instance installation.
    ssh ${INSTANCE_SSH_USER:-`whoami`}@${INSTANCE_IP_ADDR_NODE_2} sudo -u root hostname
    ```
 
-1. Review optional toolkit parameters:
+1. Review optional oracle-toolkit parameters:
 
    `./install-oracle.sh --help`
 
-1. Create the cluster configuration file by editing the `cluster_config.json` file template that is provided with the toolkit.
+1. Create the cluster configuration. You have two options:
+   1. Edit the `cluster_config.json` JSON file template that is provided with the toolkit,
+and then specify its path using the `--cluster-config` parameter
+   1. Pass the cluster configuration JSON as an argument to the `--cluster-config-json` parameter
 
-1. Install the database with the path to the cluster configuration file specified on the `--cluster-config` property:
+1. Install the database:
 
    ```bash
    ./install-oracle.sh \
@@ -135,7 +139,7 @@ Initial steps similar to those of the Single Instance installation.
    --ora-swlib-path /u02/swlib/ \
    --ora-swlib-type gcs \
    --cluster-type RAC \
-   --cluster-config cluster_config.json
+   --cluster-config-json '[ { "scan_name": ... } ]'
    ```
 
 ## Command quick reference for DR deployments
@@ -164,7 +168,7 @@ To create a standby database, add the following options to the command options t
 
 ## Command quick reference for Oracle Database Free Edition deployments
 
-The toolkit supports installing the Oracle Database Free edition, which is downloadable from the Oracle website: [Oracle Database Free Get Started](https://www.oracle.com/database/free/get-started/).
+The oracle-toolkit supports installing the Oracle Database Free edition, which is downloadable from the Oracle website: [Oracle Database Free Get Started](https://www.oracle.com/database/free/get-started/).
 
 Unlike with other Oracle Database editions, the Free edition is available in [RPM package](https://en.wikipedia.org/wiki/RPM_Package_Manager) format only. Consequently, the associated Enterprise Linux pre-installation and database RPM files must be downloaded and staged in the GCS storage bucket.
 
@@ -182,7 +186,7 @@ Unlike with other Oracle Database editions, the Free edition is available in [RP
    ssh ${INSTANCE_SSH_USER:-`whoami`}@${INSTANCE_IP_ADDR} sudo -u root hostname
    ```
 
-1. Review toolkit parameters:
+1. Review oracle-toolkit parameters:
 
    ```bash
    ./install-oracle.sh --help
@@ -210,6 +214,7 @@ This guide is for experienced professional users of Oracle software who are
 deploying Oracle Database software and preparing initial Oracle databases on
 Google Cloud [Bare Metal Solution](https://cloud.google.com/bare-metal), or on
 Google Cloud [Compute Engine](https://cloud.google.com/products/compute) .
+
 The toolkit defines default values for most options, so you can run the toolkit
 with only a few specifications. Your configuration options are listed later in
 this guide.
@@ -226,17 +231,17 @@ RUs:
 - Oracle 21c
 - Oracle 23ai (currently [Free Edition](#oracle-database-free-edition-specific-details-and-changes))
 
-The toolkit does not include any Oracle software. You must obtain the
+The oracle-toolkit does not include any Oracle software. You must obtain the
 appropriate licenses and download the Oracle software on your own. This guide
 provides information about where to obtain Oracle software solely for your
 convenience.
 
 After downloading the Oracle software, you stage the software in a Cloud Storage
-bucket where the toolkit can access it.
+bucket where the oracle-toolkit can access it.
 
 ### Software Stack
 
-The toolkit customizes the software stack for Oracle Database workloads. Any out
+The oracle-toolkit customizes the software stack for Oracle Database workloads. Any out
 of a number of Oracle Database software releases can be installed. In addition,
 the configuration of the software stack includes:
 
@@ -265,9 +270,9 @@ You can further customize the environment and host server(s), as needed.
 
 ### Requirements and Prerequisites
 
-You need at least two servers to install Oracle software by using the toolkit:
+You need at least two servers to install Oracle software by using the oracle-toolkit:
 
-- **Control node**: a virtual or physical machine from which the toolkit is
+- **Control node**: a virtual or physical machine from which the oracle-toolkit is
   executed.
 - **Database server(s)**: target where the Oracle software will be installed
   and configured.
@@ -291,7 +296,7 @@ The control node can be any server capable of ssh.
 
 The control node must have the following software installed:
 
-- [Ansible](https://en.wikipedia.org/wiki/Ansible_(software))
+- [Ansible](<https://en.wikipedia.org/wiki/Ansible_(software)>)
   version 2.9 or higher.
 - If you are using a Cloud Storage bucket to stage your Oracle installation
   media, the [Google Cloud SDK](https://cloud.google.com/sdk/docs).
@@ -309,14 +314,14 @@ of Cloud SDK is installed for you.
 
 #### Target server requirements
 
-Prior to running the toolkit, ensure that the control node has SSH access to a
+Prior to running the oracle-toolkit, ensure that the control node has SSH access to a
 Linux user account on the target server. The user account must have elevated
 security privileges, such as granted by "sudo su -", to install and configure
-Oracle software. The toolkit creates _Oracle software owners_, such as `oracle`
+Oracle software. The oracle-toolkit creates _Oracle software owners_, such as `oracle`
 and `grid`.
 
 The target database server(s) must be running a version of Linux that is
-certified for Oracle Database. The toolkit currently supports the following
+certified for Oracle Database. The oracle-toolkit currently supports the following
 certified OS versions:
 
 - Red Hat Enterprise Linux (RHEL) 7 and 8 (versions 7.3 and up).
@@ -326,7 +331,12 @@ For more information about Oracle-supported platforms see the Oracle
 certification matrix in the "My Oracle Support" (MOS) site (sign in required):
 [https://support.oracle.com](https://support.oracle.com).
 
-## Installing the toolkit
+## Installing the oracle-toolkit
+
+<<<<<<< HEAD
+The latest version of the oracle-toolkit can be downloaded from Google Git
+Repositories:
+[https://github.com/google/oracle-toolkit](https://github.com/google/oracle-toolkit)
 
 The latest version of the toolkit can be downloaded from Google Git
 Repositories: https://github.com/google/oracle-toolkit
@@ -341,7 +351,7 @@ $HOME directory.
 ## Downloading and staging the Oracle Software
 
 You must download and stage the Oracle software yourself, in accordance with the
-applicable licenses governing such software. The toolkit doesn't contain any
+applicable licenses governing such software. The oracle-toolkit doesn't contain any
 Oracle software. You are responsible for procuring the Oracle software that you
 need and for complying with the applicable licenses.
 
@@ -369,12 +379,12 @@ below.
 Before you download Oracle software and patches, review and acknowledge Oracle's
 license terms.
 
-Before using the toolkit, download all of the software pieces for your Oracle
+Before using the oracle-toolkit, download all of the software pieces for your Oracle
 release, including the base release, patch sets, the OPatch utility, and any
 additional patches listed by Oracle (unless using `--no-patch`, at which
 point only the base release is installed).
 
-Do not unzip the downloaded installation files. The toolkit requires the
+Do not unzip the downloaded installation files. The oracle-toolkit requires the
 downloads in their original, compressed-file format.
 
 #### Downloading Patches from My Oracle Support
@@ -551,7 +561,7 @@ Support")</th>
 <td></td>
 <td>Patch - MOS</TD>
 <TD>COMBO OF OJVM RU COMPONENT 19.26.0.0.250100 + GI RU 19.26.0.0.250100</td>
-<td>p00000000_190000_Linux-x86-64.zip</td>
+<td>p37262208_190000_Linux-x86-64.zip</td>
 </tr>
 <tr>
 <td></td>
@@ -1015,7 +1025,7 @@ href="https://support.oracle.com/epmos/faces/PatchResultsNDetails?releaseId=8011
 </table>
 
 If the required software components are not properly downloaded and staged, the
-toolkit will fail.
+oracle-toolkit will fail.
 
 ### Staging the Oracle installation media
 
@@ -1058,7 +1068,7 @@ You can then pass the file as a parameter to the deployment:
 --ora-swlib-type gcsfuse --ora-swlib-bucket oracle-swlib --ora-swlib-credentials ~/path_to/service_account.json
 ```
 
-The toolkit uploads the service account to the server so that Cloud Storage FUSE
+The oracle-toolkit uploads the service account to the server so that Cloud Storage FUSE
 can use it.
 
 #### NFS share
@@ -1154,27 +1164,32 @@ Found p6880880_122010_Linux-x86-64.zip : OPatch Utility
 
 ## Prerequisite configuration
 
-Before you run the tool you need to create JSON formatted configuration files
-for the data mount devices and the ASM disk group.
+Create JSON formatted configurations for the data mount devices and the ASM disk group.
+They can be stored in files or passed via CLI parameters.
 
-### Data mount configuration file
+The [host provisinoing tool](host-provisioning.md) can configure newly-provisioned
+BMS hosts to run the toolkit installer, including authentication, Internet access,
+and local mountpoints.
 
-In the data mount configuration file, you specify disk device attributes for:
+### Data mount configuration
 
-- Oracle software installation, which is usually mounted at /u01
-- Oracle diagnostic destination, which is usually mounted at /u02
+In the data mount configuration, you specify disk device attributes for:
 
-In the configuration file, specify the block devices (actual devices, not
+- Oracle software installation, which is usually mounted at `/u01`
+- Oracle diagnostic destination, which is usually mounted at `/u02`
+
+Specify the block devices (actual devices, not
 partitions), the mount point names, the file system types, and the mount options
 in valid JSON format.
 
-When you run the toolkit, specify the path to the configuration file by using
+When you run the oracle-toolkit, specify the path to the configuration file by using
 either the `--ora-data-mounts` command line option or the
 `ORA_DATA_MOUNTS` environment variable. The file path can be relative or
 fully qualified. The file name defaults to `data_mounts_config.json`.
+Alternatively, pass the file content directly as JSON using `--ora-data-mounts-json` parameter.
+If both are present, `--ora-data-mounts-json` takes precedence.
 
-The following example shows a properly formatted JSON data mount configuration
-file:
+The following example shows a properly formatted JSON data mount configuration file:
 
 ```json
 [
@@ -1197,19 +1212,20 @@ file:
 ]
 ```
 
-### ASM disk group configuration file
+### ASM disk group configuration
 
-In the ASM disk group configuration, specify the disk group names, the ASM disk
-names, and the associated block devices (the actual devices, not partitions) in
+In the ASM disk group configuration, specify the disk group names, the disk
+names, and the associated block devices (the actual devices, not partitions) in a
 valid JSON format.
 
-When you run the toolkit, specify the path to the configuration file by using
+When you run the oracle-toolkit, specify the path to the configuration file by using
 either the `--ora-asm-disks` command line option or the `ORA_ASM_DISKS`
 environment variable. The file path can be relative or fully qualified. The file
-name defaults to `ask_disk_config.json`.
+name defaults to `ask_disk_config.json`. Alternatively, pass the file content directly
+as a JSON using `--ora-asm-disks-json` parameter. If both are present,
+`--ora-asm-disks-json` takes precedence.
 
-The following example shows a properly formatted JSON ASM disk group
-configuration file:
+The following example shows a properly formatted JSON ASM disk group configuration file:
 
 ```json
 [
@@ -1244,9 +1260,9 @@ using the following format:
 
 ## Configuring Installations
 
-You run the toolkit by using the `install-oracle.sh` shell script.
+You run the oracle-toolkit by using the `install-oracle.sh` shell script.
 
-**IMPORTANT**: From the control node, run the toolkit shell scripts by using a
+**IMPORTANT**: From the control node, run the oracle-toolkit shell scripts by using a
 Linux user account that has the necessary SSH permissions and privileges on the
 target database server(s).
 
@@ -1254,21 +1270,21 @@ You need to specify the Cloud Storage bucket that contains the Oracle software
 and the backup destination for an initial RMAN backup. Running with the --help
 argument displays the list of available options.
 
-Although the toolkit provides defaults for just about everything, in most cases,
+Although the oracle-toolkit provides defaults for just about everything, in most cases,
 you need to customize your installation to some degree. Your customizations can
 range from simple items, such as the name of a database or the associated
-database edition, to less frequently adjusted items, such as ASM disk group
+database edition, to less frequently adjusted items, such as ASM disk groups
 configurations. Regardless, the toolkit allows you to specify overrides for most
 configuration parameters.
 
-As well as creating the initial database, the toolkit implements and schedules a
+As well as creating the initial database, the oracle-toolkit implements and schedules a
 simple RMAN backup script. You can adjust the backup parameters either before or
-after running the toolkit, as required.
+after running the oracle-toolkit, as required.
 
 ### Configuration defaults
 
 Most parameters have default values, so you only need to specify them when you
-need a different value. The parameter values that the toolkit uses are echoed
+need a different value. The parameter values that the oracle-toolkit uses are echoed
 during execution so you can confirm the configuration.
 
 The complete list of parameters and their values are provided in the [Parameters
@@ -1281,7 +1297,7 @@ The Oracle convention for naming of file system mounts is **_/pm_**, where
 integer. The standard string constant for Oracle user file system mounts is the
 letter "u".
 
-Following this convention, the toolkit creates the following default file system
+Following this convention, the oracle-toolkit creates the following default file system
 mounts:
 
 - **/u01** - For Oracle software. For example, /u01/app/oracle/product.
@@ -1295,13 +1311,13 @@ for the software staging and other purposes. You can use the single file system,
 
 ### Database backup configuration
 
-As a part of installation, the toolkit creates an initial RMAN full database
+As a part of installation, the oracle-toolkit creates an initial RMAN full database
 backup, an archived redo log backup, and sets the initial backup schedule based
 on your specifications or the default backup values.
 
 The parameters for configuring your backups are described in [Backup
 configuration parameters](#backup-configuration-parameters). The following list shows the
-default backup configuration implemented by the toolkit:
+default backup configuration implemented by the oracle-toolkit:
 
 - Backup scripts are stored in the directory `/home/oracle/scripts`.
 - Associated log files are stored in the directory `/home/oracle/logs`.
@@ -1311,7 +1327,7 @@ default backup configuration implemented by the toolkit:
 - Hourly archived redo log backups run at 30 minutes past every hour.
 - RMAN backups are written to the Fast Recovery Area (FRA).
 
-The toolkit schedules the backups by using the Linux cron utility under the
+The oracle-toolkit schedules the backups by using the Linux cron utility under the
 Oracle software owner user. You can run the backup scripts as necessary.
 
 After installation is complete, you can adjust any of the attributes of the
@@ -1419,8 +1435,8 @@ No environment variable
 </pre></p>
 </td>
 <td>user defined<br>
-toolkit generated</td>
-<td>Optional Ansible inventory file name. If not supplied, the toolkit
+oracle-toolkit generated</td>
+<td>Optional Ansible inventory file name. If not supplied, the oracle-toolkit
 generates a filename.</td>
 </tr>
 </tbody>
@@ -1525,7 +1541,21 @@ data_mounts_config.json</td>
 <td>Properly formatted JSON file providing mount and file system details for
 local mounts including installation location for the Oracle software and
 the location for Oracle diagnostic (ADR) directories. See <a
-href="#data-mount-configuration-file">Data mount configuration file</a>.</td>
+href="#data-mount-configuration">Data mount configuration</a>.</td>
+</tr>
+<tr>
+<td>Storage configuration</td>
+<td><br>
+<p><pre>
+ORA_DATA_MOUNTS_JSON
+--ora-data-mounts-json
+</pre></p></td>
+<td>user defined<br>
+</td>
+<td>Properly formatted JSON providing mount and file system details for
+local mounts including installation location for the Oracle software and
+the location for Oracle diagnostic (ADR) directories. See <a
+href="#data-mount-configuration">Data mount configuration</a>.</td>
 </tr>
 <tr>
 <td>Software unzip location</td>
@@ -1621,36 +1651,45 @@ false</td>
 "grid" instead of the OS user "oracle".</td>
 </tr>
 <tr>
-<td>Data disk group name</td>
+<td>Data file destination (ASM disk group or file system location)</td>
 <td><p><pre>
-ORA_DATA_DISKGROUP
---ora-data-diskgroup
+ORA_DATA_DESTINATION
+--ora-data-destination
 </pre></p></td>
 <td>user defined<br>
 DATA</td>
-<td>Default disk group for DB files for initial database.</td>
+<td>Default location for DB files for initial database.</td>
 </tr>
 <tr>
-<td>Reco disk group name</td>
+<td>Recovery area destination (ASM disk group or file system location)</td>
 <td><p><pre>
-ORA_RECO_DISKGROUP
---ora-reco-diskgroup
+ORA_RECO_DESTINATION
+--ora-reco-destination
 </pre></p></td>
 <td>user defined<br>
 RECO</td>
-<td>Default disk group for FRA files for initial database.</td>
+<td>Default location for FRA files for initial database.</td>
 </tr>
 <tr>
-<td>ASM disk configuration</td>
+<td>ASM disk group configuration</td>
 <td><p><pre>
 ORA_ASM_DISKS
 --ora-asm-disks
 </pre></p></td>
 <td>user defined<br>
 asm_disk_config.json</td>
-<td>Name of an ASM configuration file that contains ASM disk definitions in
-valid JSON format. See <a href="#asm-disk-group-configuration-file">ASM disk group
-configuration file</a>.</td>
+<td>Name of an ASM configuration file that contains ASM disk groups definitions in
+valid JSON format. See <a href="#asm-disk-group-configuration">ASM disk group configuration</a>.</td>
+</tr>
+<tr>
+<td>ASM disk group configuration</td>
+<td><p><pre>
+ORA_ASM_DISKS_JSON
+--ora-asm-disks-json
+</pre></p></td>
+<td>user defined<br></td>
+<td>ASM disk groups definition in a valid JSON format.
+See <a href="#asm-disk-group-configuration">ASM disk group configuration</a>.</td>
 </tr>
 </tbody>
 </table>
@@ -1798,21 +1837,29 @@ NONE<br>
 RAC<br>
 DG
 </td>
-<td>Specify "RAC" to install a RAC cluster. Use "DG" for standby installation. Otherwise a "Single Instance"
-installation is performed.</td>
+<td>Specify RAC to provision Real Application Clusters. Use DG for standby installation.
+Otherwise, a Single Instance installation is performed.</td>
 </tr>
 <tr>
-<td>RAC specific configuration parameters</td>
+<td>Cluster configuration file</td>
 <td><p><pre>
 CLUSTER_CONFIG
 --cluster-config
 </pre></p></td>
-<td>user defined<br>
-cluster_config.json</td>
-<td>Used to specify the RAC scan listener name, port, IPs, and so forth. Also
-used to list RAC nodes.<br>
-<br>
-Specifies a file containing properly formed JSON text.</td>
+<td>user defined; defaults to<br>
+<pre>cluster_config.json</pre></td>
+<td>A file name for the cluster configuration JSON.<br>
+Use the file to specify the RAC SCAN listener name, port, IPs, nodes, etc.</td>
+</tr>
+<tr>
+<td>Cluster configuration JSON</td>
+<td><p><pre>CLUSTER_CONFIG_JSON
+--cluster-config-json
+</pre></p></td>
+<td>user defined</td>
+<td>Cluster configuration JSON. Use it to specify the RAC SCAN listener name, port, IPs, nodes, etc.
+on the CLI instead of the CLUSTER_CONFIG file.
+</td>
 </tr>
 </tbody>
 </table>
@@ -1822,14 +1869,22 @@ Specifies a file containing properly formed JSON text.</td>
 <table>
 <thead>
 <tr>
-<th>RMAN backup destination</th>
-<th><p><pre>
+<th>Attribute</th>
+<th>Parameters</th>
+<th>Parameter Values</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RMAN backup destination</td>
+<td><p><pre>
 BACKUP_DEST
 --backup-dest
-</pre></p></th>
-<th>user defined - no default<br>
-Example: +RECO</th>
-<th>Disk group name or NFS file share location. Can include formatting options,
+</pre></p></td>
+<td>user defined - no default<br>
+Example: +RECO</td>
+<td>Disk group name or NFS file share location. Can include formatting options,
 such as "/u02/db_backups/ORCL_%I_%T_%s_%p.bak", for example.<br>
 <br>
 When writing to a non-ASM disk group location, include a valid RMAN format
@@ -1838,10 +1893,8 @@ shown above.<br>
 <br>
 If you are writing to a local file system, the
 directory does not have to exist, but initial backups will fail if the
-destination is not available or writeable.</th>
+destination is not available or writeable.</td>
 </tr>
-</thead>
-<tbody>
 <tr>
 <td>RMAN full DB backup redundancy</td>
 <td><p><pre>
@@ -2156,7 +2209,7 @@ INSTANCE_SSH_EXTRA_ARGS=''\''-o StrictHostKeyChecking=no -o UserKnownHostsFile=/
 INSTANCE_SSH_KEY='~/.ssh/id_rsa'
 INSTANCE_SSH_USER=goryunov
 ORA_ASM_DISKS=asm_disk_config.json
-ORA_DATA_DISKGROUP=DATA
+ORA_DATA_DESTINATION=DATA
 ORA_DATA_MOUNTS=data_mounts_config.json
 ORA_DB_CHARSET=AL32UTF8
 ORA_DB_CONTAINER=TRUE
@@ -2170,7 +2223,7 @@ ORA_LISTENER_NAME=LISTENER
 ORA_LISTENER_PORT=1521
 ORA_PDB_COUNT=1
 ORA_PDB_NAME_PREFIX=PDB
-ORA_RECO_DISKGROUP=RECO
+ORA_RECO_DESTINATION=RECO
 ORA_REDO_LOG_SIZE=100MB
 ORA_RELEASE=latest
 ORA_ROLE_SEPARATION=TRUE
@@ -2249,7 +2302,7 @@ INSTANCE_SSH_EXTRA_ARGS=''\''-o StrictHostKeyChecking=no -o UserKnownHostsFile=/
 INSTANCE_SSH_KEY='~/.ssh/id_rsa'
 INSTANCE_SSH_USER=goryunov
 ORA_ASM_DISKS=asm_disk_config.json
-ORA_DATA_DISKGROUP=DATA
+ORA_DATA_DESTINATION=DATA
 ORA_DATA_MOUNTS=data_mounts_config.json
 ORA_DB_CHARSET=AL32UTF8
 ORA_DB_CONTAINER=false
@@ -2263,7 +2316,7 @@ ORA_LISTENER_NAME=LISTENER
 ORA_LISTENER_PORT=1521
 ORA_PDB_COUNT=1
 ORA_PDB_NAME_PREFIX=PDB
-ORA_RECO_DISKGROUP=RECO
+ORA_RECO_DESTINATION=RECO
 ORA_REDO_LOG_SIZE=100MB
 ORA_RELEASE=latest
 ORA_ROLE_SEPARATION=TRUE
@@ -2330,35 +2383,28 @@ However, Oracle Database "Free Edition" has a number of differences, including:
 1. Requires that the [Oracle Database Preinstallation RPM](https://docs.oracle.com/en/database/oracle/oracle-database/23/ladbi/about-the-oracle-preinstallation-rpm.html) be installed as it is a dependent package.
 1. Has CPU, memory, and user-data storage limits – see [Oracle Database Free FAQ – Installation](https://www.oracle.com/database/free/faq/#installation) for details.
 
-Similar to with the other editions, creation of an initial database and implementation of RMAN based backups is possible through this toolkit for Oracle Database free edition.
+Similar to with the other editions, creation of an initial database and implementation of RMAN based backups is possible through this oracle-toolkit for Oracle Database free edition.
 
 ### Free Edition Version Details
 
-Oracle has released serveral versions of free edition, often **without chaning the RPM file name**. This toolkit can install _any_ free edition version. Which version is actually installed depends on the the actual RPM file in the software library, and possibly the command line switches.
+Oracle has released serveral versions of free edition, often **without chaning the RPM file name**. The oracle-toolkit can install _any_ free edition version. Which version is actually installed depends on the the actual RPM file in the software library, and possibly the command line switches.
 
 Specific supported versions of Oracle Database 23 free edition currently includes:
 
-| Product | Specific Version | Software RPM Filename                                  | Preinstall RPM Filename                                |
-| :-----: | :--------------: | :----------------------------------------------------- | :----------------------------------------------------- |
-|  23ai   |   23.6.0.24.10   | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm` | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm` |
-|  23ai   |   23.5.0.24.07   | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm` | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm` |
-|  23ai   |   23.4.0.24.05   | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm` | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm` |
-|   23c   |   23.3.0.23.09   | `oracle-database-preinstall-23c-1.0-1.el8.x86_64.rpm`  | `oracle-database-preinstall-23c-1.0-1.el8.x86_64.rpm`  |
-|   23c   |    23.2.0.0.0    | `oracle-database-preinstall-23c-1.0-1.el8.x86_64.rpm`  | `oracle-database-preinstall-23c-1.0-1.el8.x86_64.rpm`  |
+| Product | Specific Version | Software RPM Filename                            | Preinstall RPM Filename                                |
+| :-----: | :--------------: | :----------------------------------------------- | :----------------------------------------------------- |
+|  23ai   |   23.7.0.25.01   | `oracle-database-free-23ai-1.0-1.el8.x86_64.rpm` | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm` |
+|  23ai   |   23.6.0.24.10   | `oracle-database-free-23ai-1.0-1.el8.x86_64.rpm` | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm` |
+|  23ai   |   23.5.0.24.07   | `oracle-database-free-23ai-1.0-1.el8.x86_64.rpm` | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm` |
+|  23ai   |   23.4.0.24.05   | `oracle-database-free-23ai-1.0-1.el8.x86_64.rpm` | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm` |
+|   23c   |   23.3.0.23.09   | `oracle-database-free-23c-1.0-1.el8.x86_64.rpm`  | `oracle-database-preinstall-23c-1.0-1.el8.x86_64.rpm`  |
+|   23c   |    23.2.0.0.0    | `oracle-database-free-23c-1.0-1.el8.x86_64.rpm`  | `oracle-database-preinstall-23c-1.0-1.el8.x86_64.rpm`  |
 
-Even though the file names may be the same while the version changes, multiple files with the same name can be kept in the software library. Possibly by manually changing the file names (and then updating the `rdbms_software` variables in the YAML files accoridingly.) Or more simply, by placing the unique files with the same file name in different Google Cloud Storage bucket **folders** for uniquness.
+Even though the file names may be the same while the version changes, the RPMs for the various versions can still be staged in the software library. Possibly by manually changing the file names for uniqueness (and then updating the `rdbms_software` variable in the [roles/common/defaults/main.yml](../roles/common/defaults/main.yml) file accoridingly.) Or more simply, by placing the unique files with the same file name in different Google Cloud Storage bucket **folders**.
 
-If the specific version desired is not specified via a command line switch (or corresponding environment variable), the toolkit will default to the most recent version – currently version `23.6.0.24.10`.
+If no Free Edition version is explicitly defined (via the `--ora-version` command line switch or the corresponding environment variable), the toolkit will default to the most recent version.
 
-Otherwise, one of the following command line switches should be used to install a specific free edition version:
-
-```bash
- --ora-version 23.6.0.24.10
- --ora-version 23.5.0.24.07
- --ora-version 23.4.0.24.05
- --ora-version 23.3.0.23.09
- --ora-version 23.2.0.0.0
-```
+If a specific version is required, it can be specified using the `--ora-version` command line switch and one of the above listed version values. For example: `--ora-version 23.6.0.24.10` or `--ora-version 23.2.0.0.0`.
 
 #### Free edition specific parameter changes
 
@@ -2390,6 +2436,7 @@ ORA_VERSION
 --ora-version
 </pre></p></td>
 <td>
+23.7.0.25.01<br>
 23.6.0.24.10<br>
 23.5.0.24.07<br>
 23.4.0.24.05<br>
@@ -2399,20 +2446,19 @@ ORA_VERSION
 <br>
 Defaults to the latest release.</td>
 </tr>
-<tr>
-<td>Data disk group name</td>
+<td>Data file destination</td>
 <td><p><pre>
-ORA_DATA_DISKGROUP
---ora-data-diskgroup
+ORA_DATA_DESTINATION
+--ora-data-destination
 </pre></p></td>
 <td>user defined file system location</td>
 <td>Must be an existing Linux file system location – ASM disk groups are incompatible with the free edition.</td>
 </tr>
 <tr>
-<td>Reco disk group name</td>
+<td>Recovery area destination</td>
 <td><p><pre>
-ORA_RECO_DISKGROUP
---ora-reco-diskgroup
+ORA_RECO_DESTINATION
+--ora-reco-destination
 </pre></p></td>
 <td>user defined file system location</td>
 <td>Must be an existing Linux file system location – ASM disk groups are incompatible with the free edition.</td>
@@ -2529,7 +2575,7 @@ Run the database creation steps only:
   --config-db
 ```
 
-Run the full toolkit end-to-end:
+Run the full oracle-toolkit end-to-end:
 
 ```bash
 ./install-oracle.sh \
@@ -2541,7 +2587,7 @@ Run the full toolkit end-to-end:
   --ora-pdb-name-prefix FREEPDB
 ```
 
-### Example Toolkit Execution for Free Edition
+### Example Oracle Toolkit Execution for Free Edition
 
 In the following example, environment variables are used to specify the
 following values:
@@ -2595,7 +2641,7 @@ INSTANCE_SSH_EXTRA_ARGS=''\''-o ServerAliveInterval=60 -o ServerAliveCountMax=3 
 INSTANCE_SSH_KEY='~/.ssh/id_rsa'
 INSTANCE_SSH_USER=pane
 ORA_ASM_DISKS=asm_disk_config.json
-ORA_DATA_DISKGROUP=/u02/oradata
+ORA_DATA_DESTINATION=/u02/oradata
 ORA_DATA_MOUNTS=data_mounts_config.json
 ORA_DB_CHARSET=AL32UTF8
 ORA_DB_CONTAINER=TRUE
@@ -2609,7 +2655,7 @@ ORA_LISTENER_NAME=LISTENER
 ORA_LISTENER_PORT=1521
 ORA_PDB_COUNT=2
 ORA_PDB_NAME_PREFIX=FREEPDB
-ORA_RECO_DISKGROUP=/opt/oracle/fast_recovery_area
+ORA_RECO_DESTINATION=/opt/oracle/fast_recovery_area
 ORA_REDO_LOG_SIZE=100MB
 ORA_RELEASE=latest
 ORA_ROLE_SEPARATION=FALSE
@@ -2663,13 +2709,268 @@ ok: [db-23ai-free]
 
 ## Post installation tasks
 
+### Validate the Oracle installation with ORAchk
+
+The orachk utility can be used to validate the Oracle installation. 
+
+ORAchk will check for known problems with the Oracle installation and configuration, and provide recommendations for resolving any issues that are found.
+
+To run ORAchk, download the AHF utility from the Oracle support site.
+
+The following Oracle Support Note will provide the download link:
+
+  `Autonomous Health Framework (AHF) - Including Trace File Analyzer and Orachk/Exachk (Doc ID 2550798.1)`
+
+ORAchk is a part of the AHF utility.  It is not necessary to install the entire AHF utility to run ORAchk.
+
+The script provided with the oracle-toolkit will allow you to install, run and uninstall ORAchk on the target server.
+
+#### The AHF Zip file.
+
+The zip file must be uploaded to GCS media bucket.
+
+The default 'directory' for this is AHF.
+
+For instance, the file `AHF-LINUX_v25.1.0.zip` would be uploaded to `gs://oracle-software/AHF/AHF-LINUX_v25.1.0.zip`.
+
+#### Install and Run ORAchk
+
+Use the the `check-oracle.sh` script to install and run ORAchk in one command.
+
+```bash
+./check-oracle.sh  --ahf-install \
+   --ora-swlib-bucket gs://pythian-gto-oracle-software \
+   --oracle-sid ORCL \
+   --oracle-server ora-db-server-orachk-19c-patch \
+   --ahf-dir AHF \
+   --ahf-file AHF-LINUX_v25.1.0.zip \
+   --run-orachk
+``` 
+
+example output:
+Note: skipped steps are omitted
+
+```text
+
+
+$ ./check-oracle-test.sh install-and-run
+TASK install-and-run
+
+PLAY [ORAchk: uninstall, install or run] ***********************************************************************************************************************************************************************
+
+TASK [Uninstall AHF] *******************************************************************************************************************************************************************************************
+changed: [ora-db-server-orachk-19c-patch]
+
+TASK [Create AHF directory] ************************************************************************************************************************************************************************************
+skipping: [ora-db-server-orachk-19c-patch]
+
+...
+
+PLAY RECAP *****************************************************************************************************************************************************************************************************
+ora-db-server-orachk-19c-patch   : ok=1    changed=1    unreachable=0    failed=0    skipped=14   rescued=0    ignored=0
+
+
+PLAY [ORAchk: uninstall, install or run] ***********************************************************************************************************************************************************************
+
+...
+
+TASK [Create AHF directory] ************************************************************************************************************************************************************************************
+ok: [ora-db-server-orachk-19c-patch]
+
+TASK [Create Orachk directory] *********************************************************************************************************************************************************************************
+ok: [ora-db-server-orachk-19c-patch]
+
+TASK [Copy AHF file from Google Storage] ***********************************************************************************************************************************************************************
+ok: [ora-db-server-orachk-19c-patch]
+
+TASK [Unzip AHF file] ******************************************************************************************************************************************************************************************
+ok: [ora-db-server-orachk-19c-patch]
+
+TASK [Verify AHF setup signature] ******************************************************************************************************************************************************************************
+changed: [ora-db-server-orachk-19c-patch]
+
+TASK [Ensure perl is installed] ********************************************************************************************************************************************************************************
+ok: [ora-db-server-orachk-19c-patch]
+
+TASK [Run AHF setup] *******************************************************************************************************************************************************************************************
+changed: [ora-db-server-orachk-19c-patch]
+
+TASK [Copy orachk.sh file to target system] ********************************************************************************************************************************************************************
+skipping: [ora-db-server-orachk-19c-patch]
+
+...
+
+PLAY RECAP *****************************************************************************************************************************************************************************************************
+ora-db-server-orachk-19c-patch   : ok=7    changed=2    unreachable=0    failed=0    skipped=8    rescued=0    ignored=0
+
+PLAY [ORAchk: uninstall, install or run] ***********************************************************************************************************************************************************************
+
+TASK [Uninstall AHF] *******************************************************************************************************************************************************************************************
+skipping: [ora-db-server-orachk-19c-patch]
+
+...
+
+TASK [Copy orachk.sh file to target system] ********************************************************************************************************************************************************************
+ok: [ora-db-server-orachk-19c-patch]
+
+TASK [Copy run-orachk.sh to target system] *********************************************************************************************************************************************************************
+ok: [ora-db-server-orachk-19c-patch]
+
+TASK [Run ORAchk] **********************************************************************************************************************************************************************************************
+changed: [ora-db-server-orachk-19c-patch]
+
+TASK [Read the remote file /tmp/orachk-zipfile.txt] ************************************************************************************************************************************************************
+changed: [ora-db-server-orachk-19c-patch]
+
+TASK [Fetch the file named in /tmp/orachk-zipfile.txt] *********************************************************************************************************************************************************
+changed: [ora-db-server-orachk-19c-patch]
+
+TASK [Display local path of fetched file] **********************************************************************************************************************************************************************
+skipping: [ora-db-server-orachk-19c-patch]
+
+TASK [Display local path of fetched file] **********************************************************************************************************************************************************************
+ok: [ora-db-server-orachk-19c-patch] => {
+    "msg": "Fetched file is saved locally at: /tmp/orachk_ora-db-server-orachk-19c-patch_ORCL_030325_155354.zip"
+}
+
+PLAY RECAP *****************************************************************************************************************************************************************************************************
+ora-db-server-orachk-19c-patch   : ok=6    changed=3    unreachable=0    failed=0    skipped=9    rescued=0    ignored=0
+```
+
+#### Installing ORAchk
+
+Use the the `check-oracle.sh` script to install ORAchk.
+
+```bash
+./check-oracle.sh  --ahf-install \
+      --ora-swlib-bucket gs://pythian-gto-oracle-software \
+      --oracle-sid ORCL \
+      --oracle-server ora-db-server-orachk-19c-patch \
+      --ahf-dir AHF \
+      --ahf-file AHF-LINUX_v25.1.0.zip
+
+```
+
+example output:
+Note: skipped steps are omitted
+
+```text
+PLAY [ORAchk: uninstall, install or run] **********************************************************************************************************************************************************************************************
+
+TASK [Create AHF directory] ***********************************************************************************************************************************************************************************************************
+ok: [ora-db-server-orachk-19c-patch]
+
+TASK [Create Orachk directory] ********************************************************************************************************************************************************************************************************
+ok: [ora-db-server-orachk-19c-patch]
+
+TASK [Copy AHF file from Google Storage] **********************************************************************************************************************************************************************************************
+ok: [ora-db-server-orachk-19c-patch]
+
+TASK [Unzip AHF file] *****************************************************************************************************************************************************************************************************************
+ok: [ora-db-server-orachk-19c-patch]
+
+TASK [Verify AHF setup signature] *****************************************************************************************************************************************************************************************************
+changed: [ora-db-server-orachk-19c-patch]
+
+TASK [Ensure perl is installed] *******************************************************************************************************************************************************************************************************
+ok: [ora-db-server-orachk-19c-patch]
+
+TASK [Run AHF setup] ******************************************************************************************************************************************************************************************************************
+changed: [ora-db-server-orachk-19c-patch]
+
+PLAY RECAP ****************************************************************************************************************************************************************************************************************************
+ora-db-server-orachk-19c-patch   : ok=7    changed=2    unreachable=0    failed=0    skipped=8    rescued=0    ignored=0
+
+```
+#### Running ORAchk
+
+```bash
+./check-oracle.sh  --run-orachk \
+      --oracle-sid ORCL \
+      --oracle-server ora-db-server-orachk-19c-patch
+```
+
+example output:
+Note: skipped steps are omitted
+
+```text
+
+PLAY [ORAchk: uninstall, install or run] **********************************************************************************************************************************************************************************************
+
+TASK [Copy orachk.sh file to target system] ******************************************************************************************************************************************************************************************
+ok: [ora-db-server-orachk-19c-patch]
+
+TASK [Copy run-orachk.sh to target system] ********************************************************************************************************************************************************************************************
+ok: [ora-db-server-orachk-19c-patch]
+
+TASK [Run ORAchk] *********************************************************************************************************************************************************************************************************************
+changed: [ora-db-server-orachk-19c-patch]
+
+TASK [Read the remote file /tmp/orachk-zipfile.txt] ***********************************************************************************************************************************************************************************
+changed: [ora-db-server-orachk-19c-patch]
+
+TASK [Fetch the file named in /tmp/orachk-zipfile.txt] ********************************************************************************************************************************************************************************
+changed: [ora-db-server-orachk-19c-patch]
+
+TASK [Display local path of fetched file] *********************************************************************************************************************************************************************************************
+ok: [ora-db-server-orachk-19c-patch] => {
+    "msg": "Fetched file is saved locally at: /tmp/orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642.zip"
+}
+
+PLAY RECAP ****************************************************************************************************************************************************************************************************************************
+ora-db-server-orachk-19c-patch   : ok=6    changed=3    unreachable=0    failed=0    skipped=9    rescued=0    ignored=0
+
+```
+
+As shown in the message, the orachk zip file is saved locally at `/tmp/orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642.zip`.
+
+
+```text
+$ unzip -l /tmp/orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642.zip | head -12
+Archive:  /tmp/orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642.zip
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+        0  02-05-2025 19:40   orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642/
+        0  02-05-2025 19:40   orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642/.standalone_html_gen/
+        0  02-05-2025 19:41   orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642/log/
+        0  02-05-2025 19:40   orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642/outfiles/
+        0  02-05-2025 19:40   orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642/reports/
+        0  02-05-2025 19:40   orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642/scripts/
+        0  02-05-2025 19:40   orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642/upload/
+   650915  02-05-2025 19:40   orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642/orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642.html
+     8959  02-05-2025 19:40   orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642/localcmd.py.shell
+```
+
+Unzip the zip file, and open `orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642/orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642.html` in a browser
+
+#### Uninstalling ORAchk
+
+```bash
+./check-oracle.sh  --ahf-uninstall \
+      --oracle-sid ORCL \
+      --oracle-server ora-db-server-orachk-19c-patch
+```
+
+example output:
+Note: skipped steps are omitted
+
+```text
+PLAY [ORAchk: uninstall, install or run] **********************************************************************************************************************************************************************************************
+
+TASK [Uninstall AHF] ******************************************************************************************************************************************************************************************************************
+changed: [ora-db-server-orachk-19c-patch]
+
+PLAY RECAP ****************************************************************************************************************************************************************************************************************************
+ora-db-server-orachk-19c-patch   : ok=1    changed=1    unreachable=0    failed=0    skipped=14   rescued=0    ignored=0
+```
+
 ### Reset passwords
 
 The toolkit does not use or store any passwords. At runtime, passwords
 for the Oracle SYS and SYSTEM database users are set with strong, unique, and
 randomized passwords that are not written to or persisted in any OS files.
 
-Change the passwords immediately after running the toolkit.
+Change the passwords immediately after running the oracle-toolkit.
 
 To change the passwords, connect to the database by using a SYSDBA
 administrative connection and change the passwords by using the SQL Plus
@@ -2684,7 +2985,7 @@ SQL> password SYSTEM
 ### Validate the environment
 
 After deployment, you can validate your environment using several scripts that
-are provided with the toolkit.
+are provided with the oracle-toolkit.
 
 #### Listing Oracle ASM devices
 
@@ -2779,7 +3080,7 @@ User:                         oracle
 
 You can apply Oracle Release Update (RU) or Patch Set Update (PSU) patches to
 both the Grid Infrastructure and Database homes by using the
-`apply-patch.sh` script of the toolkit.
+`apply-patch.sh` script of the oracle-toolkit.
 
 By default, `install-oracle.sh` updates to the latest available patch. To
 apply a specific patch instead, use the `--no-patch` option in `install-oracle.sh`
@@ -2869,7 +3170,7 @@ By default, if RAC GI and RDBMS homes are of the same base release, the
 
 You can skip all RU/PSU patching steps and install only the base software by
 specifying the command line option `--no-patch`. You can then apply patches
-separately later, either manually or by using the toolkit.
+separately later, either manually or by using the oracle-toolkit.
 
 Alternatively, you can apply RAC GI and RDBMS patches independently from the
 base software installations by using the script `apply-patch.sh`. This script
@@ -2879,11 +3180,11 @@ The list of RU/PSU patches to apply are defined by the `gi_patches` and
 `rdbms_patches` variables. By default, both are specified in the
 `roles/common/defaults/main.yml` Ansible file. For each major Oracle release,
 you can specify multiple versions from the various quarterly releases When you
-install by using `install-oracle.sh`, the toolkit uses the most recent patch
+install by using `install-oracle.sh`, the oracle-toolkit uses the most recent patch
 version.
 
 When creating a database, if the RDBMS home software is no longer at the base
-release because it was patched during installation, the toolkit uses the Oracle
+release because it was patched during installation, the oracle-toolkit uses the Oracle
 `datapatch` utility to apply patches at the database level, which is known as _SQL
 level patching_.
 
@@ -2907,7 +3208,7 @@ is the default behavior:
   --ora-data-mounts data_mounts_config.json \
   --cluster-type RAC \
   --cluster-config cluster_config.json \
-  --ora-reco-diskgroup DATA \
+  --ora-reco-destination DATA \
   --ora-db-name ORCL
 ```
 
@@ -2915,7 +3216,7 @@ If you do not specify a value on the `--compatible-rdbms` parameter, the
 RDBMS compatibility of the ASM disk group is set to the major version level
 that is defined on the `--ora-version` parameter.
 
-To patch RAC databases, the toolkit performs the following actions:
+To patch RAC databases, the oracle-toolkit performs the following actions:
 
 1. Stops the RAC databases in their homes by using the "stop home" option
    from the master node.
@@ -2986,7 +3287,7 @@ The following example shows the specification of the YAML file by using the
   --ora-data-mounts data_mounts_config.json \
   --cluster-type RAC \
   --cluster-config cluster_config.json \
-  --ora-reco-diskgroup DATA \
+  --ora-reco-destination DATA \
   --ora-db-name ORCL \
   -- "--extra-vars @patches.yaml"
 ```

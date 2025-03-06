@@ -14,6 +14,8 @@
 
 ---
 # Variables used by more than one role
+pkg_mgr_lock_timeout: 180
+
 oracle_ver_dir: "{% if free_edition %}{% if oracle_ver[:4] == '23.2' or oracle_ver[:4] == '23.3' %}23c{% else %}{{ oracle_ver[:2] }}ai{% endif %}{% else %}{{ oracle_ver[:6] }}{% endif %}"
 oracle_inventory: "{{ oracle_root }}/oraInventory"
 oracle_base: "{% if free_edition %}/opt/oracle{% else %}{{ oracle_root }}/oracle{% endif %}"
@@ -74,8 +76,8 @@ grid_dirs:
   - { name: "/home/{{ grid_user }}/.ansible/tmp", owner: "{{ grid_user }}", group: "{{ oracle_group }}", mode: "ug=rwx,o=rx" }
 
 fs_dirs:
-  - { name: "{{ data_diskgroup }}", owner: "{{ oracle_user }}", group: "{{ oracle_group }}", mode: "u=rwx,g=rx,o=" }
-  - { name: "{{ reco_diskgroup }}", owner: "{{ oracle_user }}", group: "{{ oracle_group }}", mode: "u=rwx,g=rx,o=" }
+  - { name: "{{ data_destination }}", owner: "{{ oracle_user }}", group: "{{ oracle_group }}", mode: "u=rwx,g=rx,o=" }
+  - { name: "{{ reco_destination }}", owner: "{{ oracle_user }}", group: "{{ oracle_group }}", mode: "u=rwx,g=rx,o=" }
 
 pwgen_file: pwgen.sh
 pwgen_path: /usr/local/bin
@@ -169,7 +171,20 @@ gi_software:
       - "BM7zeZHbGPgZD31KGbJpEg=="
 
 rdbms_software:
-  - name: 23aiFREE_23_6
+  - name: 23ai_free_23_7
+    version: 23.7.0.25.01
+    edition: FREE
+    files:
+      - "oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm"
+      - "oracle-database-free-23ai-1.0-1.el8.x86_64.rpm"
+    sha256sum:
+      - "4578e6d1cf566e04541e0216b07a0372725726a7c339423ee560255cb918138b"
+      - "af64450e1120e56dac43a447a2e109449c7590489003d830d6a32a9168e0469d"
+    md5sum:
+      - "TmjqUT878Owv7NbXGECpTA=="
+      - "a838g/xuUjrVkzM2S5AUug=="
+
+  - name: 23ai_free_23_6
     version: 23.6.0.24.10
     edition: FREE
     files:
@@ -182,12 +197,12 @@ rdbms_software:
       - "TmjqUT878Owv7NbXGECpTA=="
       - "Y70TVN1a7dV6TnNOeN1pYA=="
 
-  - name: 23aiFREE_23_5
+  - name: 23ai_free_23_5
     version: 23.5.0.24.07
     edition: FREE
     files:
       - "oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm"
-      - "oracle-database-free-23ai-1.0-1.el8.x86_64.version_23_5.rpm"
+      - "oracle-database-free-23ai-1.0-1.el8.x86_64.rpm"
     sha256sum:
       - "4578e6d1cf566e04541e0216b07a0372725726a7c339423ee560255cb918138b"
       - "80c1ceae3b158cffe71fa4cfa8e4f540161659f79f777bcf48935f79031c054c"
@@ -195,12 +210,12 @@ rdbms_software:
       - "TmjqUT878Owv7NbXGECpTA=="
       - "cWcZFOhqt4Bnwt4rft6wpw=="
 
-  - name: 23aiFREE_23_4
+  - name: 23ai_free_23_4
     version: 23.4.0.24.05
     edition: FREE
     files:
       - "oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm"
-      - "oracle-database-free-23ai-1.0-1.el8.x86_64.version_23_4.rpm"
+      - "oracle-database-free-23ai-1.0-1.el8.x86_64.rpm"
     sha256sum:
       - "4578e6d1cf566e04541e0216b07a0372725726a7c339423ee560255cb918138b"
       - "e6cccec7f101325c233f374c2aa86f77d62123edd3125450d79404c3eec30b65"
@@ -208,12 +223,12 @@ rdbms_software:
       - "TmjqUT878Owv7NbXGECpTA=="
       - "nZiDvGPHVa8iDkR110gB8A=="
 
-  - name: 23cFREE_23_3
+  - name: 23c_free_23_3
     version: 23.3.0.23.09
     edition: FREE
     files:
       - "oracle-database-preinstall-23c-1.0-1.el8.x86_64.rpm"
-      - "oracle-database-free-23c-1.0-1.el8.x86_64.version_23_3.rpm"
+      - "oracle-database-free-23c-1.0-1.el8.x86_64.rpm"
     sha256sum:
       - "f41059c22a610a2180cc6286179a7da148bfe14b0d88211f006c9998ce03ba0e"
       - "1319bcd7cb706cb727501cbd98abf3f3980a4fdabeb613a1abffc756925c7374"
@@ -221,12 +236,12 @@ rdbms_software:
       - "lVoplyvF66eUXign+DuZ8Q=="
       - "k+q8twMOziARmih9mF79ow=="
 
-  - name: 23cFREE_23_2
+  - name: 23c_free_23_2
     version: 23.2.0.0.0
     edition: FREE
     files:
       - "oracle-database-preinstall-23c-1.0-1.el8.x86_64.rpm"
-      - "oracle-database-free-23c-1.0-1.el8.x86_64.version_23_2.rpm"
+      - "oracle-database-free-23c-1.0-1.el8.x86_64.rpm"
     sha256sum:
       - "f41059c22a610a2180cc6286179a7da148bfe14b0d88211f006c9998ce03ba0e"
       - "63b6c0ec9464682cfd9814e7e2a5d533139e5c6aeb9d3e7997a5f976d6677ca6"
@@ -429,6 +444,22 @@ gi_patches:
   - { category: "RU", base: "21.3.0.0.0", release: "21.15.0.0.0", patchnum: "36696109", patchfile: "p36696109_210000_Linux-x86-64.zip", patch_subdir: "/", prereq_check: false, method: "opatchauto apply", ocm: false, upgrade: false, md5sum: "9aPx+eWkCSEVS9vKqoVi/Q==" }
   - { category: "RU", base: "21.3.0.0.0", release: "21.16.0.0.0", patchnum: "36990664", patchfile: "p36990664_210000_Linux-x86-64.zip", patch_subdir: "/", prereq_check: false, method: "opatchauto apply", ocm: false, upgrade: false, md5sum: "N1p/HLEg+UFYAr04loujqg==" }
   - { category: "RU", base: "21.3.0.0.0", release: "21.17.0.0.0", patchnum: "37349593", patchfile: "p37349593_210000_Linux-x86-64.zip", patch_subdir: "/", prereq_check: false, method: "opatchauto apply", ocm: false, upgrade: false, md5sum: "Mt0Bw+IPKqoKh31YkneCrg==" }
+
+# 21c GRID RU - 21.4 and 21.7 are available only via SR
+#     RDBMS RU - 21.4 - 21.7 are available only via SR
+#     so 21.5 and 21.6 are commented out here, even though available
+#  - { category: "RU", base: "21.3.0.0.0", release: "21.5.0.0.0", patchnum: "33531909", patchfile: "p33531909_210000_Linux-x86-64.zip", patch_subdir: "/", prereq_check: FALSE, method: "opatchauto apply", ocm: FALSE, upgrade: FALSE, md5sum: "EZjEl84aNDhPtfTzPX0yvg==" }
+#  - { category: "RU", base: "21.3.0.0.0", release: "21.6.0.0.0", patchnum: "33859395", patchfile: "p33859395_210000_Linux-x86-64.zip", patch_subdir: "/", prereq_check: FALSE, method: "opatchauto apply", ocm: FALSE, upgrade: FALSE, md5sum: "/g5sK/SJgS+lkbFYAnIIwQ==" }
+  - { category: "RU", base: "21.3.0.0.0", release: "21.8.0.0.0", patchnum: "34526142", patchfile: "p34526142_210000_Linux-x86-64.zip", patch_subdir: "/", prereq_check: FALSE, method: "opatchauto apply", ocm: FALSE, upgrade: FALSE, md5sum: "NEz4KTVqvQFmwRmoUk3Y1Q==" }
+  - { category: "RU", base: "21.3.0.0.0", release: "21.9.0.0.0", patchnum: "34838415", patchfile: "p34838415_210000_Linux-x86-64.zip", patch_subdir: "/", prereq_check: FALSE, method: "opatchauto apply", ocm: FALSE, upgrade: FALSE, md5sum: "epovX5nLjETpLJ+uk4J67g==" }
+  - { category: "RU", base: "21.3.0.0.0", release: "21.10.0.0.0", patchnum: "35132566", patchfile: "p35132566_210000_Linux-x86-64.zip", patch_subdir: "/", prereq_check: FALSE, method: "opatchauto apply", ocm: FALSE, upgrade: FALSE, md5sum: "RgV29GT3QUPXFK+/S20zqg==" }
+  - { category: "RU", base: "21.3.0.0.0", release: "21.11.0.0.0", patchnum: "35427907", patchfile: "p35427907_210000_Linux-x86-64.zip", patch_subdir: "/", prereq_check: FALSE, method: "opatchauto apply", ocm: FALSE, upgrade: FALSE, md5sum: "I+1hR8GUjTRs+8XecgVKHw==" }
+  - { category: "RU", base: "21.3.0.0.0", release: "21.12.0.0.0", patchnum: "35738010", patchfile: "p35738010_210000_Linux-x86-64.zip", patch_subdir: "/", prereq_check: FALSE, method: "opatchauto apply", ocm: FALSE, upgrade: FALSE, md5sum: "68+wBzYRmV05Y2NvKxLQaQ==" }
+  - { category: "RU", base: "21.3.0.0.0", release: "21.13.0.0.0", patchnum: "36031790", patchfile: "p36031790_210000_Linux-x86-64.zip", patch_subdir: "/", prereq_check: FALSE, method: "opatchauto apply", ocm: FALSE, upgrade: FALSE, md5sum: "F1X+ftiKg6hlgUvxIBgrkA==" }
+  - { category: "RU", base: "21.3.0.0.0", release: "21.14.0.0.0", patchnum: "36352207", patchfile: "p36352207_210000_Linux-x86-64.zip", patch_subdir: "/", prereq_check: FALSE, method: "opatchauto apply", ocm: FALSE, upgrade: FALSE, md5sum: "ZM+D4I64l/upLeGZXkzrRg==" }
+  - { category: "RU", base: "21.3.0.0.0", release: "21.15.0.0.0", patchnum: "36696109", patchfile: "p36696109_210000_Linux-x86-64.zip", patch_subdir: "/", prereq_check: FALSE, method: "opatchauto apply", ocm: FALSE, upgrade: FALSE, md5sum: "9aPx+eWkCSEVS9vKqoVi/Q==" }
+  - { category: "RU", base: "21.3.0.0.0", release: "21.16.0.0.0", patchnum: "36990664", patchfile: "p36990664_210000_Linux-x86-64.zip", patch_subdir: "/", prereq_check: FALSE, method: "opatchauto apply", ocm: FALSE, upgrade: FALSE, md5sum: "N1p/HLEg+UFYAr04loujqg==" }
+  - { category: "RU", base: "21.3.0.0.0", release: "21.17.0.0.0", patchnum: "37349593", patchfile: "p37349593_210000_Linux-x86-64.zip", patch_subdir: "/", prereq_check: FALSE, method: "opatchauto apply", ocm: FALSE, upgrade: FALSE, md5sum: "Mt0Bw+IPKqoKh31YkneCrg==" }
 
 rdbms_patches:
 # 11.2.0.4 OJVM packages from Combo
