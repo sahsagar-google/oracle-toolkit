@@ -12,47 +12,43 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-module "oratk_ansible" {
-  source = "./modules/oratk-ansible"
+module "oracle_toolkit" {
+  source = "./modules/oracle_toolkit_module"
+  #
+  # Fill in the information below
+  #
+  ##############################################################################
+  ## MANDATORY SETTINGS
+  ##############################################################################
+  # General settings
+  region                = "REGION"                # example: us-central1
+  zone                  = "ZONE"                  # example: us-central1-b
+  project_id            = "PROJECT_ID"            # example: my-project-123
+  subnetwork            = "SUBNET"                # example: default
+  service_account_email = "SERVICE_ACCOUNT_EMAIL" # example: 123456789-compute@developer.gserviceaccount.com
 
-  region                = var.region
-  zone                  = var.zone
-  project               = var.project_id
-  subnetwork            = var.subnet
-  service_account_email = var.service_account_email
+  # Instance settings
+  instance_name        = "INSTANCE_NAME"  # example: oracle-rhel8-example
+  instance_count       = "INSTANCE_COUNT" # example: 1
+  source_image_family  = "IMAGE_FAMILY"   # example: rhel-8
+  source_image_project = "IMAGE_PROJECT"  # example: rhel-cloud
+  machine_type         = "MACHINE_TYPE"   # example: n2-standard-4
+  os_disk_size         = "OS_DISK_SIZE"   # example: 100
+  os_disk_type         = "OS_DISK_TYPE"   # example: pd-balanced
 
-  image_map = {
-    rhel7  = "projects/rhel-cloud/global/images/rhel-7-v20240611"
-    alma8  = "projects/almalinux-cloud/global/images/almalinux-8-v20241009"
-    rhel8  = "projects/rhel-cloud/global/images/rhel-8-v20241210"
-    rocky8 = "projects/rocky-linux-cloud/global/images/rocky-linux-8-v20250114"
-  }
-
-  instance_name  = "oracle-test"
-  instance_count = 1
-  image          = "rhel8"
-  machine_type   = "n2-standard-4"
-  #metadata_startup_script = "gs://BUCKET/SCRIPT.sh"  # Optional - use only if required
-  network_tags = ["oracle", "ssh"] # Optional - use only if required
-
-  base_disk_size = 50
-
+  # Disk settings
+  # By default, the list below will create 1 disk for filesystem, 2 disks for ASM and 1 disk for swap, the minimum required for a basic Oracle installation.
+  # Feel free to adjust the disk sizes and types to match your requirements.
+  # You can add more disks to the list below to create additional disks for ASM or filesystem.
+  # fs_disks will be mounted as /u01, /u02, /u03, etc and formatted as XFS
   fs_disks = [
     {
       auto_delete  = true
       boot         = false
-      device_name  = "oracle-fs-1"
+      device_name  = "oracle-u01"
       disk_size_gb = 50
       disk_type    = "pd-balanced"
-      disk_labels  = { purpose = "fs" }
-    },
-    {
-      auto_delete  = true
-      boot         = false
-      device_name  = "swap"
-      disk_size_gb = 16
-      disk_type    = "pd-balanced"
-      disk_labels  = { purpose = "swap" }
+      disk_labels  = { purpose = "software" } # Do not modify this label
     }
   ]
 
@@ -72,14 +68,29 @@ module "oratk_ansible" {
       disk_size_gb = 50
       disk_type    = "pd-balanced"
       disk_labels  = { diskgroup = "reco", purpose = "asm" }
+    },
+    # Attributes other than disk_size_gb and disk_type should NOT be modified for the swap disk
+    {
+      auto_delete  = true
+      boot         = false
+      device_name  = "swap"
+      disk_size_gb = 50
+      disk_type    = "pd-balanced"
+      disk_labels  = { purpose = "swap" }
     }
   ]
 
-  ssh_public_key_path  = abspath("${path.module}/ansible-ssh-key.pub")
-  ssh_private_key_path = abspath("${path.module}/ansible-ssh-key")
+  ##############################################################################
+  ## OPTIONAL SETTINGS
+  ##   - default values will be determined/calculated
+  ##############################################################################
+  # metadata_startup_script = "STARTUP_SCRIPT" # example: gs://BUCKET/SCRIPT.sh
+  # network_tags            = "NETWORK_TAGS"   # example: ["oracle", "ssh"]
 
+  # Full list of parameters can be found here https://google.github.io/oracle-toolkit/user-guide.html#parameters
+  # The example below will install Oracle 19c, using the Oracle software stored in a GCS bucket, and will configure the backup destination to be RECO diskgroup.
   extra_ansible_vars = [
-    "--ora-swlib-bucket gs://BUCKET",
+    "--ora-swlib-bucket BUCKET", # gcs bucket where the Oracle software is stored, example: gs://my-oracle-software/19c 
     "--ora-version 19",
     "--backup-dest +RECO"
   ]

@@ -74,10 +74,8 @@ repo-root/
 ├── config-rac-db.yml
 └── terraform/
     ├── main.tf                     # Main Terraform configuration
-    ├── ansible-ssh-key             # Private SSH key file
-    ├── ansible-ssh-key.pub         # Public SSH key file
     └── modules/
-        └── oratk-ansible/
+        └── oracle_toolkit_module/
             ├── main.tf             # Ansible integration module
             └── variables.tf        # Module variables
 ```
@@ -100,128 +98,17 @@ Set your project ID:
 gcloud config set project PROJECT_ID
 ```
 
-2. Generate a SSH key-pair for Ansible
-
-```bash
-ssh-keygen -t ed25519 -C "ansible" -f ansible-ssh-key -N ""
-```
-
-Ensure the correct permissions for the private key:
-
-```bash
-chmod 600 ansible-ssh-key
-```
-
-3. Review and Edit Terraform Backend Configuration
+2. Review and Edit Terraform Backend Configuration
 
    Edit `terraform/backend.tf` to define your backend settings for your state file prefix and storage bucket.
 
-   Below is an example configuration:
+3. Review and Edit Terraform Module Configuration
 
-```terraform
-terraform {
-  required_version = "1.10.5"
-
-  required_providers {
-    google = {
-      source  = "hashicorp/google"
-      version = "6.20.0"
-    }
-  }
-
-  backend "gcs" {
-    bucket = "STATE_BUCKET"
-    prefix = "STATE_PREFIX"
-  }
-}
-```
-
-4. Review and Edit Terraform Module Configuration
-
-   Edit `terraform/main.tf` to define your deployment settings. Add however many ASM disks you require in the `asm_disks` section.
-
-   Below is an example configuration:
-
-```terraform
-#...
-module "oratk_ansible" {
-  source = "./modules/oratk-ansible"
-
-  region                = "REGION"
-  zone                  = "ZONE"
-  project               = "PROJECT_ID"
-  subnetwork            = "SUBNET"
-  service_account_email = "SERVICE_ACCOUNT_EMAIL"
-
-  image_map = {
-    rhel7  = "projects/rhel-cloud/global/images/rhel-7-v20240611"
-    alma8  = "projects/almalinux-cloud/global/images/almalinux-8-v20241009"
-    rhel8  = "projects/rhel-cloud/global/images/rhel-8-v20241210"
-    rocky8 = "projects/rocky-linux-cloud/global/images/rocky-linux-8-v20250114"
-  }
-
-  instance_name  = "oracle-test"
-  instance_count = 1
-  image          = "rhel8"
-  machine_type   = "n2-standard-4"
-  #metadata_startup_script = "gs://BUCKET/SCRIPT.sh"  # Optional - use only if required
-  network_tags   = ["oracle", "ssh"]  # Optional - use only if required
-
-  base_disk_size = 50
-
-  fs_disks = [
-    {
-      auto_delete  = true
-      boot         = false
-      device_name  = "oracle-fs-1"
-      disk_size_gb = 50
-      disk_type    = "pd-balanced"
-      disk_labels  = { purpose = "fs" }
-    },
-    {
-      auto_delete  = true
-      boot         = false
-      device_name  = "swap"
-      disk_size_gb = 16
-      disk_type    = "pd-balanced"
-      disk_labels  = { purpose = "swap" }
-    }
-  ]
-
-  asm_disks = [
-    {
-      auto_delete  = true
-      boot         = false
-      device_name  = "oracle-asm-1"
-      disk_size_gb = 50
-      disk_type    = "pd-balanced"
-      disk_labels  = { diskgroup = "data", purpose = "asm" }
-    },
-      {
-      auto_delete  = true
-      boot         = false
-      device_name  = "oracle-asm-2"
-      disk_size_gb = 50
-      disk_type    = "pd-balanced"
-      disk_labels  = { diskgroup = "reco", purpose = "asm" }
-    }
-  ]
-
-  ssh_public_key_path  = abspath("${path.module}/ansible-ssh-key.pub")
-  ssh_private_key_path = abspath("${path.module}/ansible-ssh-key")
-
-  extra_ansible_vars = [
-    "--ora-swlib-bucket gs://BUCKET",
-    "--ora-version 19",
-    "--backup-dest +RECO"
-  ]
-
-}
-```
+   Edit `terraform/main.tf` to define your deployment settings. Add however many ASM disks you require in the `asm_disks` and `fs_disks` sections.
 
 > **NOTE** There is no need to supply the toolkit script parameters `--instance-ip-addr`, `--instance-ssh-user`, and `--instance-ssh-key` - these are automatically added by the Terraform commands.
 
-5. Initialize and Apply Terraform
+4. Initialize and Apply Terraform
 
    Navigate to the terraform directory and initialize Terraform:
 
@@ -248,7 +135,7 @@ This will:
 - Apply the SSH public key to the VM
 - Use Ansible playbooks to configure the instance
 
-6. Verify Ansible Execution
+5. Verify Ansible Execution
 
    Once deployment is complete, verify the output to check if Ansible playbooks ran successfully:
 
@@ -265,7 +152,7 @@ TASK [Test connectivity to target instance via ping] ***************************
 ok: [VM_PUBLIC_IP]
 ```
 
-7. Clean Up Resources
+6. Clean Up Resources
 
    To destroy all the resources created by Terraform:
 
@@ -276,20 +163,11 @@ terraform destroy
 ## Troubleshooting
 
 ### Common Issues
-
-1. SSH Permission Denied
-
-- Ensure the private key has correct permissions:
-
-```bash
-chmod 600 ansible-ssh-key
-```
-
-2. No Such File or Directory
+1. No Such File or Directory
 
 - Make sure `working_dir = "${path.root}"` is set in the provisioner block.
 
-3. JSON Parsing Errors
+2. JSON Parsing Errors
 
 - Ensure jq is installed and working:
 

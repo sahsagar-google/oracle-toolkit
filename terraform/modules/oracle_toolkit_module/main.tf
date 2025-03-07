@@ -13,8 +13,7 @@
 # limitations under the License.
 
 locals {
-  additional_disks = concat(var.fs_disks, var.asm_disks)
-
+  # Takes the list of filesystem disks and converts them into a list of objects with the required fields by ansible
   data_mounts_config = [
     for i, d in var.fs_disks : {
       purpose     = d.disk_labels.purpose
@@ -26,43 +25,91 @@ locals {
     }
   ]
 
+  # Takes the list of asm disks and converts them into a list of objects with the required fields by ansible
   asm_disk_config = [
-    for g in distinct([for d in var.asm_disks : d.disk_labels.diskgroup]) : {
+    for g in distinct([for d in var.asm_disks : d.disk_labels.diskgroup if lookup(d.disk_labels, "diskgroup", null) != null]) : {
       diskgroup = upper(g)
       disks = [
         for d in var.asm_disks : {
           blk_device = "/dev/disk/by-id/google-${d.device_name}"
           name       = d.device_name
-        } if d.disk_labels.diskgroup == g
+        } if lookup(d.disk_labels, "diskgroup", null) == g
       ]
     }
   ]
+
+  # Concatenetes both lists to be passed down to the instance module
+  additional_disks = concat(var.fs_disks, var.asm_disks)
+
+  project_id = var.project_id
 }
 
+# Generate an SSH key pair
+resource "tls_private_key" "ssh_key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+# Store the private key in Secret Manager
+resource "google_secret_manager_secret" "ssh_private_key" {
+  secret_id = "ansible-ssh-private-key"
+  project   = local.project_id
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret_version" "ssh_private_key_version" {
+  secret      = google_secret_manager_secret.ssh_private_key.id
+  secret_data = tls_private_key.ssh_key.private_key_pem
+}
+
+# Store the public key in Secret Manager
+resource "google_secret_manager_secret" "ssh_public_key" {
+  secret_id = "ansible-ssh-public-key"
+  project   = local.project_id
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret_version" "ssh_public_key_version" {
+  secret      = google_secret_manager_secret.ssh_public_key.id
+  secret_data = tls_private_key.ssh_key.public_key_openssh
+}
+
+resource "local_file" "private_key" {
+  filename        = abspath("${path.module}/ansible-ssh-key")
+  content         = tls_private_key.ssh_key.private_key_pem
+  file_permission = "0600"
+}
+
+# Instance template module
 module "instance_template" {
   source  = "terraform-google-modules/vm/google//modules/instance_template"
   version = "~> 13.0"
 
   name_prefix        = format("%s-template", var.instance_name)
   region             = var.region
-  project_id         = var.project
+  project_id         = local.project_id
   subnetwork         = var.subnetwork
-  subnetwork_project = var.project
+  subnetwork_project = local.project_id
   service_account = {
     email  = var.service_account_email
     scopes = ["https://www.googleapis.com/auth/cloud-platform"]
   }
 
-  machine_type = var.machine_type
-  source_image = lookup(var.image_map, var.image, null)
-  disk_size_gb = var.base_disk_size
-  disk_type    = "pd-balanced"
-  auto_delete  = true
+  machine_type         = var.machine_type
+  source_image_family  = var.source_image_family
+  source_image_project = var.source_image_project
+  disk_size_gb         = var.os_disk_size
+  disk_type            = var.os_disk_type
+  auto_delete          = true
 
 
   metadata = {
     metadata_startup_script = var.metadata_startup_script
-    ssh-keys                = "ansible:${file(var.ssh_public_key_path)}"
+    ssh-keys                = "ansible:${tls_private_key.ssh_key.public_key_openssh}"
   }
 
   additional_disks = local.additional_disks
@@ -70,6 +117,7 @@ module "instance_template" {
   tags = var.network_tags
 }
 
+# Compute instance module
 module "compute_instance" {
   source  = "terraform-google-modules/vm/google//modules/compute_instance"
   version = "~> 13.0"
@@ -77,7 +125,7 @@ module "compute_instance" {
   region              = var.region
   zone                = var.zone
   subnetwork          = var.subnetwork
-  subnetwork_project  = var.project
+  subnetwork_project  = local.project_id
   num_instances       = var.instance_count
   hostname            = var.instance_name
   instance_template   = module.instance_template.self_link
@@ -86,12 +134,13 @@ module "compute_instance" {
   access_config = [
     {
       nat_ip       = null
-      network_tier = "STANDARD"
+      network_tier = "PREMIUM"
     }
   ]
 }
 
-resource "null_resource" "provisioner" {
+# Local provisioner to run the Oracle Toolkit
+resource "null_resource" "oracle_toolkit" {
   for_each = { for i, instance in module.compute_instance.instances_details : i => instance }
 
   provisioner "remote-exec" {
@@ -100,7 +149,7 @@ resource "null_resource" "provisioner" {
     connection {
       type        = "ssh"
       user        = "ansible"
-      private_key = file("${var.ssh_private_key_path}")
+      private_key = file(local_file.private_key.filename)
       host        = each.value.network_interface[0].access_config[0].nat_ip
     }
   }
@@ -108,15 +157,25 @@ resource "null_resource" "provisioner" {
   provisioner "local-exec" {
     working_dir = "../"
     command     = <<-EOT
-      ./install-oracle.sh \
+      bash install-oracle.sh \
       --instance-ip-addr ${each.value.network_interface[0].access_config[0].nat_ip} \
       --instance-ssh-user ansible \
-      --instance-ssh-key "${var.ssh_private_key_path}" \
+      --instance-ssh-key "${local_file.private_key.filename}" \
       --ora-asm-disks-json '${jsonencode(local.asm_disk_config)}' \
       --ora-data-mounts-json '${jsonencode(local.data_mounts_config)}' \
+      --swap-blk-device "/dev/disk/by-id/google-swap" \
       $(echo "${join(" ", var.extra_ansible_vars)}") &
     EOT
   }
 
-  depends_on = [module.compute_instance]
+  depends_on = [module.compute_instance, local_file.private_key]
+}
+
+# Deleting local private key after Oracle Toolkit provision
+resource "null_resource" "delete_privatekey" {
+  provisioner "local-exec" {
+    command = "rm -f ${local_file.private_key.filename}"
+  }
+
+  depends_on = [null_resource.oracle_toolkit]
 }

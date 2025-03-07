@@ -23,7 +23,7 @@ terraform {
   }
 
   backend "gcs" {
-    bucket = "STATE_BUCKET"
-    prefix = "STATE_PREFIX"
+    bucket = "BUCKET" # example my-state-bucket
+    prefix = "PREFIX" # example dev
   }
 }
