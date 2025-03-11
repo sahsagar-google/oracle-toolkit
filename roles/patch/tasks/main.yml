@@ -39,7 +39,7 @@
   become: true
   become_user: root
 
-- name: Bug 31748584 resolution - MOS (Doc ID 2283767.1) Case3a
+- name: Clean up old files in OPatch directory (MOS Doc ID 2283767.1, case 3a)
   block:
     - name: (GI) Remove existing OPatch directory
       file:
