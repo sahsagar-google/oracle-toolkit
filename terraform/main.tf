@@ -95,3 +95,33 @@ module "oracle_toolkit" {
     "--backup-dest +RECO"
   ]
 }
+
+# Firewall rules
+# Custom firewall rules can be added by sourcing Google's firewall module https://github.com/terraform-google-modules/terraform-google-network/tree/v10.0.0/modules/firewall-rules
+# example:
+# module "oracle_listener" {
+#   source       = "terraform-google-modules/network/google//modules/firewall-rules"
+#   project_id   = "PROJECT_ID" # example: my-project-123
+#   network_name = "VPN_NAME"   # example: default
+
+#   rules = [{
+#     name                    = "RULE_NAME" # example: oracle-listener
+#     description             = null
+#     direction               = "INGRESS"
+#     priority                = null
+#     destination_ranges      = ["10.0.0.0/8"]
+#     source_ranges           = ["0.0.0.0/0"]
+#     source_tags             = null
+#     source_service_accounts = null
+#     target_tags             = null
+#     target_service_accounts = null
+#     allow = [{
+#       protocol = "tcp"
+#       ports    = ["1521"]
+#     }]
+#     deny = []
+#     log_config = {
+#       metadata = "INCLUDE_ALL_METADATA"
+#     }
+#   }]
+# }
