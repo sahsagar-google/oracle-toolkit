@@ -164,7 +164,16 @@ resource "null_resource" "oracle_toolkit" {
       --ora-asm-disks-json '${jsonencode(local.asm_disk_config)}' \
       --ora-data-mounts-json '${jsonencode(local.data_mounts_config)}' \
       --swap-blk-device "/dev/disk/by-id/google-swap" \
-      $(echo "${join(" ", var.extra_ansible_vars)}") &
+      --ora-swlib-bucket "${var.ora_swlib_bucket}" \
+      --ora-version "${var.ora_version}" \
+      --backup-dest "${var.ora_backup_dest}" \
+      ${var.ora_db_name != "" ? "--ora-db-name ${var.ora_db_name}" : ""} \
+      ${var.ora_db_container != "" ? "--ora-db-container ${lower(var.ora_db_container)}" : ""} \
+      ${var.ntp_pref != "" ? "--ntp-pref ${var.ntp_pref}" : ""} \
+      ${var.oracle_release != "" ? "--oracle-release ${var.oracle_release}" : ""} \
+      ${var.ora_edition != "" ? "--ora-edition ${var.ora_edition}" : ""} \
+      ${var.ora_listener_port != "" ? "--ora-listener-port ${var.ora_listener_port}" : ""} \
+      ${var.ora_redo_log_size != "" ? "--ora-redo-log-size ${var.ora_redo_log_size}" : ""} &
     EOT
   }
 

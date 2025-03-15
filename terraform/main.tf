@@ -80,20 +80,27 @@ module "oracle_toolkit" {
     }
   ]
 
+  # Full list of parameters can be found here https://google.github.io/oracle-toolkit/user-guide.html#parameters
+  # The example below will install Oracle 19c, using the Oracle software stored in a GCS bucket, and will configure the backup destination to be RECO diskgroup.
+  # Mandatory
+  ora_swlib_bucket = "BUCKET"      # example: gs://my-bucket/19
+  ora_version      = "ORA_VERSION" # example: "19"
+  ora_backup_dest  = "BACKUP_DEST" # example: "+RECO"
+  # Optional
+  ora_db_name       = "DB_NAME"            # example: "test"
+  ora_db_container  = "CONTAINER"          # example: false
+  ntp_pref          = "NTP_PREF"           # example: "169.254.169.254"
+  oracle_release    = "ORA_RELEASE"        # example: "19.7.0.0.200414"
+  ora_edition       = "ORA_EDITION"        # example: "EE"
+  ora_listener_port = "ORA_LISTERNER_PORT" # example: 1521 
+  ora_redo_log_size = "ORA_LOG_SIZE"       # example: "100MB"
+
   ##############################################################################
   ## OPTIONAL SETTINGS
   ##   - default values will be determined/calculated
   ##############################################################################
   # metadata_startup_script = "STARTUP_SCRIPT" # example: gs://BUCKET/SCRIPT.sh
   # network_tags            = "NETWORK_TAGS"   # example: ["oracle", "ssh"]
-
-  # Full list of parameters can be found here https://google.github.io/oracle-toolkit/user-guide.html#parameters
-  # The example below will install Oracle 19c, using the Oracle software stored in a GCS bucket, and will configure the backup destination to be RECO diskgroup.
-  extra_ansible_vars = [
-    "--ora-swlib-bucket BUCKET", # gcs bucket where the Oracle software is stored, example: gs://my-oracle-software/19c 
-    "--ora-version 19",
-    "--backup-dest +RECO"
-  ]
 }
 
 # Firewall rules
