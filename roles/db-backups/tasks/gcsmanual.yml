@@ -1,0 +1,80 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+- name: gcsfuse | gcsfuse install
+  include_tasks: gcsfuse.yml
+
+- name: gcsfuse service account verification | GCE gcsfuse service account verification
+  shell:
+    cmd: "gcloud iam service-accounts list --format json|egrep -i {{ gcsfuse_backup_service_account }}|egrep -i email |awk -F'\"' '{print $4}'"
+  register: gcsfuse_backup_service_account_verification
+  failed_when: gcsfuse_backup_service_account_verification.rc not in [0, 1]
+  changed_when: false
+  check_mode: false
+
+- name: gcsfuse service account verification results | GCE gcsfuse service account results
+  debug:
+    var: gcsfuse_backup_service_account_verification.stdout
+#    verbosity: 1
+
+- name: gcsfuse create temp directory | GCE gcsfuse create temp directory
+  become: true
+  file:
+    path: "{{ gcsfuse_backup_temp_path }}/{{ gcsfuse_backup_temp_prefix }}"
+    state: directory
+    mode: 0760
+    owner: "{{ oracle_user }}"
+    group: "{{ oracle_group }}"
+
+- name: gcsfuse create bucket mount directory | GCE gcsfuse create bucket mount directory
+  become: true
+  file:
+    path: "{{ gcsfuse_backup_mount_path }}/{{ gcsfuse_backup_mount_prefix }}"
+    state: directory
+    mode: 0760
+    owner: "{{ oracle_user }}"
+    group: "{{ oracle_group }}"
+
+- name: gcsfuse mount bucket | GCE gcsfuse mount directory values
+  debug:
+    msg:
+      - "gcsfuse_backup_mount_path: {{ gcsfuse_backup_mount_path }}" 
+      - "gcsfuse_backup_mount_prefix: {{ gcsfuse_backup_mount_prefix }}" 
+      - "gcsfuse_backup_bucket: {{ gcsfuse_backup_bucket }}" 
+      - "gcsfuse_backup_bucket_folder: {{ gcsfuse_backup_bucket_folder }}" 
+      - "gcsfuse_backup_service_account: {{ gcsfuse_backup_service_account }}" 
+      - "gce_auth_service_account: {{ gcsfuse_backup_service_account_verification.stdout }}" 
+
+- name: gcsfuse mount bucket | GCE gcsfuse mount bucket
+  mount:
+    path: "{{ gcsfuse_backup_mount_path }}/{{ gcsfuse_backup_mount_prefix }}"
+    src: "{{ gcsfuse_backup_bucket }}"
+    fstype: gcsfuse
+    opts:  _netdev,temp_dir={{ gcsfuse_backup_temp_path }}/{{ gcsfuse_backup_temp_prefix }},rw,dir_mode=777,uid={{ oracle_user }},gid={{ oracle_group }},noexec,nodev,allow_other
+    state: mounted
+  when: gcsfuse_backup_service_account_verification is defined and gcsfuse_backup_bucket_folder == ""
+
+- name: gcsfuse mount bucket directory | GCE gcsfuse mount bucket directory
+  mount:
+    path: "{{ gcsfuse_backup_mount_path }}/{{ gcsfuse_backup_mount_prefix }}"
+    src: "{{ gcsfuse_backup_bucket }}"
+    fstype: gcsfuse
+    opts:  _netdev,only_dir={{gcsfuse_backup_bucket_folder}},temp_dir={{ gcsfuse_backup_temp_path }}/{{ gcsfuse_backup_temp_prefix }},rw,dir_mode=777,uid={{ oracle_user }},gid={{ oracle_group }},noexec,nodev,allow_other
+    state: mounted
+  when: gcsfuse_backup_service_account_verification is defined and gcsfuse_backup_bucket_folder != ""
+
+- name: gcsfuse set backup directory | GCE gcsfuse service account key
+  set_fact:
+    backup_dest: "{{ gcsfuse_backup_mount_path }}/{{ gcsfuse_backup_mount_prefix }}"
