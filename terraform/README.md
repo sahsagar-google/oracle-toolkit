@@ -57,6 +57,7 @@ Additionally, you will need:
 
 - A **Google Cloud project** with billing enabled
 - A **Service Account** with appropriate IAM roles for Compute Engine and Storage management
+- The following **IAM roles** added to the **Service Account** running **Terraform**:`Compute Admin`, `Storage Object Admin`
 
 ---
 
