@@ -187,11 +187,11 @@ BACKUP_REDUNDANCY_PARAM="^[0-9]+$"
 GCS_BACKUP_CONFIG="${GCS_BACKUP_CONFIG}"
 GCS_BACKUP_CONFIG_PARAM="^[a-zA-Z0-9]+$"
 
-GCS_BACKUP_SERVICE_ACCOUNT="${GCS_BACKUP_SERVICE_ACCOUNT}"
-GCS_BACKUP_SERVICE_ACCOUNT_PARAM="^[a-zA-Z0-9]+$"
-
 GCS_BACKUP_BUCKET="${GCS_BACKUP_BUCKET}"
 GCS_BACKUP_BUCKET_PARAM="^.+[^/]"
+
+GCS_BACKUP_TEMP_PATH="${GCS_BACKUP_TEMP_PATH:-/u01/gcsfusetmp}"
+GCS_BACKUP_TEMP_PATH_PARAM="^/.*" 
 
 ARCHIVE_REDUNDANCY="${ARCHIVE_REDUNDANCY:-2}"
 ARCHIVE_REDUNDANCY_PARAM="^[0-9]+$"
@@ -251,7 +251,7 @@ COMPATIBLE_RDBMS_PARAM="^[0-9][0-9]\.[0-9].*"
 export ANSIBLE_DISPLAY_SKIPPED_HOSTS=false
 ###
 GETOPT_MANDATORY="ora-swlib-bucket:"
-GETOPT_OPTIONAL="gcs-backup-config:,gcs-backup-service-account:,gcs-backup-bucket:,backup-dest:,ora-version:,no-patch,ora-edition:,cluster-type:,cluster-config:,cluster-config-json:"
+GETOPT_OPTIONAL="gcs-backup-config:,gcs-backup-bucket:,gcs-backup-temp-path:,backup-dest:,ora-version:,no-patch,ora-edition:,cluster-type:,cluster-config:,cluster-config-json:"
 GETOPT_OPTIONAL="$GETOPT_OPTIONAL,ora-staging:,ora-db-name:,ora-db-domain:,ora-db-charset:,ora-disk-mgmt:,ora-role-separation:"
 GETOPT_OPTIONAL="$GETOPT_OPTIONAL,ora-data-destination:,ora-data-diskgroup:,ora-reco-destination:,ora-reco-diskgroup:"
 GETOPT_OPTIONAL="$GETOPT_OPTIONAL,ora-asm-disks:,ora-asm-disks-json:,ora-data-mounts:,ora-data-mounts-json:,ora-listener-port:,ora-listener-name:"
@@ -420,12 +420,12 @@ while true; do
     GCS_BACKUP_CONFIG="$2"
     shift
     ;;
-  --gcs-backup-service-account)
-    GCS_BACKUP_SERVICE_ACCOUNT="$2"
-    shift
-    ;;
   --gcs-backup-bucket)
     GCS_BACKUP_BUCKET="$2"
+    shift
+    ;;
+  --gcs-backup-temp-path)
+    GCS_BACKUP_TEMP_PATH="$2"
     shift
     ;;
   --backup-redundancy)
@@ -688,7 +688,7 @@ shopt -s nocasematch
   echo "Incorrect parameter provided for backup-dest: $BACKUP_DEST"
   exit 1
 }
-[[ ! "$GCS_BACKUP_CONFIG" =~ $GCS_BACKUP_CONFIG_PARAM ]] && [[ "$BACKUP_DEST" != "/mnt/gcsfuse" ]] && {
+[[ ! "$GCS_BACKUP_CONFIG" =~ $GCS_BACKUP_CONFIG_PARAM ]] && [[ "$BACKUP_DEST" != "/mnt" ]] && {
   echo "Incorrect parameter provided for gcs-backup-config: $GCS_BACKUP_CONFIG"
   exit 1
 }
@@ -696,8 +696,8 @@ shopt -s nocasematch
   echo "Incorrect parameter provided for gcs-backup-bucket: $GCS_BACKUP_BUCKET"
   exit 1
 }
-[[ ! "$GCS_BACKUP_SERVICE_ACCOUNT" =~ $GCS_BACKUP_SERVICE_ACCOUNT_PARAM ]] && [[ "$GCS_BACKUP_CONFIG" != "manual" ]] && {
-  echo "Incorrect parameter provided for gcs-backup-service-account: $GCS_BACKUP_SERVICE_ACCOUNT"
+[[ ! "$GCS_BACKUP_TEMP_PATH" =~ $GCS_BACKUP_TEMP_PATH_PARAM ]] && [[ "$GCS_BACKUP_CONFIG" != "manual" ]] && {
+  echo "Incorrect parameter provided for gcs-backup-temp-path: $GCS_BACKUP_TEMP_PATH"
   exit 1
 }
 [[ ! "$BACKUP_REDUNDANCY" =~ $BACKUP_REDUNDANCY_PARAM ]] && {
@@ -933,7 +933,6 @@ fi
 # Trim tailing slashes from variables with paths
 #
 BACKUP_DEST=${BACKUP_DEST%/}
-#GCS_BACKUP_BUCKET=${GCS_BACKUP_BUCKET%/}
 BACKUP_LOG_LOCATION=${BACKUP_LOG_LOCATION%/}
 BACKUP_SCRIPT_LOCATION=${BACKUP_SCRIPT_LOCATION%/}
 ORA_STAGING=${ORA_STAGING%/}
@@ -945,8 +944,8 @@ export ARCHIVE_ONLINE_DAYS
 export ARCHIVE_REDUNDANCY
 export BACKUP_DEST
 export GCS_BACKUP_CONFIG
-export GCS_BACKUP_SERVICE_ACCOUNT
 export GCS_BACKUP_BUCKET
+export GCS_BACKUP_TEMP_PATH
 export BACKUP_LEVEL0_DAYS
 export BACKUP_LEVEL1_DAYS
 export BACKUP_LOG_LOCATION

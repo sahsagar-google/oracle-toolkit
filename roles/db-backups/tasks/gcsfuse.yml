@@ -11,22 +11,25 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+# gcsfuse rpm repo has the same name for RedHat based versions, link to installation below
+#
+# https://cloud.google.com/storage/docs/cloud-storage-fuse/install#centosred-hatrocky-linux
+#
 
 ---
 - name: gcsfuse | Add Google Cloud gcsfuse repo
   yum_repository:
     name: gcsfuse
-    description: Google cloud gcsfuse    
+    description: Google cloud gcsfuse
     baseurl: https://packages.cloud.google.com/yum/repos/gcsfuse-el7-x86_64
     gpgkey:
       - https://packages.cloud.google.com/yum/doc/yum-key.gpg
       - https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
     gpgcheck: true
-  when: ansible_os_family == "RedHat"
 
 - name: gcloud | Install latest gcloud gcsfuse package
   package:
     name: gcsfuse
     state: present
     lock_timeout: "{{ pkg_mgr_lock_timeout }}"
-  when: ansible_os_family == "RedHat"

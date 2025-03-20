@@ -16,23 +16,10 @@
 - name: gcsfuse | gcsfuse install
   include_tasks: gcsfuse.yml
 
-- name: gcsfuse service account verification | GCE gcsfuse service account verification
-  shell:
-    cmd: "gcloud iam service-accounts list --format json|egrep -i {{ gcsfuse_backup_service_account }}|egrep -i email |awk -F'\"' '{print $4}'"
-  register: gcsfuse_backup_service_account_verification
-  failed_when: gcsfuse_backup_service_account_verification.rc not in [0, 1]
-  changed_when: false
-  check_mode: false
-
-- name: gcsfuse service account verification results | GCE gcsfuse service account results
-  debug:
-    var: gcsfuse_backup_service_account_verification.stdout
-#    verbosity: 1
-
 - name: gcsfuse create temp directory | GCE gcsfuse create temp directory
   become: true
   file:
-    path: "{{ gcsfuse_backup_temp_path }}/{{ gcsfuse_backup_temp_prefix }}"
+    path: "{{ gcsfuse_backup_temp_path }}/{{ gcsfuse_backup_temp_prefix }}/{{ db_name }}"
     state: directory
     mode: 0760
     owner: "{{ oracle_user }}"
@@ -41,40 +28,40 @@
 - name: gcsfuse create bucket mount directory | GCE gcsfuse create bucket mount directory
   become: true
   file:
-    path: "{{ gcsfuse_backup_mount_path }}/{{ gcsfuse_backup_mount_prefix }}"
+    path: "{{ gcsfuse_backup_mount_path }}/{{ gcsfuse_backup_mount_prefix }}/{{ db_name }}"
     state: directory
     mode: 0760
     owner: "{{ oracle_user }}"
     group: "{{ oracle_group }}"
 
-- name: gcsfuse mount bucket | GCE gcsfuse mount directory values
+- name: gcsfuse mount bucket values | GCE gcsfuse mount directory values
   debug:
     msg:
-      - "gcsfuse_backup_mount_path: {{ gcsfuse_backup_mount_path }}" 
-      - "gcsfuse_backup_mount_prefix: {{ gcsfuse_backup_mount_prefix }}" 
-      - "gcsfuse_backup_bucket: {{ gcsfuse_backup_bucket }}" 
-      - "gcsfuse_backup_bucket_folder: {{ gcsfuse_backup_bucket_folder }}" 
-      - "gcsfuse_backup_service_account: {{ gcsfuse_backup_service_account }}" 
-      - "gce_auth_service_account: {{ gcsfuse_backup_service_account_verification.stdout }}" 
+      - "gcsfuse_backup_mount_path: {{ gcsfuse_backup_mount_path }}"
+      - "gcsfuse_backup_mount_prefix: {{ gcsfuse_backup_mount_prefix }}"
+      - "gcsfuse_backup_bucket: {{ gcsfuse_backup_bucket }}"
+      - "gcsfuse_backup_bucket_folder: {{ gcsfuse_backup_bucket_folder }}"
 
 - name: gcsfuse mount bucket | GCE gcsfuse mount bucket
+  become: true
   mount:
-    path: "{{ gcsfuse_backup_mount_path }}/{{ gcsfuse_backup_mount_prefix }}"
+    path: "{{ gcsfuse_backup_mount_path }}/{{ gcsfuse_backup_mount_prefix }}/{{ db_name }}"
     src: "{{ gcsfuse_backup_bucket }}"
     fstype: gcsfuse
-    opts:  _netdev,temp_dir={{ gcsfuse_backup_temp_path }}/{{ gcsfuse_backup_temp_prefix }},rw,dir_mode=777,uid={{ oracle_user }},gid={{ oracle_group }},noexec,nodev,allow_other
+    opts: _netdev,temp_dir={{ gcsfuse_backup_temp_path }}/{{ gcsfuse_backup_temp_prefix }}/{{ db_name }},rw,dir_mode=777,uid={{ oracle_user }},gid={{ oracle_group }},noexec,nodev,allow_other
     state: mounted
-  when: gcsfuse_backup_service_account_verification is defined and gcsfuse_backup_bucket_folder == ""
+  when: gcsfuse_backup_bucket_folder == ""
 
 - name: gcsfuse mount bucket directory | GCE gcsfuse mount bucket directory
+  become: true
   mount:
-    path: "{{ gcsfuse_backup_mount_path }}/{{ gcsfuse_backup_mount_prefix }}"
+    path: "{{ gcsfuse_backup_mount_path }}/{{ gcsfuse_backup_mount_prefix }}/{{ db_name}}"
     src: "{{ gcsfuse_backup_bucket }}"
     fstype: gcsfuse
-    opts:  _netdev,only_dir={{gcsfuse_backup_bucket_folder}},temp_dir={{ gcsfuse_backup_temp_path }}/{{ gcsfuse_backup_temp_prefix }},rw,dir_mode=777,uid={{ oracle_user }},gid={{ oracle_group }},noexec,nodev,allow_other
+    opts: _netdev,only_dir={{gcsfuse_backup_bucket_folder}},temp_dir={{ gcsfuse_backup_temp_path }}/{{ gcsfuse_backup_temp_prefix }}/{{ db_name }},rw,dir_mode=777,uid={{ oracle_user }},gid={{ oracle_group }},noexec,nodev,allow_other
     state: mounted
-  when: gcsfuse_backup_service_account_verification is defined and gcsfuse_backup_bucket_folder != ""
+  when: gcsfuse_backup_bucket_folder != ""
 
-- name: gcsfuse set backup directory | GCE gcsfuse service account key
+- name: gcsfuse set backup directory | GCE gcsfuse set backup directory
   set_fact:
-    backup_dest: "{{ gcsfuse_backup_mount_path }}/{{ gcsfuse_backup_mount_prefix }}"
+    backup_dest: "{{ gcsfuse_backup_mount_path }}/{{ gcsfuse_backup_mount_prefix }}/{{ db_name }}"
