@@ -17,8 +17,8 @@
   hosts: all
   become: true
   gather_facts: false
-  vars_files:
-    - check-oracle-vars.yml
+  roles:
+    - role: check-oracle
 
   tasks:
 
@@ -70,34 +70,60 @@
       when: ( not ( uninstall_ahf | bool ) ) and ( not ( run_orachk | bool ) )
 
     - block:
-        - name: Copy orachk.sh file to target system
+        - name: Copy login.sql file to target system
           copy:
-            src: "./orachk.sh"
-            dest: "{{ orachk_script_dir }}/orachk.sh"
+            src: roles/check-oracle/files/login.sql
+            dest: "{{ orachk_script_dir }}/login.sql"
             owner: root
             group: root
-            mode: '0644'
+            mode: '0600'
 
-        - name: Copy run-orachk.sh to target system
-          copy:
-            src: "./run-orachk.sh"
-            dest: "{{ orachk_script_dir }}/run-orachk.sh"
-            owner: root
-            group: root
-            mode: '0700'
+        - name: Slurp /etc/oratab from remote
+          slurp:
+            src: /etc/oratab
+          register: oratab_contents
+
+        - name: Split oratab file contents into lines
+          set_fact:
+            oratab_lines: "{{ oratab_contents.content | b64decode | split('\n') }}"
+
+        - name: Parse oratab to find Oracle Home for {{ ORACLE_SID }}
+          set_fact:
+            ORACLE_HOME: >-
+              {{
+                (oratab_lines
+                 | select('match', '^' ~ ORACLE_SID ~ ':')
+                 | list
+                 | first
+                ).split(':')[1]
+              }}
+          when: oratab_lines is defined and (oratab_lines | length) > 0
+
+        - name: Debug the oratab result
+          debug:
+            msg: "Found ORACLE_HOME={{ ORACLE_HOME }}"
+
+        - name: Get a tmpfile name
+          set_fact:
+            TMPFILE: "{{ lookup('pipe','mktemp') }}"
+
+        - name: Debug orachk command for {{ ORACLE_SID }}
+          debug:
+            msg: "CMD: ORACLE_PATH={{ ORACHK_BASE }} SQLPATH={{ ORACHK_BASE }} {{ ORACHK_BASE }}/orachk/orachk -s -dbconfig {{ ORACLE_HOME }}%{{ ORACLE_SID }} -showpass -profile dba | tee {{ TMPFILE }}"
 
         - name: Run ORAchk
-          shell: ./run-orachk.sh
+          shell: "ORACLE_PATH={{ orachk_script_dir }} SQLPATH={{ orachk_script_dir }} {{ ORACHK_BASE }}/orachk/orachk -s -dbconfig {{ ORACLE_HOME }}%{{ ORACLE_SID }} -showpass -profile dba | tee {{ TMPFILE }}"
           environment:
             ORACLE_SID: "{{ ORACLE_SID }}"
+            PATH: "{{ extended_path }}"
           args:
             chdir: "{{ orachk_script_dir }}"
 
-        - name: Read the remote file /tmp/orachk-zipfile.txt
-          command: cat "{{ orachk_rpt_filename }}"
+        - name: Retrieve ORAchk zipfile name form {{ TMPFILE }}
+          shell: "grep UPLOAD {{ TMPFILE }} | awk '{ print $NF }'"
           register: orachk_file_info
 
-        - name: Fetch the file named in /tmp/orachk-zipfile.txt
+        - name: Fetch the ORAchk zipfile
           fetch:
             src: "{{ orachk_file_info.stdout }}"
             dest: /tmp/
