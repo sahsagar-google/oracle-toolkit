@@ -40,11 +40,8 @@ options="$(getopt --longoptions "$GETOPT_LONG" --options "$GETOPT_SHORT" -- "$@"
 
 eval set -- "$options"
 
-# shell check complains about lack of quotes around variables
-# the entire expression is quoted, so it's safe
-# shellcheck disable=SC2086
 help () {
-    echo -e "\tUsage: $(basename $0)"
+    echo -e "\tUsage: $(basename "$0")"
     echo "${GETOPT_MANDATORY}" | sed 's/,/\n/g' | sed 's/:/ <value>/' | sed 's/\(.\+\)/\t --\1/'
     echo "${GETOPT_OPTIONAL}"  | sed 's/,/\n/g' | sed 's/:/ <value>/' | sed 's/\(.\+\)/\t [ --\1 ]/'
     echo
