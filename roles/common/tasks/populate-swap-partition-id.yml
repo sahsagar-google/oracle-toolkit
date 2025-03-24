@@ -32,7 +32,7 @@
         part_path="${by_id_link}"-part1;
         ;;
     esac;
-    if [[ -e "$part_path" ]] && [[ "$part_path" != "" ]]; then
+    if [[ -e "$part_path" ]]; then
       echo "$part_path"
     else
       echo ""
