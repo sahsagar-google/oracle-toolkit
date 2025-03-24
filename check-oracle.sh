@@ -3,6 +3,7 @@
 # used for oracle ORAchk.  install, run and uninstall ORAchk
 
 # Check if we're using the Mac stock getopt and fail if true
+# shellcheck disable=SC2034
 out="$(getopt -T)"
 if [ $? != 4 ]; then
     echo -e "Your getopt does not support long parameters, possibly you're on a Mac, if so please install gnu-getopt with brew"
@@ -14,7 +15,6 @@ fi
 DEBUG_CMD='echo '
 DEBUG_CMD=''
 
-ORA_SWLIB_BUCKET="${ORA_SWLIB_BUCKET}"
 ORA_SWLIB_BUCKET_PARAM='^gs://.+[^/]$'
 
 ORACLE_SERVER=''
@@ -32,13 +32,17 @@ GETOPT_SHORT="h"
 
 options="$(getopt --longoptions "$GETOPT_LONG" --options "$GETOPT_SHORT" -- "$@")"
 
+# shellcheck disable=SC2181
 [ $? -eq 0 ] || {
-    echo "Invalid options provided: $@" >&2
+    echo "Invalid options provided: $*" >&2
     exit 1
 }
 
 eval set -- "$options"
 
+# shell check complains about lack of quotes around variables
+# the entire expression is quoted, so it's safe
+# shellcheck disable=SC2086
 help () {
     echo -e "\tUsage: $(basename $0)"
     echo "${GETOPT_MANDATORY}" | sed 's/,/\n/g' | sed 's/:/ <value>/' | sed 's/\(.\+\)/\t --\1/'
@@ -116,7 +120,7 @@ do
 
 done
 
-[ "$RUN_ENABLED" -eq 1 -a "$INSTALL_ENABLED" -eq 1 ] && {
+[ "$RUN_ENABLED" -eq 1 ] && [ "$INSTALL_ENABLED" -eq 1 ] && {
     AHF_UNINSTALL=1
     AHF_INSTALL=1
     INSTALL_ENABLED=1
@@ -139,7 +143,7 @@ export ANSIBLE_DISPLAY_SKIPPED_HOSTS=false
 # Uninstall AHF
 [[ $AHF_UNINSTALL -eq 1 ]] && {
 
-    $DEBUG_CMD ansible-playbook -i $INVENTORY_FILE check-oracle.yml \
+    $DEBUG_CMD ansible-playbook -i "$INVENTORY_FILE" check-oracle.yml \
         --extra-vars "uninstall_ahf=true"
 }
 
@@ -156,14 +160,14 @@ export ANSIBLE_DISPLAY_SKIPPED_HOSTS=false
 
     ORA_SWLIB_AHF_FILENAME="${ORA_SWLIB_BUCKET}/${AHF_DIR}/${AHF_FILE}"
 
-    $DEBUG_CMD ansible-playbook -i $INVENTORY_FILE check-oracle.yml \
+    $DEBUG_CMD ansible-playbook -i "$INVENTORY_FILE" check-oracle.yml \
         --extra-vars "uninstall_ahf=false ORA_SWLIB_AHF_FILENAME=$ORA_SWLIB_AHF_FILENAME"
 }
 
 # run ORAchk
 [[ $RUN_ORACHK -eq 1 ]] && {
 
-    $DEBUG_CMD ansible-playbook -i $INVENTORY_FILE check-oracle.yml \
+    $DEBUG_CMD ansible-playbook -i "$INVENTORY_FILE" check-oracle.yml \
         --extra-vars "uninstall_ahf=false run_orachk=true ORACLE_SID=$ORACLE_SID"
 }
 
