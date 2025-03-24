@@ -132,6 +132,10 @@ INVENTORY_FILE=inventory_files/inventory_${ORACLE_SERVER}_${ORACLE_SID}
     exit 1
 }
 
+# do not display skipped hosts - 
+# a misnomer, as it skips all 'skipped' tasks
+export ANSIBLE_DISPLAY_SKIPPED_HOSTS=false
+
 # Uninstall AHF
 [[ $AHF_UNINSTALL -eq 1 ]] && {
 
