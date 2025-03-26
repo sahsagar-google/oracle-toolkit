@@ -57,11 +57,14 @@ options="$(getopt --longoptions "$GETOPT_LONG" --options "$GETOPT_SHORT" -- "$@"
 eval set -- "$options"
 
 help () {
+
     echo -e "\tUsage: $(basename "$0")"
     echo "${GETOPT_MANDATORY}" | sed 's/,/\n/g' | sed 's/:/ <value>/' | sed 's/\(.\+\)/\t --\1/'
     echo "${GETOPT_OPTIONAL}"  | sed 's/,/\n/g' | sed 's/:/ <value>/' | sed 's/\(.\+\)/\t [ --\1 ]/'
     echo
     echo "--ahf-install and --run-orachk may be combined to install and run"
+    echo "--extra-vars is used to pass extra ansible vars"
+    echo "  example:  --extra-vars "var1=val1 var2=val2 ...""
 
 }
 
@@ -137,6 +140,11 @@ do
    shift
 
 done
+
+# one of install, uninstall or run must be called
+
+[[ $AHF_INSTALL -eq 0 ]] && [[ $AHF_UNINSTALL -eq 0 ]] && [[ $RUN_ORACHK -eq 0 ]] && { help; exit 1; }
+
 
 [[ -n $ANSIBLE_EXTRA_VARS ]] && {
 

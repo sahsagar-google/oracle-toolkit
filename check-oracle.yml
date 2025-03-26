@@ -24,11 +24,11 @@
 
     - name: Check for AHF Installation
       stat:
-        path: /opt/oracle.ahf/bin/ahfctl
+        path: "{{ AHFCTL_PATH }}"
       register: ahfctl_script
 
     - name: Uninstall AHF
-      shell: yes 'Y' | /opt/oracle.ahf/bin/ahfctl uninstall
+      shell: yes 'Y' | "{{ AHFCTL_PATH }}" uninstall
       when: (uninstall_ahf | bool) and ahfctl_script.stat.exists
       ignore_errors: true
       failed_when: ahf_uninstall_result.rc != 0 and ahf_uninstall_result.rc is defined
@@ -83,14 +83,34 @@
             group: root
             mode: '0600'
 
-        - name: Slurp /etc/oratab from remote
+        - name: Check for oratab
+          stat:
+            path: "{{ oratab_path }}"
+          register: oratab_exists
+
+        - name: oratab not found
+          fail: 
+            msg: "The file {{ oratab_path }} was not found on the target"
+          when: not ( oratab_exists.stat.exists | bool )
+
+        - name: Slurp oratab from remote
           slurp:
-            src: /etc/oratab
+            src: "{{ oratab_path }}"
           register: oratab_contents
 
         - name: Split oratab file contents into lines
           set_fact:
             oratab_lines: "{{ oratab_contents.content | b64decode | split('\n') }}"
+
+        - name: Check for ORACLE_SID
+          shell: "grep ^{{ ORACLE_SID }} {{ oratab_path }}"
+          register: oratab_results
+          ignore_errors: true
+
+        - name: ORACLE_HOME Not Found
+          fail: 
+            msg: "ORACLE_HOME was not found on the target for {{ ORACLE_SID }}"
+          when: oratab_results.rc != 0
 
         - name: Parse oratab to find Oracle Home for {{ ORACLE_SID }}
           set_fact:
@@ -103,8 +123,9 @@
                 ).split(':')[1]
               }}
           when: oratab_lines is defined and (oratab_lines | length) > 0
+          failed_when: oratab_lines is not defined
 
-        - name: Debug the oratab result
+        - name: Display ORACLE_HOME
           debug:
             msg: "Found ORACLE_HOME={{ ORACLE_HOME }}"
 

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
+oratab_path: "/etc/oratab"
 ahf_extract_path: "/u01/AHF"
 orachk_script_dir: "/u01/orachk"
 orachk_rpt_filename: "/tmp/orachk-zipfile.txt"
@@ -24,6 +25,7 @@ run_orachk: false
 ORAENV_ASK: "NO"
 RAT_TIMEOUT: "240"
 ORACHK_BASE: "/opt/oracle.ahf"
+AHFCTL_PATH: "{{ ORACHK_BASE }}/bin/ahfctl"
 SQLPATH: "{{ ORACHK_BASE }}"
 ORACLE_PATH: "{{ ORACHK_BASE }}"
 ORACLE_OWNER: "oracle"
