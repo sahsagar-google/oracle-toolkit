@@ -15,12 +15,12 @@
 oratab_path: "/etc/oratab"
 ahf_extract_path: "/u01/AHF"
 orachk_script_dir: "/u01/orachk"
-orachk_rpt_filename: "/tmp/orachk-zipfile.txt"
 extended_path: "/usr/local/bin:{{ ansible_env.PATH | default('/usr/bin:/usr/sbin') }}"
 # Default is to NOT uninstall AHF
 uninstall_ahf: false
 # default is to NOT run orachk
 run_orachk: false
+expedited_testing: false
 
 ORAENV_ASK: "NO"
 RAT_TIMEOUT: "240"

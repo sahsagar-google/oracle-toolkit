@@ -25,7 +25,7 @@ if [ $? != 4 ]; then
 fi
 
 # do not display skipped hosts - 
-# a misnomer, as it skips all 'skipped' tasks
+# a misnomer, as it does not display all 'skipped' tasks
 export ANSIBLE_EXTRA_VARS=''
 export ANSIBLE_DISPLAY_SKIPPED_HOSTS=false
 export INVENTORY_FILE=''
@@ -165,8 +165,14 @@ done
 
 [[ -z $ORACLE_SID ]] && { echo "please specify --db-name"; echo; help; exit 1; }
 
-# if the inventory file is specified on the cli, then the --instance-ip-addr or ORACLE_SERVER are not required
+# if an ip address is passed for --instance-ip-address, and inventory file is not specified on the cli, check for an inventory file by lookup of target hostname
+[[ "$ORACLE_SERVER" =~ ^[[:digit:]]{1,3}[.][[:digit:]]{1,3}[.][[:digit:]]{1,3}[.][[:digit:]]{1,3}$ ]] && [[ -z "$INVENTORY_FILE" ]] && {
+    TARGET_HOSTNAME="$( dig +short -x $ORACLE_SERVER | cut -f1 -d\. )"
+    TEST_INVENTORY_FILE=inventory_files/inventory_${TARGET_HOSTNAME}_${ORACLE_SID}
+    [[ -r $TEST_INVENTORY_FILE ]] && INVENTORY_FILE="$TEST_INVENTORY_FILE"
+}
 
+# if the inventory file is specified on the cli, then the --instance-ip-addr or ORACLE_SERVER are not required
 if [[ -z $INVENTORY_FILE ]]; then
     [[ -z $ORACLE_SERVER ]] && { echo "please specify --instance-ip-addr"; echo; help; exit 1; }
     INVENTORY_FILE=inventory_files/inventory_${ORACLE_SERVER}_${ORACLE_SID}

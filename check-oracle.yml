@@ -83,6 +83,19 @@
             group: root
             mode: '0600'
 
+        - name: Copy orachk-quicktest.sh for expedited testing
+          copy:
+            src: roles/check-oracle/files/orachk-quicktest.sh
+            dest: "{{ ORACHK_BASE }}/orachk/orachk-quicktest.sh"
+            owner: root
+            group: root
+            mode: '0700'
+          when: ( expedited_testing | bool )
+
+        - name: Configure Expedited Testing
+          shell:  cd  "{{ ORACHK_BASE }}/orachk/" && [[ ! -r orachk.orig ]] && mv orachk orachk.orig && ln -s orachk-quicktest.sh orachk
+          when: ( expedited_testing | bool )
+
         - name: Check for oratab
           stat:
             path: "{{ oratab_path }}"
@@ -141,16 +154,44 @@
           args:
             chdir: "{{ orachk_script_dir }}"
 
-        - name: Retrieve ORAchk zipfile name form {{ TMPFILE }}
+        - name: Get ORAchk tmpfile status
+          stat:
+            path: "{{ TMPFILE }}"
+          register: tmpfile_location
+
+        - name: Check that ORAchk tmpfile exists
+          fail:
+            msg: "Could not find ORAchk tmpfile {{ TMPFILE }}"
+          when: not tmpfile_location.stat.exists
+
+        - name: Retrieve ORAchk zipfile name from tmpfile
           shell: "grep UPLOAD {{ TMPFILE }} | awk '{ print $NF }'"
           register: orachk_file_info
 
+        - name: Get a tmpfile name
+          set_fact:
+            ORACHK_RPT_FILE: "{{ orachk_file_info.stdout }}"
+
+        - name: Verify ORAchk Report File Existence
+          stat:
+            path: "{{ ORACHK_RPT_FILE }}"
+          register: orachk_rpt_location
+
+        - name: Was ORAchk report name found
+          fail:
+            msg: "Could not locate ORAchk report file {{ ORACHK_RPT_FILE }}"
+          when: not orachk_rpt_location.stat.exists
+
         - name: Fetch the ORAchk zipfile
           fetch:
-            src: "{{ orachk_file_info.stdout }}"
+            src: "{{ ORACHK_RPT_FILE }}"
             dest: /tmp/
             flat: true
           register: fetch_result
+
+        - name: Deconfigure Expedited Testing
+          shell:  cd  "{{ ORACHK_BASE }}/orachk/" && [[ -r orachk.orig ]] && rm -f orachk && mv orachk.orig orachk && rm -f orachk-quicktest.sh
+          when: ( expedited_testing | bool )
 
         # See what was actually returned by the fetch task
         # this will be useful if the ansible version changes
