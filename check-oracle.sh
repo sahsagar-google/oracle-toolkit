@@ -24,24 +24,27 @@ if [ $? != 4 ]; then
     exit 1
 fi
 
-# set to 'echo ' to only dislay commands
-DEBUG_CMD='echo '
-DEBUG_CMD=''
+# do not display skipped hosts - 
+# a misnomer, as it skips all 'skipped' tasks
+export ANSIBLE_EXTRA_VARS=''
+export ANSIBLE_DISPLAY_SKIPPED_HOSTS=false
+export INVENTORY_FILE=''
+export AHF_LOCATION=''
 
-ORA_SWLIB_BUCKET_PARAM='^gs://.+[^/]$'
+export AHF_LOCATION_PARAM='^gs://.+[^/]$'
 
-ORACLE_SERVER=''
-AHF_DIR='AHF'
-AHF_FILE=''
-AHF_INSTALL=0
-AHF_UNINSTALL=0
-RUN_ORACHK=0
+export ORACLE_SERVER=''
+export AHF_DIR='AHF'
+export AHF_FILE=''
+export AHF_INSTALL=0
+export AHF_UNINSTALL=0
+export RUN_ORACHK=0
 
-GETOPT_MANDATORY="oracle-server:,oracle-sid:"
-GETOPT_OPTIONAL="ora-swlib-bucket:,ahf-file:,ahf-dir:,ahf-install,ahf-uninstall,run-orachk,help"
+export GETOPT_MANDATORY="instance-ip-addr:"
+export GETOPT_OPTIONAL="extra-vars:,ahf-location:,db-name:,inventory-file:,ahf-install,ahf-uninstall,run-orachk,help,debug"
 
-GETOPT_LONG="$GETOPT_MANDATORY,$GETOPT_OPTIONAL"
-GETOPT_SHORT="h"
+export GETOPT_LONG="$GETOPT_MANDATORY,$GETOPT_OPTIONAL"
+export GETOPT_SHORT="h"
 
 options="$(getopt --longoptions "$GETOPT_LONG" --options "$GETOPT_SHORT" -- "$@")"
 
@@ -63,51 +66,56 @@ help () {
 }
 
 # check if both install and run were specified together
-RUN_ENABLED=0
-INSTALL_ENABLED=0
+export RUN_ENABLED=0
+export INSTALL_ENABLED=0
 
 while true
 do
 
     case "$1" in
 
-        --ora-swlib-bucket)
-           ORA_SWLIB_BUCKET="$2"
-           shift
-           ;;
+        --extra-vars)
+            ANSIBLE_EXTRA_VARS="$2"
+            ;;
+
+        --ahf-location)
+            AHF_LOCATION="$2"
+            ;;
+
+        --debug)
+            export ANSIBLE_DEBUG=1
+            export ANSIBLE_DISPLAY_SKIPPED_HOSTS=true
+            ;;
 
         --help | -h)
             help >&2
             exit 0
             ;;
 
-        --ahf-file) 
-            AHF_FILE="$2"
-            shift
+        --inventory-file)
+            INVENTORY_FILE="$2"
+            shift;
             ;;
- 
-        --ahf-dir)
-            AHF_DIR="$2"
-             shift
-             ;;
 
-        --oracle-sid)
+        --db-name)
             ORACLE_SID="$2"
             shift
             ;;
 
-        --oracle-server)
+        --instance-ip-addr)
             ORACLE_SERVER="$2"
             shift
             ;;
 
         --ahf-install)
+            ORACLE_SID='NOOP'
             AHF_UNINSTALL=1
             AHF_INSTALL=1
             INSTALL_ENABLED=1
             ;;
 
         --ahf-uninstall)
+            ORACLE_SID='NOOP'
             AHF_UNINSTALL=1
             AHF_INSTALL=0
             ;;
@@ -130,55 +138,74 @@ do
 
 done
 
+[[ -n $ANSIBLE_EXTRA_VARS ]] && {
+
+    if [[ ! "$ANSIBLE_EXTRA_VARS" =~ ^([a-zA-Z_][a-zA-Z0-9_]*=[^[:space:]]+)([[:space:]]+[a-zA-Z_][a-zA-Z0-9_]*=[^[:space:]]+)*$ ]]; then
+        echo "Invalid format for --extra-vars"
+        echo "the extra vars should be a string of 1 or more name=value pairs separated by a space"
+        echo "example: varname1=value varname2=value2 varname3=value3"
+        exit 1
+    fi
+
+}
+
 [ "$RUN_ENABLED" -eq 1 ] && [ "$INSTALL_ENABLED" -eq 1 ] && {
     AHF_UNINSTALL=1
     AHF_INSTALL=1
     INSTALL_ENABLED=1
 }
 
-[[ -z $ORACLE_SERVER ]] && { echo "please specify --oracle-server"; exit 1; }
-[[ -z $ORACLE_SID ]] && { echo "please specify --oracle-sid"; exit 1; }
+[[ -z $ORACLE_SID ]] && { echo "please specify --db-name"; echo; help; exit 1; }
 
-INVENTORY_FILE=inventory_files/inventory_${ORACLE_SERVER}_${ORACLE_SID}
+# if the inventory file is specified on the cli, then the --instance-ip-addr or ORACLE_SERVER are not required
+
+if [[ -z $INVENTORY_FILE ]]; then
+    [[ -z $ORACLE_SERVER ]] && { echo "please specify --instance-ip-addr"; echo; help; exit 1; }
+    INVENTORY_FILE=inventory_files/inventory_${ORACLE_SERVER}_${ORACLE_SID}
+fi
+
 [[ -r $INVENTORY_FILE ]] || { 
     echo "cannot read inventory file '$INVENTORY_FILE'"
-    echo " please check --oracle-sid and --oracle-server"
+    echo " please check and --instance-ip-addr"
+    echo " and --inventory-file"
     exit 1
 }
 
-# do not display skipped hosts - 
-# a misnomer, as it skips all 'skipped' tasks
-export ANSIBLE_DISPLAY_SKIPPED_HOSTS=false
+# fail early if the AFH file format is incorrect and/or the file does not exist.
+[[ -n "$AHF_LOCATION" ]] && {
+
+    [[ ! "$AHF_LOCATION" =~ $AHF_LOCATION_PARAM ]] && {
+        echo "Incorrect parameter provided for AHF_LOCATION: $AHF_LOCATION"
+        echo "Example: gs://my-gcs-bucket/ahf/ahf.zip"
+        exit 1
+    }
+
+    ( gsutil ls "$AHF_LOCATION"  >/dev/null 2>&1 ) || {
+        echo "--ahf-location file '$AHF_LOCATION' not found"
+        exit 1;
+    }
+}
 
 # Uninstall AHF
 [[ $AHF_UNINSTALL -eq 1 ]] && {
 
-    $DEBUG_CMD ansible-playbook -i "$INVENTORY_FILE" check-oracle.yml \
-        --extra-vars "uninstall_ahf=true"
+    ansible-playbook -i "$INVENTORY_FILE" check-oracle.yml \
+        --extra-vars "uninstall_ahf=true $ANSIBLE_EXTRA_VARS"
 }
 
 # Install AHF
 [[ $AHF_INSTALL -eq 1 ]] && {
 
-    [[ -z $AHF_DIR ]] && { echo "please specify --ahf-dir"; exit 1; }
 
-    [[ ! "$ORA_SWLIB_BUCKET" =~ $ORA_SWLIB_BUCKET_PARAM ]] && {
-        echo "Incorrect parameter provided for ora-swlib-bucket: $ORA_SWLIB_BUCKET"
-        echo "Example: gs://my-gcs-bucket"
-        exit 1
-    }
-
-    ORA_SWLIB_AHF_FILENAME="${ORA_SWLIB_BUCKET}/${AHF_DIR}/${AHF_FILE}"
-
-    $DEBUG_CMD ansible-playbook -i "$INVENTORY_FILE" check-oracle.yml \
-        --extra-vars "uninstall_ahf=false ORA_SWLIB_AHF_FILENAME=$ORA_SWLIB_AHF_FILENAME"
+    ansible-playbook -i "$INVENTORY_FILE" check-oracle.yml \
+        --extra-vars "uninstall_ahf=false AHF_LOCATION=$AHF_LOCATION $ANSIBLE_EXTRA_VARS"
 }
 
 # run ORAchk
 [[ $RUN_ORACHK -eq 1 ]] && {
 
-    $DEBUG_CMD ansible-playbook -i "$INVENTORY_FILE" check-oracle.yml \
-        --extra-vars "uninstall_ahf=false run_orachk=true ORACLE_SID=$ORACLE_SID"
+    ansible-playbook -i "$INVENTORY_FILE" check-oracle.yml \
+        --extra-vars "uninstall_ahf=false run_orachk=true ORACLE_SID=$ORACLE_SID $ANSIBLE_EXTRA_VARS"
 }
 
 

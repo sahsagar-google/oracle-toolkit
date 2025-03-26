@@ -22,9 +22,14 @@
 
   tasks:
 
+    - name: Check for AHF Installation
+      stat:
+        path: /opt/oracle.ahf/bin/ahfctl
+      register: ahfctl_script
+
     - name: Uninstall AHF
       shell: yes 'Y' | /opt/oracle.ahf/bin/ahfctl uninstall
-      when: (uninstall_ahf | bool)
+      when: (uninstall_ahf | bool) and ahfctl_script.stat.exists
       ignore_errors: true
       failed_when: ahf_uninstall_result.rc != 0 and ahf_uninstall_result.rc is defined
       register: ahf_uninstall_result
@@ -43,13 +48,13 @@
             mode: "0700"
 
         - name: Copy AHF file from Google Storage
-          shell: gsutil cp {{ ORA_SWLIB_AHF_FILENAME }} {{ ahf_extract_path }}
+          shell: gsutil cp {{ AHF_LOCATION }} {{ ahf_extract_path }}
           args:
-            creates: "{{ ahf_extract_path }}/{{ ORA_SWLIB_AHF_FILENAME | basename }}"
+            creates: "{{ ahf_extract_path }}/{{ AHF_LOCATION | basename }}"
 
         - name: Unzip AHF file
           unarchive:
-            src: "{{ ahf_extract_path }}/{{ ORA_SWLIB_AHF_FILENAME | basename }}"
+            src: "{{ ahf_extract_path }}/{{ AHF_LOCATION | basename }}"
             dest: "{{ ahf_extract_path }}"
             remote_src: true
 
@@ -106,10 +111,6 @@
         - name: Get a tmpfile name
           set_fact:
             TMPFILE: "{{ lookup('pipe','mktemp') }}"
-
-        - name: Debug orachk command for {{ ORACLE_SID }}
-          debug:
-            msg: "CMD: ORACLE_PATH={{ ORACHK_BASE }} SQLPATH={{ ORACHK_BASE }} {{ ORACHK_BASE }}/orachk/orachk -s -dbconfig {{ ORACLE_HOME }}%{{ ORACLE_SID }} -showpass -profile dba | tee {{ TMPFILE }}"
 
         - name: Run ORAchk
           shell: "ORACLE_PATH={{ orachk_script_dir }} SQLPATH={{ orachk_script_dir }} {{ ORACHK_BASE }}/orachk/orachk -s -dbconfig {{ ORACLE_HOME }}%{{ ORACLE_SID }} -showpass -profile dba | tee {{ TMPFILE }}"
