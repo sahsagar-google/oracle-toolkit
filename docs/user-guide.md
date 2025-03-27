@@ -2723,11 +2723,54 @@ The following Oracle Support Note will provide the download link:
 
 ORAchk is a part of the AHF utility.  It is not necessary to install the entire AHF utility to run ORAchk.
 
-The script provided with the oracle-toolkit will allow you to install, run and uninstall ORAchk on the target server.
+The `check-oracle.sh` script provided with the oracle-toolkit will allow you to install, run and uninstall ORAchk on the target server.
+
+#### Options
+
+ORAchk can be installed on the target server using the following options:
+
+example 1:
+
+```text
+./check-oracle.sh \
+--ahf-install \
+--db-name <your-database-name> \
+--instance-ip-addr <your-instance-ip-address|server-name> \
+--ahf-location <path-to-ahf-zip-file> 
+```
+
+example 2:
+
+```text
+./check-oracle.sh \
+--ahf-install \
+--inventory-file <path-to-inventory-file> \
+--ahf-location <path-to-ahf-zip-file> 
+```
+
+Running ORAchk on the target server is similar to the installation process, but the '--ahf-location' option is not required.
+
+example 1:
+
+```text
+./check-oracle.sh \
+--run-orachk \
+--db-name <your-database-name> \
+--instance-ip-addr <your-instance-ip-address|server-name> 
+```
+
+example 2:
+
+```text
+./check-oracle.sh \
+--run-orachk \
+--db-name <your-database-name> \
+--inventory-file <path-to-inventory-file> 
+```
 
 #### The AHF Zip file.
 
-The zip file must be uploaded to GCS media bucket.
+The zip file must be uploaded to a GCS media bucket.
 
 The default 'directory' for this is AHF.
 
@@ -2738,13 +2781,23 @@ For instance, the file `AHF-LINUX_v25.1.0.zip` would be uploaded to `gs://oracle
 Use the the `check-oracle.sh` script to install and run ORAchk in one command.
 
 ```bash
-./check-oracle.sh  --ahf-install \
-   --ora-swlib-bucket gs://pythian-gto-oracle-software \
-   --oracle-sid ORCL \
-   --oracle-server ora-db-server-orachk-19c-patch \
-   --ahf-dir AHF \
-   --ahf-file AHF-LINUX_v25.1.0.zip \
-   --run-orachk
+$  ./check-oracle.sh --help
+        Usage: check-oracle.sh
+         --instance-ip-addr <value>
+         [ --extra-vars <value> ]
+         [ --ahf-location <value> ]
+         [ --db-name <value> ]
+         [ --inventory-file <value> ]
+         [ --ahf-install ]
+         [ --ahf-uninstall ]
+         [ --run-orachk ]
+         [ --help ]
+         [ --debug ]
+
+--ahf-install and --run-orachk may be combined to install and run
+--extra-vars is used to pass any number of extra ansible vars
+  example:  --extra-vars 'var1=val1 var2=val2'
+
 ``` 
 
 example output:
@@ -2752,27 +2805,21 @@ Note: skipped steps are omitted
 
 ```text
 
+./check-oracle.sh --ahf-install \
+  --instance-ip-addr 10.2.80.39 \
+  --db-name ORCL \
+  --ahf-location gs://oracle-software/AHF/AHF-LINUX_v25.1.0.zip
 
-$ ./check-oracle-test.sh install-and-run
-TASK install-and-run
-
-PLAY [ORAchk: uninstall, install or run] ***********************************************************************************************************************************************************************
-
-TASK [Uninstall AHF] *******************************************************************************************************************************************************************************************
-changed: [ora-db-server-orachk-19c-patch]
-
+PLAY [ORAchk: uninstall, install or run] ***********************************************************************************************************************************************************************************************************************************
 ...
+PLAY [ORAchk: uninstall, install or run] ***********************************************************************************************************************************************************************************************************************************
 
-TASK [Display local path of fetched file] **********************************************************************************************************************************************************************
-skipping: [ora-db-server-orachk-19c-patch]
+TASK [Check for AHF Installation] ******************************************************************************************************************************************************************************************************************************************
+ok: [ora-db-server-19c]
+...
+PLAY RECAP *****************************************************************************************************************************************************************************************************************************************************************
+ora-db-server-19c : ok=8    changed=2    unreachable=0    failed=0    skipped=24   rescued=0    ignored=0
 
-TASK [Display local path of fetched file] **********************************************************************************************************************************************************************
-ok: [ora-db-server-orachk-19c-patch] => {
-    "msg": "Fetched file is saved locally at: /tmp/orachk_ora-db-server-orachk-19c-patch_ORCL_030325_155354.zip"
-}
-
-PLAY RECAP *****************************************************************************************************************************************************************************************************
-ora-db-server-orachk-19c-patch   : ok=6    changed=3    unreachable=0    failed=0    skipped=9    rescued=0    ignored=0
 ```
 
 #### Installing ORAchk
@@ -2780,15 +2827,12 @@ ora-db-server-orachk-19c-patch   : ok=6    changed=3    unreachable=0    failed=
 Use the the `check-oracle.sh` script to install ORAchk.
 
 ```bash
-./check-oracle.sh  --ahf-install \
-      --ora-swlib-bucket gs://pythian-gto-oracle-software \
-      --oracle-sid ORCL \
-      --oracle-server ora-db-server-orachk-19c-patch \
-      --ahf-dir AHF \
-      --ahf-file AHF-LINUX_v25.1.0.zip
+
+./check-oracle.sh --ahf-install \
+   --inventory-file inventory_files/inventory_ora-db-server-19c_ORCL \
+   --ahf-location gs://oracle-software/AHF/AHF-LINUX_v25.1.0.zip
 
 ```
-
 example output:
 Note: skipped steps are omitted
 
@@ -2796,23 +2840,23 @@ Note: skipped steps are omitted
 PLAY [ORAchk: uninstall, install or run] **********************************************************************************************************************************************************************************************
 
 TASK [Create AHF directory] ***********************************************************************************************************************************************************************************************************
-ok: [ora-db-server-orachk-19c-patch]
+ok: [ora-db-server-19c]
 
 ...
 
 TASK [Run AHF setup] ******************************************************************************************************************************************************************************************************************
-changed: [ora-db-server-orachk-19c-patch]
+changed: [ora-db-server-19c]
 
 PLAY RECAP ****************************************************************************************************************************************************************************************************************************
-ora-db-server-orachk-19c-patch   : ok=7    changed=2    unreachable=0    failed=0    skipped=8    rescued=0    ignored=0
+ora-db-server-19c   : ok=7    changed=2    unreachable=0    failed=0    skipped=8    rescued=0    ignored=0
 
 ```
 #### Running ORAchk
 
 ```bash
-./check-oracle.sh  --run-orachk \
-      --oracle-sid ORCL \
-      --oracle-server ora-db-server-orachk-19c-patch
+./check-oracle.sh --run-orachk \
+  --db-name ORCL \
+  --inventory-file inventory_files/inventory_ora-db-server-19c_ORCL
 ```
 
 example output:
@@ -2825,47 +2869,47 @@ PLAY [ORAchk: uninstall, install or run] ***************************************
 ...
 
 TASK [Run ORAchk] *********************************************************************************************************************************************************************************************************************
-changed: [ora-db-server-orachk-19c-patch]
+changed: [ora-db-server-19c]
 
 ...
 
 TASK [Display local path of fetched file] *********************************************************************************************************************************************************************************************
-ok: [ora-db-server-orachk-19c-patch] => {
-    "msg": "Fetched file is saved locally at: /tmp/orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642.zip"
+ok: [ora-db-server-19c] => {
+    "msg": "Fetched file is saved locally at: /tmp/orachk_ora-db-server-19c_ORCL_020525_193642.zip"
 }
 
 PLAY RECAP ****************************************************************************************************************************************************************************************************************************
-ora-db-server-orachk-19c-patch   : ok=6    changed=3    unreachable=0    failed=0    skipped=9    rescued=0    ignored=0
+ora-db-server-19c   : ok=6    changed=3    unreachable=0    failed=0    skipped=9    rescued=0    ignored=0
 
 ```
 
-As shown in the message, the orachk zip file is saved locally at `/tmp/orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642.zip`.
+As shown in the message, the orachk zip file is saved locally at `/tmp/orachk_ora-db-server-19c_ORCL_020525_193642.zip`.
 
 
 ```text
-$ unzip -l /tmp/orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642.zip | head -12
-Archive:  /tmp/orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642.zip
+$ unzip -l /tmp/orachk_ora-db-server-19c_ORCL_020525_193642.zip | head -12
+Archive:  /tmp/orachk_ora-db-server-19c_ORCL_020525_193642.zip
   Length      Date    Time    Name
 ---------  ---------- -----   ----
-        0  02-05-2025 19:40   orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642/
-        0  02-05-2025 19:40   orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642/.standalone_html_gen/
-        0  02-05-2025 19:41   orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642/log/
-        0  02-05-2025 19:40   orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642/outfiles/
-        0  02-05-2025 19:40   orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642/reports/
-        0  02-05-2025 19:40   orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642/scripts/
-        0  02-05-2025 19:40   orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642/upload/
-   650915  02-05-2025 19:40   orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642/orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642.html
-     8959  02-05-2025 19:40   orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642/localcmd.py.shell
+        0  02-05-2025 19:40   orachk_ora-db-server-19c_ORCL_020525_193642/
+        0  02-05-2025 19:40   orachk_ora-db-server-19c_ORCL_020525_193642/.standalone_html_gen/
+        0  02-05-2025 19:41   orachk_ora-db-server-19c_ORCL_020525_193642/log/
+        0  02-05-2025 19:40   orachk_ora-db-server-19c_ORCL_020525_193642/outfiles/
+        0  02-05-2025 19:40   orachk_ora-db-server-19c_ORCL_020525_193642/reports/
+        0  02-05-2025 19:40   orachk_ora-db-server-19c_ORCL_020525_193642/scripts/
+        0  02-05-2025 19:40   orachk_ora-db-server-19c_ORCL_020525_193642/upload/
+   650915  02-05-2025 19:40   orachk_ora-db-server-19c_ORCL_020525_193642/orachk_ora-db-server-19c_ORCL_020525_193642.html
+     8959  02-05-2025 19:40   orachk_ora-db-server-19c_ORCL_020525_193642/localcmd.py.shell
 ```
 
-Unzip the zip file, and open `orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642/orachk_ora-db-server-orachk-19c-patch_ORCL_020525_193642.html` in a browser
+Unzip the zip file, and open `orachk_ora-db-server-19c_ORCL_020525_193642/orachk_ora-db-server-19c_ORCL_020525_193642.html` in a browser
 
 #### Uninstalling ORAchk
 
 ```bash
 ./check-oracle.sh  --ahf-uninstall \
-      --oracle-sid ORCL \
-      --oracle-server ora-db-server-orachk-19c-patch
+      --db-name ORCL \
+      --oracle-server ora-db-server-19c
 ```
 
 example output:
@@ -2875,10 +2919,10 @@ Note: skipped steps are omitted
 PLAY [ORAchk: uninstall, install or run] **********************************************************************************************************************************************************************************************
 
 TASK [Uninstall AHF] ******************************************************************************************************************************************************************************************************************
-changed: [ora-db-server-orachk-19c-patch]
+changed: [ora-db-server-19c]
 
 PLAY RECAP ****************************************************************************************************************************************************************************************************************************
-ora-db-server-orachk-19c-patch   : ok=1    changed=1    unreachable=0    failed=0    skipped=14   rescued=0    ignored=0
+ora-db-server-19c   : ok=1    changed=1    unreachable=0    failed=0    skipped=14   rescued=0    ignored=0
 ```
 
 ### Reset passwords
