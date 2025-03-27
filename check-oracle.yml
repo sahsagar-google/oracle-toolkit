@@ -48,7 +48,6 @@
             mode: "0700"
 
         - name: Copy AHF file from Google Storage
-          become: true
           vars:
             local_ahf_path: "/tmp/{{ AHF_LOCATION | basename }}"
           block:
