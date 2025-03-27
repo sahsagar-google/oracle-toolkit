@@ -688,7 +688,7 @@ shopt -s nocasematch
   echo "Incorrect parameter provided for backup-dest: $BACKUP_DEST"
   exit 1
 }
-[[ ! "$GCS_BACKUP_CONFIG" =~ $GCS_BACKUP_CONFIG_PARAM ]] && [[ "$BACKUP_DEST" != "/mnt" ]] && {
+[[ -n "$GCS_BACKUP_CONFIG" && ! "$GCS_BACKUP_CONFIG" =~ $GCS_BACKUP_CONFIG_PARAM ]] && [[ "$BACKUP_DEST" != "/mnt" ]] && {
   echo "Incorrect parameter provided for gcs-backup-config: $GCS_BACKUP_CONFIG"
   exit 1
 }
