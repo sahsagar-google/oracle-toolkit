@@ -692,7 +692,7 @@ shopt -s nocasematch
   echo "Incorrect parameter provided for gcs-backup-config: $GCS_BACKUP_CONFIG"
   exit 1
 }
-[[ ! "$GCS_BACKUP_BUCKET" =~ $GCS_BACKUP_BUCKET_PARAM ]] && [[ "$GCS_BACKUP_CONFIG" != "manual" ]] && {
+[[ -n "$GCS_BACKUP_BUCKET" && ! "$GCS_BACKUP_BUCKET" =~ $GCS_BACKUP_BUCKET_PARAM ]] && [[ "$GCS_BACKUP_CONFIG" != "manual" ]] && {
   echo "Incorrect parameter provided for gcs-backup-bucket: $GCS_BACKUP_BUCKET"
   exit 1
 }
