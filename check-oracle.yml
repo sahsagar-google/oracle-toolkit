@@ -35,10 +35,6 @@
       register: ahf_uninstall_result
 
     - block:
-        # 777 is require to write to the dest using the ssh workaround
-        # there seems to be no way to copy files to AHF_LOCATION using ssh
-        # when the permissions are restrictive. 
-        # The permisssions are unimportant for this file anyway
         - name: Create AHF directory
           file:
             path: "{{ ahf_extract_path }}"
