@@ -35,6 +35,10 @@
       register: ahf_uninstall_result
 
     - block:
+        # 777 is require to write to the dest using the ssh workaround
+        # there seems to be no way to copy files to AHF_LOCATION using ssh
+        # when the permissions are restrictive. 
+        # The permisssions are unimportant for this file anyway
         - name: Create AHF directory
           file:
             path: "{{ ahf_extract_path }}"
@@ -48,9 +52,45 @@
             mode: "0700"
 
         - name: Copy AHF file from Google Storage
-          shell: gsutil cp {{ AHF_LOCATION }} {{ ahf_extract_path }}
-          args:
-            creates: "{{ ahf_extract_path }}/{{ AHF_LOCATION | basename }}"
+          become: true
+          vars:
+            local_ahf_path: "/tmp/{{ AHF_LOCATION | basename }}"
+          block:
+
+            - name: Download AHF file from Google Storage to the ansible control node.
+              local_action: 
+                module: command
+                cmd: "gsutil cp {{ AHF_LOCATION }} {{ local_ahf_path }}"
+              register: gsutil_result
+              changed_when: gsutil_result.rc == 0
+
+            - name: Check if {{ local_ahf_path }} is a zip file
+              local_action:
+                module: command
+                cmd: unzip -l "{{ local_ahf_path }}"
+              register: zip_check
+              until: zip_check.rc == 0 
+              retries: 3 # Adjust the number of retries
+              delay: 1 # Delay between retries
+              failed_when: zip_check.rc != 0
+              ignore_errors: true
+
+            - name: Copy AHF file to remote host if it is a zip file.
+              copy:
+                src: "{{ local_ahf_path }}"
+                dest: "{{ ahf_extract_path }}/{{ AHF_LOCATION | basename }}"
+              when: zip_check.rc == 0
+
+            - name: remove local AHF file.
+              file:
+                path: "{{ local_ahf_path }}"
+                state: absent
+
+          rescue:
+            - name: remove local AHF file on failure.
+              file:
+                path: "{{ local_ahf_path }}"
+                state: absent
 
         - name: Unzip AHF file
           unarchive:
