@@ -196,7 +196,7 @@ fi
     echo "Incorrect parameter provided for ora-swlib-path: $ORA_SWLIB_PATH"
     exit 1
 }
-[[ ! "$GCS_BACKUP_PATH" =~ $GCS_BACKUP_PATH_PARAM ]] && {
+[[ -n "$GCS_BACKUP_PATH" && ! "$GCS_BACKUP_PATH" =~ $GCS_BACKUP_PATH_PARAM ]] && {
   echo "Incorrect parameter provided for gcs-backup-path: $GCS_BACKUP_PATH"
   exit 1
 }

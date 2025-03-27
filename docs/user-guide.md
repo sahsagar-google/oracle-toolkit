@@ -1933,7 +1933,7 @@ GCS_BACKUP_CONFIG
 </pre></p></td>
 <td>user defined - no default<br>
 Example: manual</td>
-<td>The manual option requires all the steps from Cloud Storage Bucket and Cloud Storage Fuse for a successful configuration. The manual option requires the options --gcs-backup-bucket and --gcs-backup-service-account parameters.<br>
+<td>The manual option requires all the steps from Cloud Storage Bucket and Cloud Storage Fuse for a successful configuration. The manual option requires the --gcs-backup-bucket parameter.<br>
 </tr>
 <tr>
 <td>GCS backup bucket</td>
@@ -1945,17 +1945,6 @@ GCS_BACKUP_BUCKET
 Example:  gs://[cloud-storage-bucket-name] </td>
 <td>The bucket name expected as  gs://[cloud-storage-bucket-name].<br>
 </tr>
-<tr>
-<td>GCS backup service account</td>
-<td><p><pre>
-GCS_BACKUP_SERVICE_ACCOUNT
---gcs-backup-service-account
-</pre></p></td>
-<td>user defined - no default<br>
-Example:  abcdefg-compute@developer.gserviceaccount.com </td>
-<td>The service account configured to access the gcs bucket by the gce vm instance.<br>
-</tr>
-
 <tr>
 <td>RMAN full DB backup redundancy</td>
 <td><p><pre>
@@ -3160,6 +3149,7 @@ $ ./cleanup-oracle.sh --help
           [ --ora-staging <value> ]
           [ --ora-asm-disks <value> ]
           [ --ora-data-mounts <value> ]
+          [ --gcs-backup-path <value> ]
           [ --help ]
 ```
 
@@ -3173,7 +3163,8 @@ $ ./cleanup-oracle.sh --ora-version 19 \
 --ora-swlib-path /u02/oracle_install \
 --ora-staging /u02/oracle_install \
 --ora-asm-disks asm_disk_config.json \
---ora-data-mounts data_mounts_config.json
+--ora-data-mounts data_mounts_config.json \
+--gcs-backup-path /mnt/gcsfuse
 
 Running with parameters from command line or environment variables:
 
@@ -3185,6 +3176,7 @@ ORA_ROLE_SEPARATION=TRUE
 ORA_STAGING=/u02/oracle_install
 ORA_SWLIB_PATH=/u02/oracle_install
 ORA_VERSION=19.3.0.0.0
+GCS_BACKUP_PATH=/mnt/gcsfuse
 
 Ansible params:
 Found Ansible at /usr/bin/ansible-playbook
