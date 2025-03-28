@@ -36,6 +36,7 @@
 - name: gcs backup location | gcs backup
   include_tasks: gcsmanual.yml
   when: gcsfuse_backup_config == "manual"
+  tags: db-backups,add-backups
 
 - name: Copy backup scripts to target server
   become: true

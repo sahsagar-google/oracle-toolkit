@@ -19,6 +19,8 @@
 
 ---
 - name: gcsfuse | Add Google Cloud gcsfuse repo
+  become: true
+  become_user: root
   yum_repository:
     name: gcsfuse
     description: Google cloud gcsfuse
@@ -29,6 +31,8 @@
     gpgcheck: true
 
 - name: gcloud | Install latest gcloud gcsfuse package
+  become: true
+  become_user: root
   package:
     name: gcsfuse
     state: present
