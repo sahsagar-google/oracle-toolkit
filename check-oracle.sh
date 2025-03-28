@@ -115,7 +115,7 @@ do
             ;;
 
         --ahf-install)
-            ORACLE_SID='NOOP'
+            : ${ORACLE_SID=:'NOOP'}
             AHF_UNINSTALL=1
             AHF_INSTALL=1
             INSTALL_ENABLED=1
@@ -190,7 +190,7 @@ fi
 }
 
 # fail early if the AFH file format is incorrect and/or the file does not exist.
-[[ -n "$AHF_LOCATION" ]] && {
+[[ -n "$AHF_LOCATION" ]] || [[ $AHF_INSTALL -eq 1 ]] && {
 
     [[ ! "$AHF_LOCATION" =~ $AHF_LOCATION_PARAM ]] && {
         echo "Incorrect parameter provided for AHF_LOCATION: $AHF_LOCATION"
