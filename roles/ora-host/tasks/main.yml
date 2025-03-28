@@ -69,49 +69,43 @@
     opts: rw,nosuid,nodev
     state: mounted
 
-- name: Check for existing package manager repo files
-  stat:
-    path: "/etc/yum.repos.d/{{ item }}"
-  register: repo_file_check
-  with_items: "{{ package_repository_files }}"
-  tags: os-packages
-
-- name: Build a list of detected package manager repo files
-  set_fact:
-    repo_files: "{{ repo_file_check.results | selectattr('stat.exists') | map(attribute='item') | list }}"
-  tags: os-packages
-
-- name: List all detected package manager repo files
-  debug:
-    var: repo_files
-    verbosity: 1
-  tags: os-packages
-
-- name: Install Oracle required packages (RHUI/cloud config) for RHEL7
-  package:
-    name: "{{ oracle_required_rpms + oracle_required_rpms_el7 }}"
-    state: present
-    lock_timeout: "{{ pkg_mgr_lock_timeout }}"
-    enablerepo: rhui-rhel-7-server-rhui-optional-rpms
+- name: Enterprise Linux 7 specific package manager steps
   when:
     - install_os_packages
     - ansible_distribution == 'RedHat'
     - ansible_distribution_major_version | int == 7
-    - "'rh-cloud.repo' in repo_files"
   tags: os-packages
+  block:
+    - name: Check for existing package manager repo files
+      stat:
+        path: "/etc/yum.repos.d/{{ item }}"
+      register: repo_file_check
+      with_items: "{{ package_repository_files }}"
 
-- name: Install Oracle required packages (base/non-RHUI config) for RHEL7
-  package:
-    name: "{{ oracle_required_rpms + oracle_required_rpms_el7 }}"
-    state: present
-    lock_timeout: "{{ pkg_mgr_lock_timeout }}"
-    enablerepo: rhel-7-server-optional-rpms
-  when:
-    - install_os_packages
-    - ansible_distribution == 'RedHat'
-    - ansible_distribution_major_version | int == 7
-    - "'redhat.repo' in repo_files and 'rh-cloud.repo' not in repo_files"
-  tags: os-packages
+    - name: Build a list of detected package manager repo files
+      set_fact:
+        repo_files: "{{ repo_file_check.results | selectattr('stat.exists') | map(attribute='item') | list }}"
+
+    - name: List all detected package manager repo files
+      debug:
+        var: repo_files
+        verbosity: 1
+
+    - name: Install Oracle required packages (RHUI/cloud config) for RHEL7
+      package:
+        name: "{{ oracle_required_rpms + oracle_required_rpms_el7 }}"
+        state: present
+        lock_timeout: "{{ pkg_mgr_lock_timeout }}"
+        enablerepo: rhui-rhel-7-server-rhui-optional-rpms
+      when: "'rh-cloud.repo' in repo_files"
+
+    - name: Install Oracle required packages (base/non-RHUI config) for RHEL7
+      package:
+        name: "{{ oracle_required_rpms + oracle_required_rpms_el7 }}"
+        state: present
+        lock_timeout: "{{ pkg_mgr_lock_timeout }}"
+        enablerepo: rhel-7-server-optional-rpms
+      when: "'redhat.repo' in repo_files and 'rh-cloud.repo' not in repo_files"
 
 - name: Install Oracle required packages
   package:
