@@ -115,7 +115,7 @@ do
             ;;
 
         --ahf-install)
-            : ${ORACLE_SID=:'NOOP'}
+            : ${ORACLE_SID:='NOOP'}
             AHF_UNINSTALL=1
             AHF_INSTALL=1
             INSTALL_ENABLED=1
