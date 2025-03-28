@@ -66,7 +66,7 @@
             - name: Download AHF file from Google Storage to the ansible control node.
               local_action: 
                 module: command
-                cmd: gcloud storage cp "{{ AHF_LOCATION }} {{ local_ahf_path }}"
+                cmd: gcloud storage cp "{{ AHF_LOCATION }}" "{{ local_ahf_path }}"
               register: gsutil_result
               changed_when: gsutil_result.rc == 0
 
