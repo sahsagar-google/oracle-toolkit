@@ -239,6 +239,7 @@
           when: not orachk_rpt_location.stat.exists
 
         - name: Fetch the ORAchk zipfile
+          become: true
           fetch:
             src: "{{ ORACHK_RPT_FILE }}"
             dest: /tmp/
