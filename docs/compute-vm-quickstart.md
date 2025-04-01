@@ -94,7 +94,13 @@ gcloud compute instances set-disk-auto-delete ${VM_NAME} --auto-delete --disk=${
 
 ### Configure SSH Connectivity
 
-If required, generate a new and dedicated ssh key-pair (using your internal or organizational ssh key standards for properties such as key file names, encryption algorithm used, etc).
+Initial access to a new compute engine VM is easiest using the [cloud compute ssh](https://cloud.google.com/sdk/gcloud/reference/compute/ssh) command. This command handles authenication (including key pair creation and distribution if necessary) and hostname resolution for accessing the new VM. For example:
+
+```bash
+gcloud compute ssh ${VM_NAME} --zone=${ZONE_ID}
+```
+
+If using a separate, Ansible dedicated ssh key-pair is desirable, create a new key-pair (using your internal or organizational ssh key standards for properties such as key file names, encryption algorithm used, etc).
 
 Example command:
 
@@ -103,15 +109,13 @@ mkdir -p "${HOME}/.ssh" && chmod 0700 "${HOME}/.ssh"
 ssh-keygen -q -b 4096 -t rsa -N '' -C 'oracle-toolkit-for-oracle' -f "${HOME}/.ssh/id_rsa_oracle_toolkit"
 ```
 
-Then copy your pre-existing, or newly created public key to your newly created Compute VM.
-
-Various methods can be used to copy the public key to the new VM, for example if you have password based access, you might use a command similar to:
+The newly created public key can then be copied to your compute engine VM using the [gcloud compute scp](https://cloud.google.com/sdk/gcloud/reference/compute/scp) command. For example:
 
 ```bash
-ssh-copy-id -i "${HOME}/.ssh/id_rsa_oracle_toolkit" ${INSTANCE_IP_ADDR}
+gcloud compute scp "${HOME}/.ssh/id_rsa_oracle_toolkit.pub" ${VM_NAME}:"${HOME}/.ssh/" --zone=${ZONE_ID}
 ```
 
-Or you may have Google Cloud [Identity-Aware Proxy](https://cloud.google.com/security/products/iap)(IAP) authenticated access or leverage Google Cloud metadata-based SSH keys - see the [Add SSH keys to VMs](https://cloud.google.com/compute/docs/connect/add-ssh-keys) documentation for additional details.
+Alternatively, the ssh key can be added to your Google Cloud project metadata, which is then automatically copied to compute engine VMs. For additional information on this option, see [Add SSH keys to VMs](https://cloud.google.com/compute/docs/connect/add-ssh-keys).
 
 ### Install the Oracle Software and Create a Database
 
@@ -130,30 +134,3 @@ bash ./install-oracle.sh \
   --ora-asm-disks-json '[{"diskgroup":"DATA","disks":[{"blk_device":"/dev/disk/by-id/google-oracle-asm-data-1","name":"DATA1"}]},{"diskgroup":"RECO","disks":[{"blk_device":"/dev/disk/by-id/google-oracle-asm-reco-1","name":"RECO1"}]}]' \
   --ora-db-name ORCL
 ```
-
-## Deploying using Terraform
-
-The required database infrastructure can also be provisioned, including execution of this toolkit, using Terraform.
-
-To deploy using Terraform:
-
-1. Edit the [terraform/backend.tf](../terraform/backend.tf) document and update the backend Cloud Storage `bucket` and `prefix` values indicating where your Terraform state file is stored.
-2. Edit the [terraform/main.tf](../terraform/main.tf) document and customize all key-value pairs as necessary. Including adding and resizing ASM disks as required.
-
-Then run the Terraform using:
-
-```bash
-cd terraform
-
-terraform init
-terraform plan
-terraform apply
-```
-
-And if required, remove using:
-
-```bash
-terraform destroy
-```
-
-For full details, refer to the [Terraform Infrastructure Provisioning](../terraform/README.md) guide for this toolkit.
