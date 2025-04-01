@@ -41,7 +41,9 @@ Several other options for creating Compute Engines VMs exist and are explained i
 
 ### Ansible Control Node Provisioning & Setup
 
-Your Ansible Control Node can be virtually any Ansible supported operating system. Install Ansible via typical methods. See the [Installing Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html) section of the official Ansible documentation for additional details.
+Your Ansible Control Node can be virtually any Ansible supported operating system. However, running from a dedicated Linux virtual machine is recommended.
+
+Install Ansible via typical methods. See the [Installing Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html) section of the official Ansible documentation for additional details.
 
 > **NOTE:** Ansible version 2.9 or higher is required.
 
@@ -220,7 +222,7 @@ DISK_JSON_OBJECT=$(echo '
   "diskgroup": "DATA",
   "disks": [
     {
-      "blk_device": "/dev/disk/by-id/google-'${DISK_NAME}'",
+      "blk_device": "/dev/disk/by-id/google-oracle-'${DISK_NAME}'",
       "name": "'${DISK_NAME}'"
     }
   ]
@@ -239,17 +241,23 @@ If desired, the above provided **gcloud** utility steps and commands can easily 
 
 Before the toolkit can be used, ssh connectivity must be established with an ssh key exchange. An existing, or new (and perhaps toolkit dedicated) ssh key pair can be used.
 
-If required, create an ssh key pair using your internal standards (i.e. for encryption algorithm, comment standards, etc). Example command to create a new key-pair for usage with this toolkit using common settings:
+Initial access to a new compute engine VM is easiest using the [cloud compute ssh](https://cloud.google.com/sdk/gcloud/reference/compute/ssh) command. This command handles authenication (including key pair creation and distribution if necessary) and hostname resolution for accessing the new VM. For example:
+
+```bash
+gcloud compute ssh ${VM_NAME} --zone=${ZONE_ID}
+```
+
+If required, create a new and Ansible dedicated ssh key pair using your internal standards (i.e. for encryption algorithm, comment standards, etc). Example command to create a new key-pair for usage with this toolkit using common settings:
 
 ```bash
 mkdir -p "${HOME}/.ssh" && chmod 0700 "${HOME}/.ssh"
 ssh-keygen -q -b 4096 -t rsa -N '' -C 'oracle-toolkit-for-oracle' -f "${HOME}/.ssh/id_rsa_oracle_toolkit"
 ```
 
-Then copy the desired public key to your newly created Compute Engine VM. Specifics on how to copy may be site specific, may rely on Google Cloud [Identity-Aware Proxy](https://cloud.google.com/security/products/iap)(IAP) or may use a command similar to the following (assuming your ID is already setup with a password):
+The newly created public key can then be copied to your compute engine VM using the [gcloud compute scp](https://cloud.google.com/sdk/gcloud/reference/compute/scp) command. For example:
 
 ```bash
-ssh-copy-id -i "${HOME}/.ssh/id_rsa_oracle_toolkit" ${INSTANCE_IP_ADDR}
+gcloud compute scp "${HOME}/.ssh/id_rsa_oracle_toolkit.pub" ${VM_NAME}:"${HOME}/.ssh/" --zone=${ZONE_ID}
 ```
 
 Or, if appropriate in your environment, use Google Cloud metadata-based SSH keys - see the [Add SSH keys to VMs](https://cloud.google.com/compute/docs/connect/add-ssh-keys) documentation for additional details.
