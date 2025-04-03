@@ -15,7 +15,6 @@
 # check-oracle.yml
 - name: "ORAchk: uninstall, install or run"
   hosts: all
-  become: false
   gather_facts: false
   roles:
     - role: check-oracle
@@ -27,30 +26,55 @@
         path: "{{ AHFCTL_PATH }}"
       register: ahfctl_script
 
-    - name: Uninstall AHF
-      become: true
-      shell: yes 'Y' | "{{ AHFCTL_PATH }}" uninstall
-      when: (uninstall_ahf | bool) and ahfctl_script.stat.exists
-      ignore_errors: true
-      failed_when: ahf_uninstall_result.rc != 0 and ahf_uninstall_result.rc is defined
-      register: ahf_uninstall_result
+
+    - block:
+        - name: Uninstall AHF
+          become: true
+          shell: yes 'Y' | "{{ AHFCTL_PATH }}" uninstall
+          ignore_errors: true
+          failed_when: ahf_uninstall_result.rc != 0 and ahf_uninstall_result.rc is defined
+          register: ahf_uninstall_result
+
+        - name: Remove AHF Unzip Location
+          become: true
+          file:
+            path: "{{ ahf_extract_path }}"
+            state: absent
+
+        - name: Remove orachk directory
+          become: true
+          file:
+            path: "{{ orachk_script_dir }}"
+            state: absent
+
+        - name: Remove orachk base directory
+          become: true
+          file:
+            path: "{{ ORACHK_BASE }}"
+            state: absent
+
+      when: (uninstall_ahf | bool) 
 
     - block:
         - name: Create AHF directory
+          become: true
           file:
             path: "{{ ahf_extract_path }}"
             state: directory
             mode: "0700"
 
         - name: Create ORAchk directory
+          become: true
           file:
             path: "{{ orachk_script_dir }}"
             state: directory
             mode: "0700"
 
         - name: Copy AHF file from Google Storage
+          become: false
           vars:
             local_ahf_path: "/tmp/{{ AHF_LOCATION | basename }}"
+
           block:
 
             # leave these here for testing
@@ -64,6 +88,7 @@
                 #msg: "AHF File Dest: {{ ahf_extract_path }}/{{ AHF_LOCATION | basename }}"
 
             - name: Download AHF file from Google Storage to the ansible control node.
+              become: false
               local_action: 
                 module: command
                 cmd: gcloud storage cp "{{ AHF_LOCATION }}" "{{ local_ahf_path }}"
@@ -71,17 +96,20 @@
               changed_when: gsutil_result.rc == 0
 
             - name: Check if {{ local_ahf_path }} exists
+              become: false
               stat:
                 path: "{{ local_ahf_path }}"
               register: file_status_check
               delegate_to: localhost
 
             - name: File Status
+              become: false
               debug:
                 msg: "file exists"
               when: file_status_check.stat.exists
 
             - name: Fail if the file does not exist
+              become: false
               fail:
                 msg: "File {{ local_ahf_path }} does not exist."
               when: not file_status_check.stat.exists
@@ -91,13 +119,26 @@
               copy:
                 src: "{{ local_ahf_path }}"
                 dest: "{{ ahf_extract_path }}/{{ AHF_LOCATION | basename }}"
-              when: file_status_check.stat.exists == 0
+              when: file_status_check.stat.exists
 
             - name: remove local AHF file.
+              become: false
               file:
                 path: "{{ local_ahf_path }}"
                 state: absent
               delegate_to: localhost
+
+        - name: Get status of remote zip
+          become: true
+          stat:
+            path: "{{ ahf_extract_path }}/{{ AHF_LOCATION | basename }}"
+          register: remote_zip_status
+
+        - name: Fail if Zip not found "{{ ahf_extract_path }}/{{ AHF_LOCATION | basename }}"
+          become: true
+          fail:
+            msg: "File {{ ahf_extract_path }}/{{ AHF_LOCATION | basename }} does not exist"
+          when: not remote_zip_status.stat.exists
 
         - name: Unzip AHF file
           become: true
@@ -239,7 +280,6 @@
           when: not orachk_rpt_location.stat.exists
 
         - name: Fetch the ORAchk zipfile
-          become: true
           fetch:
             src: "{{ ORACHK_RPT_FILE }}"
             dest: /tmp/
