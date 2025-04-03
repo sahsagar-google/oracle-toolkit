@@ -91,7 +91,7 @@
               become: false
               local_action: 
                 module: command
-                cmd: gcloud storage cp "{{ AHF_LOCATION }}" "{{ local_ahf_path }}"
+                cmd: gcloud storage cp --verbosity=debug "{{ AHF_LOCATION }}" "{{ local_ahf_path }}"
               register: gsutil_result
               changed_when: gsutil_result.rc == 0
 
@@ -240,8 +240,10 @@
 
         - name: Get a tmpfile name
           set_fact:
-            TMPFILE: "{{ lookup('pipe','mktemp') }}"
+            TMPFILE: "{{ lookup('pipe','mktemp -t orachk.XXXXXX') }}"
 
+        # create a temporary log file from the orachk run
+        # this can be used the location of the zip file created by ORAchk
         - name: Run ORAchk
           become: true
           shell: "ORACLE_PATH={{ orachk_script_dir }} SQLPATH={{ orachk_script_dir }} {{ ORACHK_BASE }}/orachk/orachk -s -dbconfig {{ ORACLE_HOME }}%{{ ORACLE_SID }} -showpass -profile dba | tee {{ TMPFILE }}"
@@ -270,6 +272,7 @@
             ORACHK_RPT_FILE: "{{ orachk_file_info.stdout }}"
 
         - name: Verify ORAchk Report File Existence
+          become: true
           stat:
             path: "{{ ORACHK_RPT_FILE }}"
           register: orachk_rpt_location
@@ -279,12 +282,27 @@
             msg: "Could not locate ORAchk report file {{ ORACHK_RPT_FILE }}"
           when: not orachk_rpt_location.stat.exists
 
+        - name: Create /tmp/orachk directory for the zip files
+          become: false
+          file:
+            path: /tmp/orachk/
+            state: directory
+            mode: "0700"
+
         - name: Fetch the ORAchk zipfile
+          become: true
           fetch:
             src: "{{ ORACHK_RPT_FILE }}"
-            dest: /tmp/
+            dest: /tmp/orachk/
             flat: true
           register: fetch_result
+
+        - name: Remove temporary file on controller
+          file:
+            path: "{{ TMPFILE }}"
+            state: absent
+          delegate_to: localhost
+          when: TMPFILE is defined
 
         - name: Deconfigure Expedited Testing
           become: true
