@@ -76,22 +76,21 @@
             local_ahf_path: "/tmp/{{ AHF_LOCATION | basename }}"
 
           block:
+            - name: Local AHF File
+              debug:
+                msg: "AHF File Source: {{ local_ahf_path }}"
+                verbosity: 1
 
-            # leave these here for testing
-            # this has been a problem area
-            #- name: Local AHF File
-              #debug:
-                #msg: "AHF File Source: {{ local_ahf_path }}"
-
-            #- name: Remote AHF File Dest
-              #debug:
-                #msg: "AHF File Dest: {{ ahf_extract_path }}/{{ AHF_LOCATION | basename }}"
+            - name: Remote AHF File Dest
+              debug:
+                msg: "AHF File Dest: {{ ahf_extract_path }}/{{ AHF_LOCATION | basename }}"
+                verbosity: 1
 
             - name: Download AHF file from Google Storage to the ansible control node.
               become: false
               local_action: 
                 module: command
-                cmd: gcloud storage cp --verbosity=debug "{{ AHF_LOCATION }}" "{{ local_ahf_path }}"
+                cmd: gcloud storage cp "{{ AHF_LOCATION }}" "{{ local_ahf_path }}"
               register: gsutil_result
               changed_when: gsutil_result.rc == 0
 
@@ -309,11 +308,10 @@
           shell:  cd  "{{ ORACHK_BASE }}/orachk/" && [[ -r orachk.orig ]] && rm -f orachk && mv orachk.orig orachk && rm -f orachk-quicktest.sh
           when: ( expedited_testing | bool )
 
-        # See what was actually returned by the fetch task
-        # this will be useful if the ansible version changes
-        # - name: Debug the entire fetch_result
-        # debug:
-        # var: fetch_result
+        - name: Debug the entire fetch_result
+          debug:
+            var: fetch_result
+            verbosity: 1
 
         # Only display the path if it exists in fetch_result.files
         - name: Display local path of fetched file
