@@ -56,7 +56,6 @@
       when: (uninstall_ahf | bool) 
 
     - block:
-
         - name: Create AHF directory
           become: true
           file:
@@ -77,6 +76,16 @@
             local_ahf_path: "/tmp/{{ AHF_LOCATION | basename }}"
 
           block:
+            - name: Local AHF File
+              debug:
+                msg: "AHF File Source: {{ local_ahf_path }}"
+                verbosity: 1
+
+            - name: Remote AHF File Dest
+              debug:
+                msg: "AHF File Dest: {{ ahf_extract_path }}/{{ AHF_LOCATION | basename }}"
+                verbosity: 1
+
             - name: Download AHF file from Google Storage to the ansible control node.
               become: false
               local_action: 
@@ -298,6 +307,11 @@
           become: true
           shell:  cd  "{{ ORACHK_BASE }}/orachk/" && [[ -r orachk.orig ]] && rm -f orachk && mv orachk.orig orachk && rm -f orachk-quicktest.sh
           when: ( expedited_testing | bool )
+
+        - name: Debug the entire fetch_result
+          debug:
+            var: fetch_result
+            verbosity: 1
 
         # Only display the path if it exists in fetch_result.files
         - name: Display local path of fetched file
