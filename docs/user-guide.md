@@ -1,3 +1,7 @@
+---
+published: True
+---
+
 # Oracle Toolkit for GCP: User Guide
 
 ## Table of Contents
