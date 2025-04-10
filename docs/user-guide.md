@@ -333,12 +333,8 @@ certification matrix in the "My Oracle Support" (MOS) site (sign in required):
 
 ## Installing the toolkit
 
-The latest version of the toolkit can be downloaded from Google Git
-Repositories:
+The latest version of the toolkit can be downloaded from GitHub:
 [https://github.com/google/oracle-toolkit](https://github.com/google/oracle-toolkit)
-
-The latest version of the toolkit can be downloaded from Google Git
-Repositories: https://github.com/google/oracle-toolkit
 
 On the `google/oracle-toolkit` home page in GitHub, download the toolkit to your
 control node by clicking the **Clone or Download** button and selecting
