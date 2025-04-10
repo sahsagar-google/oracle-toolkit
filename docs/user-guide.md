@@ -333,7 +333,6 @@ certification matrix in the "My Oracle Support" (MOS) site (sign in required):
 
 ## Installing the oracle-toolkit
 
-<<<<<<< HEAD
 The latest version of the oracle-toolkit can be downloaded from Google Git
 Repositories:
 [https://github.com/google/oracle-toolkit](https://github.com/google/oracle-toolkit)
@@ -1942,7 +1941,7 @@ GCS_BACKUP_CONFIG
 </pre></p></td>
 <td>user defined - no default<br>
 Example: manual</td>
-<td>The manual option requires all the steps from Cloud Storage Bucket and Cloud Storage Fuse for a successful configuration. The manual option requires the --gcs-backup-bucket parameter.<br>
+<td>The manual option requires all the steps from Cloud Storage Bucket and Cloud Storage Fuse for a successful configuration. The manual option requires the --gcs-backup-bucket parameter.</td>
 </tr>
 <tr>
 <td>GCS backup bucket</td>
@@ -1952,7 +1951,7 @@ GCS_BACKUP_BUCKET
 </pre></p></td>
 <td>user defined - no default<br>
 Example:  gs://[cloud-storage-bucket-name] </td>
-<td>The bucket name expected as  gs://[cloud-storage-bucket-name].<br>
+<td>The bucket name expected as  gs://[cloud-storage-bucket-name].</td>
 </tr>
 <tr>
 <td>GCS backup bucket</td>
@@ -1962,7 +1961,7 @@ GCS_BACKUP_TEMP_PATH
 </pre></p></td>
 <td>user defined - /u01/gcsfusetmp <br>
 Example:  /u01/gcsfusetmp </td>
-<td>The temporary directory used by gcsfuse to write temporarily locally. The directory requires 2GB of free space for every backup channel.<br>
+<td>The temporary directory used by gcsfuse to write temporarily locally. The directory requires 2GB of free space for every backup channel.</td>
 </tr>
 <tr>
 <td>RMAN full DB backup redundancy</td>
@@ -2517,6 +2516,7 @@ ORA_VERSION
 <br>
 Defaults to the latest release.</td>
 </tr>
+<tr>
 <td>Data file destination</td>
 <td><p><pre>
 ORA_DATA_DESTINATION
@@ -2807,7 +2807,7 @@ example 1:
 --ahf-install \
 --db-name <your-database-name> \
 --instance-ip-addr <your-instance-ip-address|server-name> \
---ahf-location <path-to-ahf-zip-file> 
+--ahf-location <path-to-ahf-zip-file>
 ```
 
 example 2:
@@ -2816,7 +2816,7 @@ example 2:
 ./check-oracle.sh \
 --ahf-install \
 --inventory-file <path-to-inventory-file> \
---ahf-location <path-to-ahf-zip-file> 
+--ahf-location <path-to-ahf-zip-file>
 ```
 
 Running ORAchk on the target server is similar to the installation process, but the '--ahf-location' option is not required.
@@ -2827,7 +2827,7 @@ example 1:
 ./check-oracle.sh \
 --run-orachk \
 --db-name <your-database-name> \
---instance-ip-addr <your-instance-ip-address|server-name> 
+--instance-ip-addr <your-instance-ip-address|server-name>
 ```
 
 example 2:
@@ -2836,7 +2836,7 @@ example 2:
 ./check-oracle.sh \
 --run-orachk \
 --db-name <your-database-name> \
---inventory-file <path-to-inventory-file> 
+--inventory-file <path-to-inventory-file>
 ```
 
 #### The AHF Zip file.
@@ -2869,7 +2869,7 @@ $  ./check-oracle.sh --help
 --extra-vars is used to pass any number of extra ansible vars
   example:  --extra-vars 'var1=val1 var2=val2'
 
-``` 
+```
 
 example output:
 Note: skipped steps are omitted
@@ -3251,12 +3251,12 @@ that is defined on the `--ora-version` parameter.
 To patch RAC databases, the oracle-toolkit performs the following actions:
 
 1. Stops the RAC databases in their homes by using the "stop home" option
-   from the master node.
+   from the first node.
 1. Stops TFA.
 1. Kills the `asmcmd` daemon processes.
 1. Executes `opatchauto apply`, patching both nodes.
 1. Restarts the services, including `start home`.
-1. On the master node only, runs the `datapatch` utility over several
+1. On the first node only, runs the `datapatch` utility over several
    iterations to resolve any PDB invalid states.
 
 Regardless of which script is used, the specifics about which patch files to
