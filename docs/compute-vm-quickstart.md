@@ -29,12 +29,12 @@ NETWORK_TAGS="NETWORK_TAGS"
 gcloud config set project ${PROJECT_ID}
 ```
 
-Add additional variables for instance specific characteristics such as the VM shape, name, and OS project and image family. For example if using the [C4 machine series](https://cloud.google.com/compute/docs/general-purpose-machines#c4_series) and the latest RHEL8 OS image:
+Add additional variables for instance specific characteristics such as the VM shape, name, and OS project and image family. For example if using the [C4 machine series](https://cloud.google.com/compute/docs/general-purpose-machines#c4_series) and the latest Compute Engine [Oracle Linux](https://cloud.google.com/compute/docs/images/os-details#oracle_linux) 8 OS image:
 
 ```bash
 MACHINE_TYPE="c4-standard-4"
-IMAGE_PROJECT="rhel-cloud"
-IMAGE_FAMILY="rhel-8"
+IMAGE_PROJECT="oracle-linux-cloud"
+IMAGE_FAMILY="oracle-linux-8"
 ```
 
 Finally, define variables for the virtual machine name, and the Google Cloud Storage bucket where the required Oracle software is staged:
@@ -54,9 +54,7 @@ Optionally, add the version you wish to install to the above command using the `
 
 ### Create the Compute VM and Block Storage Devices
 
-> **NOTE:** Some operating systems such as Red Hat Enterprise Linux have additional licensing costs. See the [Premium images](https://cloud.google.com/compute/disks-image-pricing?hl=en#section-1) section of Google documentation for additional details.
-
-Create the instance:
+Create the Compute Engine VM instance:
 
 ```bash
 gcloud compute instances create ${VM_NAME} \
