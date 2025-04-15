@@ -1,6 +1,6 @@
 # Oracle Toolkit for Google Cloud - Compute Engine VM User Guide
 
-The Oracle Toolkit for Google Cloud fully supports running on Google Compute Engine Virtual Machines (also commonly referred to as "instances"). This includes using Oracle Grid Infrastructure (GI) and Automatic Storage Management (ASM), with single-instance databases.
+The Oracle Toolkit for Google Cloud can be used with Google Compute Engine Virtual Machines (also commonly referred to as "instances"). This includes using Oracle Grid Infrastructure (GI) and Automatic Storage Management (ASM), with single-instance databases.
 
 Running this toolkit will require:
 
@@ -75,9 +75,9 @@ pip3 list | grep jmespath
 Then download to your Ansible Control Node the Oracle Toolkit for Google Cloud from it's source site:
 
 ```bash
-wget https://github.com/google/oracle-toolkit/archive/refs/heads/master.zip && \
-  unzip ./master.zip && \
-  rm ./master.zip && \
+curl -L -o oracle-toolkit-master.zip https://github.com/google/oracle-toolkit/archive/refs/heads/master.zip && \
+  unzip ./oracle-toolkit-master.zip && \
+  rm ./oracle-toolkit-master.zip && \
   mv oracle-toolkit-master oracle-toolkit
 ```
 
@@ -102,8 +102,6 @@ ZONE_ID="ZONE"
 NETWORK_ID="NETWORK"
 SUBNET_ID="SUBNET"
 NETWORK_TAGS="NETWORK_TAGS"
-
-gcloud config set project ${PROJECT_ID}
 ```
 
 ### Instance Sizing, Performance Characteristics, and OS Image
@@ -120,17 +118,13 @@ For convenience, specify your chosen virtual machine type as a variable. For exa
 MACHINE_TYPE="c4-standard-4"
 ```
 
-Choose a supported operating system image (either one of the Google Cloud public images, or your own if uploaded and prepared separately).
+Choose an operating system image (either one of the Google Cloud public images, or your own if uploaded and prepared separately). Using Oracle Linux is recommended.
 
-> **NOTE:** Some operating systems such as Red Hat Enterprise Linux have additional licensing costs. See the [Premium images](https://cloud.google.com/compute/disks-image-pricing?hl=en#section-1) section of Google documentation for additional details.
-
-Using an Oracle compatible [custom OS image](https://cloud.google.com/compute/docs/images#custom_images) is also supported. Including [Oracle Linux](https://cloud.google.com/compute/docs/images#oracle_linux).
-
-For example, if choosing a Red Hat Enterprise Linux (RHEL) 8 image, set environment variables such as:
+To use the latest Compute Engine [Oracle Linux](https://cloud.google.com/compute/docs/images/os-details#oracle_linux) 8 OS image, set environment variables such as:
 
 ```bash
-IMAGE_PROJECT="rhel-cloud"
-IMAGE_FAMILY="rhel-8"
+IMAGE_PROJECT="oracle-linux-cloud"
+IMAGE_FAMILY="oracle-linux-8"
 ```
 
 ### Database Server (Compute Engine VM) Provisioning
@@ -143,6 +137,7 @@ For example (review command carefully and adjust as required before using):
 VM_NAME="INSTANCE_NAME"
 
 gcloud compute instances create ${VM_NAME} \
+  --project=${PROJECT_ID} \
   --zone=${ZONE_ID} \
   --machine-type=${MACHINE_TYPE} \
   --network-interface=network-tier=PREMIUM,stack-type=IPV4_ONLY,subnet=${SUBNET_ID} \
@@ -160,20 +155,26 @@ After provisioning, consider networking, cloud firewalls, and private vs public 
 Opening TCP ingress to the Oracle Listener port **1521** is usually required on database servers. To add to your VPN firewall, use a command similar to (review and customize as required):
 
 ```bash
+PRIORITY_VALUE=1000
+SOURCE_TAGS=app-servers
+
 gcloud compute firewall-rules create oracle-listener \
+  --project=${PROJECT_ID} \
   --description="Ingress to the Oracle Listener port" \
   --network=${NETWORK_ID} \
   --direction=INGRESS \
-  --priority="PRIORITY_VALUE" \
+  --priority=${PRIORITY_VALUE} \
   --allow=tcp:1521 \
-  --source-ranges='SOURCE_CIDR' \
+  --source-tags=${SOURCE_TAGS} \
   --target-tags=oracle
 ```
 
 If necessary, the assigned IP address, which will be used when running the toolkit, can be obtained from the Google Cloud web console, the VM instance itself, or using the **gcloud** command:
 
 ```bash
-INSTANCE_IP_ADDR=$(gcloud compute instances describe ${VM_NAME} --zone=${ZONE_ID} --format="value(networkInterfaces[0].networkIP)")
+INSTANCE_IP_ADDR=$(gcloud compute instances describe ${VM_NAME} --project=${PROJECT_ID} --zone=${ZONE_ID} --format="value(networkInterfaces[0].networkIP)")
+
+echo -e ${INSTANCE_IP_ADDR}
 ```
 
 ### Adding Block Storage Devices
@@ -199,12 +200,22 @@ DISK_PERFORMANCE="--provisioned-iops=3300 --provisioned-throughput=290"
 Next, create the cloud disk, add it to the VM instance, and if desired, make the disk auto-delete (customize as necessary):
 
 ```bash
-gcloud compute disks create ${VM_NAME}-${DISK_NAME} --size=${DISK_SIZE} --type=${DISK_TYPE} ${DISK_PERFORMANCE} --zone=${ZONE_ID}
-gcloud compute instances attach-disk ${VM_NAME} --disk=${VM_NAME}-${DISK_NAME} --device-name=oracle-${DISK_NAME} --zone=${ZONE_ID}
-gcloud compute instances set-disk-auto-delete ${VM_NAME} --auto-delete --disk=${VM_NAME}-${DISK_NAME} --zone=${ZONE_ID}
+gcloud compute disks create ${VM_NAME}-${DISK_NAME} --size=${DISK_SIZE} --type=${DISK_TYPE} ${DISK_PERFORMANCE} --project=${PROJECT_ID} --zone=${ZONE_ID}
+gcloud compute instances attach-disk ${VM_NAME} --disk=${VM_NAME}-${DISK_NAME} --device-name=oracle-${DISK_NAME} --project=${PROJECT_ID} --zone=${ZONE_ID}
+gcloud compute instances set-disk-auto-delete ${VM_NAME} --auto-delete --disk=${VM_NAME}-${DISK_NAME} --project=${PROJECT_ID} --zone=${ZONE_ID}
 ```
 
-Repeat as necessary. For example, adding as many block storage devices are required to add to your ASM disk groups.
+Repeat as necessary adding as many block storage devices as required.
+
+For example, to add one device `/u01` for the Oracle software (Oracle home), and two more for ASM storage (`DATA` and `RECO` diskgroups):
+
+```bash
+for DISK_NAME in "u01" "data" "reco"; do
+  gcloud compute disks create ${VM_NAME}-${DISK_NAME} --size=${DISK_SIZE} --type=${DISK_TYPE} ${DISK_PERFORMANCE} --project=${PROJECT_ID} --zone=${ZONE_ID}
+  gcloud compute instances attach-disk ${VM_NAME} --disk=${VM_NAME}-${DISK_NAME} --device-name=oracle-${DISK_NAME} --project=${PROJECT_ID} --zone=${ZONE_ID}
+  gcloud compute instances set-disk-auto-delete ${VM_NAME} --auto-delete --disk=${VM_NAME}-${DISK_NAME} --project=${PROJECT_ID} --zone=${ZONE_ID}
+done
+```
 
 ### Recoding Block Storage in JSON Format for Toolkit Usage
 
@@ -244,20 +255,20 @@ Before the toolkit can be used, ssh connectivity must be established with an ssh
 Initial access to a new compute engine VM is easiest using the [cloud compute ssh](https://cloud.google.com/sdk/gcloud/reference/compute/ssh) command. This command handles authenication (including key pair creation and distribution if necessary) and hostname resolution for accessing the new VM. For example:
 
 ```bash
-gcloud compute ssh ${VM_NAME} --zone=${ZONE_ID}
+gcloud compute ssh ${VM_NAME} --project=${PROJECT_ID} --zone=${ZONE_ID}
 ```
 
 If required, create a new and Ansible dedicated ssh key pair using your internal standards (i.e. for encryption algorithm, comment standards, etc). Example command to create a new key-pair for usage with this toolkit using common settings:
 
 ```bash
-mkdir -p "${HOME}/.ssh" && chmod 0700 "${HOME}/.ssh"
+install -d -m 0700 "${HOME}/.ssh"
 ssh-keygen -q -b 4096 -t rsa -N '' -C 'oracle-toolkit-for-oracle' -f "${HOME}/.ssh/id_rsa_oracle_toolkit"
 ```
 
 The newly created public key can then be copied to your compute engine VM using the [gcloud compute scp](https://cloud.google.com/sdk/gcloud/reference/compute/scp) command. For example:
 
 ```bash
-gcloud compute scp "${HOME}/.ssh/id_rsa_oracle_toolkit.pub" ${VM_NAME}:"${HOME}/.ssh/" --zone=${ZONE_ID}
+gcloud compute scp "${HOME}/.ssh/id_rsa_oracle_toolkit.pub" ${VM_NAME}:"${HOME}/.ssh/" --project=${PROJECT_ID} --zone=${ZONE_ID}
 ```
 
 Or, if appropriate in your environment, use Google Cloud metadata-based SSH keys - see the [Add SSH keys to VMs](https://cloud.google.com/compute/docs/connect/add-ssh-keys) documentation for additional details.
@@ -276,9 +287,9 @@ BUCKET_NAME="BUCKET_NAME"
 bash ./check-swlib.sh --ora-swlib-bucket ${BUCKET_NAME}
 ```
 
-Optionally, add the version you wish to install to the above command using the `--ora-version` argument.
+Optionally, add the version you wish to install to the above command using the `--ora-version` argument (or the `--ora-edition FREE` if verifying the media for Free edition).
 
-While GI and ASM are fully supported, the quickest and easiest start is usually to deploy Free Edition for familiarity with the toolkit and it's operation. Then complement with full EE or SE2 installations.
+While the toolkit is compatible with GI and ASM, the quickest and easiest start is usually to deploy Free Edition for familiarity with the toolkit and it's operation. Then complement with full EE or SE2 installations.
 
 For example, the simplest command to create a Free Edition database:
 
@@ -311,7 +322,7 @@ bash ./install-oracle.sh \
 The one key difference from BMS is that Compute Engine VMs can be destroyed quickly and easily in a variety of ways, including using **gcloud**. For example:
 
 ```bash
-gcloud compute instances delete ${VM_NAME} --zone=${ZONE_ID}
+gcloud compute instances delete ${VM_NAME} --project=${PROJECT_ID} --zone=${ZONE_ID}
 ```
 
 Since the block storage devices ("disks") were added using the `set-disk-auto-delete` they will automatically be removed when the VM is deleted. If you did not use this option when creating the disks, you will need to remove them manually.
@@ -324,7 +335,7 @@ Oracle databases on Compute Engine VMs are "self-managed" and therefore have no 
 
 However, when running in Compute Engine VMs, some integration options are available including using the Google Cloud Ops Agent to collect Oracle Database metrics and log data for use in Google Cloud Metrics Explorer and Logs Explorer. For setup and configuration details, refer to the [Oracle Database](https://cloud.google.com/logging/docs/agent/ops-agent/third-party/oracledb) documentation for Google Cloud Observability integration with third party apps. This toolkit does not automatically setup this component.
 
-Additionally, other observability options such as the [workloadagent](https://github.com/GoogleCloudPlatform/workloadagent) may be added in the future.
+Additionally, the [Google Cloud Agent for Compute Workloads](https://github.com/GoogleCloudPlatform/workloadagent) can be used.
 
 ### Backups
 
