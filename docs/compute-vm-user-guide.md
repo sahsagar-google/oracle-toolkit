@@ -16,7 +16,7 @@ Before using this toolkit, a small number of perquisites are required. Specifica
 
 - A [Google Cloud project](https://developers.google.com/workspace/guides/create-project) with billing enabled.
 - A [VPC network](https://cloud.google.com/vpc/docs/vpc) for the VMs - using a default (auto mode) network is fine.
-- A [Cloud Storage bucket](https://cloud.google.com/storage/docs/buckets) where the required software media can be staged. (Details on the required software can be found in the [Downloading and staging the Oracle Software](https://github.com/google/oracle-toolkit/blob/master/docs/user-guide.md#downloading-and-staging-the-oracle-software) section of the main user guide).
+- A [Cloud Storage bucket](https://cloud.google.com/storage/docs/buckets) where the required software media can be staged. (Details on the required software can be found in the [Downloading and staging the Oracle Software](user-guide.md#downloading-and-staging-the-oracle-software) section of the main user guide).
 - A [Compute Engine default service account](https://cloud.google.com/compute/docs/access/service-accounts#default_service_account) with the **Storage Object Viewer** (`roles/storage.objectViewer`) role on the Cloud Storage bucket.
 
 ## Benefits of Using Google Cloud Compute VMs
@@ -282,7 +282,7 @@ Or, if appropriate in your environment, use Google Cloud metadata-based SSH keys
 
 Overall, running the toolkit against a Google Compute Engine VM instance is really no different to running against a BMS physical or virtualized server. Assuming that the required block storage disk details have been properly specified in the required JSON configuration files and using the `--ora-data-mounts` and `--ora-asm-disks`, or are specified as command line arguments using the `--ora-data-mounts-json` and `--ora-asm-disks-json` arguments.
 
-Also, ensure that the required software media has been properly staged as per the User Guide section [Staging the Oracle installation media](https://github.com/pythian/gto-prv/blob/master/docs/user-guide.md#staging-the-oracle-installation-media).
+Also, ensure that the required software media has been properly staged as per the User Guide section [Staging the Oracle installation media](user-guide.md#staging-the-oracle-installation-media).
 
 Define a variable for the bucket location and verify with:
 
