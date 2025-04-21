@@ -21,9 +21,9 @@
     - name: Check environment readiness
       include_role:
         name: common
-        tasks_from: readiness_check.yml
+        tasks_from: readiness_checks.yml
       vars:
-        readiness_checks: "{{ control_node_checks }}"
+        control_node_checks: true
       tags: readiness_checks
     - name: Determine specific release
       include_role:
