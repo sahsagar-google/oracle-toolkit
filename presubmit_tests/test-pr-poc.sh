@@ -20,9 +20,11 @@
 # set up ssh from pod to database server
 # using sydney for initial testing
 # Keep permissions at 100755 to allow tests to run
-oracle_host=10.100.1.1
+
+oracle_host_name=g370069685-s001
+oracle_host_ip=172.16.128.1
 install -d -m 0700 ~/.ssh
-ssh-keyscan "${oracle_host}" > ~/.ssh/known_hosts
+ssh-keyscan "${oracle_host_ip}" > ~/.ssh/known_hosts
 
 # install pre-reqs
 pip install jmespath
@@ -46,9 +48,9 @@ fi
 
 # run the install script
 ./install-oracle.sh --ora-swlib-bucket gs://bmaas-testing-oracle-software \
---instance-ssh-user ansible1 --instance-ssh-key /etc/files_needed_for_tk/id_rsa_bms_tk_key \
+--instance-ssh-user ansible --instance-ssh-key /etc/files_needed_for_tk/id_rsa_bms_tk_key \
 --backup-dest "+RECO" --ora-swlib-path /u01/oracle_install --ora-version 19 --ora-swlib-type gcs \
 --ora-asm-disks /etc/files_needed_for_tk/nonrac-asm.json \
 --ora-data-mounts /etc/files_needed_for_tk/nonrac-datamounts.json --cluster-type NONE \
 --ora-data-destination DATA --ora-reco-destination RECO --ora-db-name orcl \
---ora-db-container false --instance-ip-addr 10.100.1.1 --instance-hostname g278813163-s366
+--ora-db-container false --instance-ip-addr "${oracle_host_ip}" --instance-hostname "${oracle_host_name}"

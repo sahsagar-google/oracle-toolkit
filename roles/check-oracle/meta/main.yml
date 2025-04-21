@@ -13,18 +13,5 @@
 # limitations under the License.
 
 ---
-etc_hosts_ip: "{% if 'virtualbox' in ansible_virtualization_type %}{{ ansible_all_ipv4_addresses[1] }}{% else %}{{ ansible_default_ipv4.address }}{% endif %}"
-install_os_packages: true
-
-required_packages:
-  - chrony
-  - bind-utils
-  - unzip
-  - expect
-  - wget
-  - net-tools
-  - parted
-
-swap_blk_device: ""
-ntp_preferred: ""
-ntp_options: "-g"
+dependencies:
+  - role: common
