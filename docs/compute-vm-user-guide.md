@@ -12,7 +12,12 @@ This document covers these items in more detail, in the context of running the t
 
 ## Things to do in Advance - Prerequisites
 
-Outside of the scope of this document is the setup of Google Cloud foundational components such as Cloud IAM, networking (VPCs and subnets), Google Cloud Storage (GCS) buckets and cloud security. Setting up the required Google Cloud project and billing account is similarly outside of the scope of this document.
+Before using this toolkit, a small number of perquisites are required. Specifically:
+
+- A [Google Cloud project](https://developers.google.com/workspace/guides/create-project) with billing enabled.
+- A [VPC network](https://cloud.google.com/vpc/docs/vpc) for the VMs - using a default (auto mode) network is fine.
+- A [Cloud Storage bucket](https://cloud.google.com/storage/docs/buckets) where the required software media can be staged. (Details on the required software can be found in the [Downloading and staging the Oracle Software](https://github.com/google/oracle-toolkit/blob/master/docs/user-guide.md#downloading-and-staging-the-oracle-software) section of the main user guide).
+- A [Compute Engine default service account](https://cloud.google.com/compute/docs/access/service-accounts#default_service_account) with the **Storage Object Viewer** (`roles/storage.objectViewer`) role on the Cloud Storage bucket.
 
 ## Benefits of Using Google Cloud Compute VMs
 
