@@ -12,7 +12,7 @@ This document covers these items in more detail, in the context of running the t
 
 ## Things to do in Advance - Prerequisites
 
-Before using this toolkit, a small number of perquisites are required. Specifically:
+Before using this toolkit, a small number of Google Cloud prerequisites are required. Specifically:
 
 - A [Google Cloud project](https://developers.google.com/workspace/guides/create-project) with billing enabled.
 - A [VPC network](https://cloud.google.com/vpc/docs/vpc) for the VMs - using a default (auto mode) network is fine.
