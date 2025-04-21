@@ -25,10 +25,6 @@
         readiness_checks: "{{ control_node_checks + managed_host_checks }}"
         become_user_check: root
       tags: readiness_checks
-    - name: Determine specific release
-      include_role:
-        name: common
-        tasks_from: populate-vars.yml
 
 - hosts: dbasm[0]
   tasks:
