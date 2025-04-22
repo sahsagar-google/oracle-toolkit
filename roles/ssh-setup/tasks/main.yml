@@ -13,7 +13,7 @@
 # limitations under the License.
 
 ---
-- name: Create .ssh dir if already present
+- name: Ensure /home/{{ ssh_user }}/.ssh directory exists with correct permissions
   become: true
   become_user: "{{ ssh_user }}"
   file:
@@ -24,45 +24,47 @@
     group: "{{ user_group }}"
   tags: ssh-keys
 
-- name: Generate ssh key on first node
+- name: Generate PKCS#1 RSA SSH key pair for user '{{ ssh_user }}' on first node
   become: true
   become_user: "{{ ssh_user }}"
-  openssh_keypair:
-    path: /home/{{ ssh_user }}/.ssh/id_rsa
-    mode: u=rw,go=
-    owner: "{{ ssh_user }}"
-    group: "{{ user_group }}"
-    private_key_format: "pkcs1"
-    backend: "cryptography"
-  register: ssh_key
+  command: ssh-keygen -m PEM -t rsa -b 2048  -f /home/{{ ssh_user }}/.ssh/id_rsa -N ''
+  args:
+    creates: /home/{{ ssh_user }}/.ssh/id_rsa
   tags: ssh-keys
 
-- name: Get key fingerprint
+- name: Read SSH public key for user '{{ ssh_user }}'
+  become: true
+  become_user: "{{ ssh_user }}"
+  command: cat /home/{{ ssh_user }}/.ssh/id_rsa.pub
+  register: user_ssh_pubkey
+  tags: ssh-keys
+
+- name: Collect SSH host key
   become: true
   become_user: "{{ ssh_user }}"
   command: ssh-keyscan -tecdsa {{ inventory_hostname }},{{ inventory_hostname }}.{{ ansible_domain }}
-  register: finger_key
+  register: host_ssh_pubkey
   tags: ssh-keys
 
-- name: Add key fingerprint to known_hosts file
+- name: Add SSH public host key for user '{{ ssh_user }}' to known_hosts file on all nodes
   become: true
   become_user: "{{ ssh_user }}"
   delegate_to: "{{ item }}"
   lineinfile:
     name: ~/.ssh/known_hosts
     create: true
-    line: "{{ finger_key.stdout }}"
+    line: "{{ host_ssh_pubkey.stdout }}"
     owner: "{{ ssh_user }}"
     group: "{{ user_group }}"
   loop: "{{ ssh_nodes }}"
   tags: ssh-keys
 
-- name: Key propagation to all nodes
+- name: Add SSH public key for user '{{ ssh_user }}' to authorized_keys on all nodes
   become: true
   become_user: root
   delegate_to: "{{ item }}"
   authorized_key:
-    key: "{{ ssh_key.public_key }}"
+    key: "{{ user_ssh_pubkey.stdout }}"
     user: "{{ ssh_user }}"
   loop: "{{ ssh_nodes }}"
   tags: ssh-keys
