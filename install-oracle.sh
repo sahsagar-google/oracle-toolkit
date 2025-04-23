@@ -191,7 +191,7 @@ GCS_BACKUP_BUCKET="${GCS_BACKUP_BUCKET}"
 GCS_BACKUP_BUCKET_PARAM="^.+[^/]"
 
 GCS_BACKUP_TEMP_PATH="${GCS_BACKUP_TEMP_PATH:-/u01/gcsfusetmp}"
-GCS_BACKUP_TEMP_PATH_PARAM="^/.*" 
+GCS_BACKUP_TEMP_PATH_PARAM="^/.*"
 
 ARCHIVE_REDUNDANCY="${ARCHIVE_REDUNDANCY:-2}"
 ARCHIVE_REDUNDANCY_PARAM="^[0-9]+$"
@@ -571,7 +571,7 @@ shopt -s nocasematch
   echo "Incorrect parameter provided for ora-edition: $ORA_EDITION"
   exit 1
 }
-[[ ! "$ORA_EDITION" =~ "EE" ]] && [[ "$CLUSTER_TYPE" =~ "DG" ]] && {
+[[ ! "$ORA_EDITION" == "EE" ]] && [[ "$CLUSTER_TYPE" == "DG" ]] && {
   echo "ora-edition should be EE with cluster-type DG"
   exit 1
 }
@@ -637,16 +637,16 @@ shopt -s nocasematch
   exit 1
 }
 [[ -n "$ORA_ASM_DISKS_JSON" && ! "$ORA_ASM_DISKS_JSON" =~ $ORA_ASM_DISKS_JSON_PARAM ]] && {
-    echo "Incorrect parameter provided for ora-asm-disks-json: $ORA_ASM_DISKS_JSON"
-    exit 1
+  echo "Incorrect parameter provided for ora-asm-disks-json: $ORA_ASM_DISKS_JSON"
+  exit 1
 }
 [[ ! "$ORA_DATA_MOUNTS" =~ $ORA_DATA_MOUNTS_PARAM ]] && {
   echo "Incorrect parameter provided for ora-data-mounts: $ORA_DATA_MOUNTS"
   exit 1
 }
 [[ -n "$ORA_DATA_MOUNTS_JSON" && ! "$ORA_DATA_MOUNTS_JSON" =~ $ORA_DATA_MOUNTS_JSON_PARAM ]] && {
-    echo "Incorrect parameter provided for ora-data-mounts-json: $ORA_DATA_MOUNTS_JSON"
-    exit 1
+  echo "Incorrect parameter provided for ora-data-mounts-json: $ORA_DATA_MOUNTS_JSON"
+  exit 1
 }
 [[ ! "$CLUSTER_CONFIG" =~ $CLUSTER_CONFIG_PARAM ]] && {
   echo "Incorrect parameter provided for cluster-config: $CLUSTER_CONFIG"
@@ -744,8 +744,16 @@ shopt -s nocasematch
   echo "Incorrect parameter provided for instance-ip-addr: $INSTANCE_IP_ADDR"
   exit 1
 }
-[[ ! "$PRIMARY_IP_ADDR" =~ ${PRIMARY_IP_ADDR_PARAM} ]] && [[ "$CLUSTER_TYPE" =~ "DG" ]] && {
+[[ "$INSTANCE_IP_ADDR" == "$PRIMARY_IP_ADDR" ]] && {
+  echo "ERROR: Both instance-ip-addr and primary-ip-addr are set to: $INSTANCE_IP_ADDR"
+  exit 1
+}
+[[ ! "$PRIMARY_IP_ADDR" =~ ${PRIMARY_IP_ADDR_PARAM} ]] && [[ "$CLUSTER_TYPE" == "DG" ]] && {
   echo "Incorrect parameter provided for primary-ip-addr: $PRIMARY_IP_ADDR"
+  exit 1
+}
+[[ -n "$PRIMARY_IP_ADDR" ]] && [[ "$CLUSTER_TYPE" != "DG" ]] && {
+  echo "Parameter cluster-type: $CLUSTER_TYPE, but primary-ip-addr should only be used with cluster-type: DG"
   exit 1
 }
 [[ ! "$INSTANCE_SSH_USER" =~ $INSTANCE_SSH_USER_PARAM ]] && {
