@@ -27,7 +27,7 @@
 - name: Generate PKCS#1 RSA SSH key pair for user '{{ ssh_user }}' on first node
   become: true
   become_user: "{{ ssh_user }}"
-  command: ssh-keygen -m PEM -t rsa -b 2048  -f /home/{{ ssh_user }}/.ssh/id_rsa -N ''
+  command: ssh-keygen -m PEM -t rsa -b 2048  -f "/home/{{ ssh_user }}/.ssh/id_rsa" -N ''
   args:
     creates: /home/{{ ssh_user }}/.ssh/id_rsa
   tags: ssh-keys
@@ -35,7 +35,7 @@
 - name: Read SSH public key for user '{{ ssh_user }}'
   become: true
   become_user: "{{ ssh_user }}"
-  command: cat /home/{{ ssh_user }}/.ssh/id_rsa.pub
+  command: cat "/home/{{ ssh_user }}/.ssh/id_rsa.pub"
   register: user_ssh_pubkey
   tags: ssh-keys
 
