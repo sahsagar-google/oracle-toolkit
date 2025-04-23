@@ -571,7 +571,7 @@ shopt -s nocasematch
   echo "Incorrect parameter provided for ora-edition: $ORA_EDITION"
   exit 1
 }
-[[ ! "$ORA_EDITION" == "EE" ]] && [[ "$CLUSTER_TYPE" == "DG" ]] && {
+[[ "$ORA_EDITION" != "EE" ]] && [[ "$CLUSTER_TYPE" == "DG" ]] && {
   echo "ora-edition should be EE with cluster-type DG"
   exit 1
 }
