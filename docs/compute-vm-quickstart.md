@@ -2,7 +2,7 @@
 
 This document serves as a quickstart guide and reference for using the Oracle Toolkit for Google Cloud on Compute Engine virtual machines. It is an abridged version of the more comprehensive [Oracle Toolkit for Google Cloud - Compute Engine VM User Guide](compute-vm-user-guide.md) and follows a simple, but manual, command based approach.
 
-If instead you would to deploy the infrastructure and run the toolkit using Terraform, please refer to the document [Terraform Infrastructure Provisioning for Oracle Toolkit for GCP Deployments](../terraform/README.md).
+If instead you would to deploy the infrastructure and run the toolkit using Terraform, please refer to the document [Terraform Infrastructure Provisioning for Oracle Toolkit for GCP Deployments](terraform.md).
 
 ## Prerequisite Assumptions
 
