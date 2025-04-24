@@ -744,7 +744,7 @@ shopt -s nocasematch
   echo "Incorrect parameter provided for instance-ip-addr: $INSTANCE_IP_ADDR"
   exit 1
 }
-[[ "$INSTANCE_IP_ADDR" == "$PRIMARY_IP_ADDR" ]] && {
+[[ "$INSTANCE_IP_ADDR" == "$PRIMARY_IP_ADDR" ]] && [[ "$CLUSTER_TYPE" != "RAC" ]] && {
   echo "ERROR: Both instance-ip-addr and primary-ip-addr are set to: $INSTANCE_IP_ADDR"
   exit 1
 }
