@@ -1,4 +1,4 @@
-# Copyright 2020 Google LLC
+# Copyright 2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,22 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
----
-os_family_supported: "RedHat"
-os_min_supported_version: "{% if free_edition %}8{% else %}7.3{% endif %}"
+terraform {
+  required_version = ">= 1.10.5"
 
-etc_hosts_ip: "{% if 'virtualbox' in ansible_virtualization_type %}{{ ansible_all_ipv4_addresses[1] }}{% else %}{{ ansible_default_ipv4.address }}{% endif %}"
-install_os_packages: true
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 6.20.0"
+    }
+  }
 
-required_packages:
-  - chrony
-  - bind-utils
-  - unzip
-  - expect
-  - wget
-  - net-tools
-  - parted
-
-swap_blk_device: ""
-ntp_preferred: ""
-ntp_options: "-g"
+  backend "gcs" {
+    bucket = "BUCKET" # example my-state-bucket
+    prefix = "PREFIX" # example dev
+  }
+}
