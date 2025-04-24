@@ -22,10 +22,10 @@
         name: "{{ role_item }}"
         tasks_from: main
       loop:
-        - db-adjustements
+        - db-adjustments
         - db-backups
         - validation-scripts
       loop_control:
         loop_var: role_item
       when: create_db | bool
-  tags: rac-db-adjustements,rac-db-backups,rac-validation-scripts
+  tags: rac-db-adjustments,rac-db-backups,rac-validation-scripts

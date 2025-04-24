@@ -34,13 +34,13 @@
         tasks_from: main
       loop:
         - db-create
-        - db-adjustements
+        - db-adjustments
         - db-backups
         - validation-scripts
       loop_control:
         loop_var: role_item
       when:
-        - create_db|bool
+        - create_db | bool
         - cluster_type != "RAC"
         - lookup('env', 'PRIMARY_IP_ADDR') is not defined or lookup('env', 'PRIMARY_IP_ADDR') | length == 0
       tags: primary-db
@@ -49,7 +49,7 @@
         name: db-copy
         tasks_from: active-copy
       when:
-        - create_db|bool
+        - create_db | bool
         - cluster_type != "RAC"
         - lookup('env', 'PRIMARY_IP_ADDR') is defined
         - lookup('env', 'PRIMARY_IP_ADDR') | length > 0
