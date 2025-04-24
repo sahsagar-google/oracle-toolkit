@@ -14,7 +14,9 @@
 
 ---
 - name: Active-copy | Check pmon process
-  shell: "set -o pipefail; ps -ef | ( grep pmon || true ) | ( grep -i {{ oracle_sid }}$ || true ) | ( grep -v grep || true ) | wc -l"
+  shell: |
+    set -o pipefail
+    ps -ef | ( grep pmon || true ) | ( grep -i {{ oracle_sid }}$ || true ) | ( grep -v grep || true ) | wc -l
   changed_when: false
   register: pmon_proc
   tags: active-duplicate
@@ -59,6 +61,7 @@
     dest: "{{ oracle_home }}/dbs/orapw{{ db_name }}.{{ lookup('pipe', 'date +%Y-%m-%d-%H-%M') }}"
     owner: "{{ oracle_user }}"
     group: "{{ oracle_group }}"
+    mode: "u=wr,go="
     remote_src: true
   delegate_to: primary1
   become: true
@@ -122,6 +125,7 @@
     state: directory
     owner: "{{ oracle_user }}"
     group: "{{ oracle_group }}"
+    mode: "u=wrx,go="
   become: true
   tags: active-duplicate
 
@@ -131,13 +135,14 @@
     dest: "{{ oracle_home }}/dbs/init{{ oracle_sid }}.ora"
     owner: "{{ oracle_user }}"
     group: "{{ oracle_group }}"
+    mode: "u=wr,go="
   become: true
   tags: active-duplicate
 
 - name: Active-copy | Start auxiliary instance
   shell: |
     set -o pipefail
-    {{ oracle_home }}/bin/sqlplus -s / as sysdba << EOF
+    {{ oracle_home }}/bin/sqlplus -s -L / as sysdba <<EOF
     startup nomount pfile={{ oracle_home }}/dbs/init{{ oracle_sid }}.ora force
     alter system register;
     host sleep 60
@@ -172,6 +177,7 @@
     dest: "{{ oracle_home }}/dbs/duplicate.cmd"
     owner: "{{ oracle_user }}"
     group: "{{ oracle_group }}"
+    mode: "u=wr,go="
   become: true
   become_user: "{{ oracle_user }}"
   tags: active-duplicate
@@ -196,15 +202,18 @@
 - name: Active-copy | Add Oracle Restart configuration
   shell: |
     set -o pipefail
-    {{ oracle_home }}/bin/sqlplus -s / as sysdba << EOF
+    {{ oracle_home }}/bin/sqlplus -s -L / as sysdba <<EOF
     shutdown immediate
     EOF
     srvctl add db -d {{ db_name }}{{ standby_suffix }} \
-    -oraclehome {{ oracle_home }} {% if db_domain | default('', true) | length > 0 %}-domain {{ db_domain }}{% endif %} \
-    -spfile {{ oracle_home }}/dbs/spfile{{ db_name }}.ora \
-    -pwfile {{ oracle_home }}/dbs/orapw{{ db_name }} \
-    -role PHYSICAL_STANDBY -startoption MOUNT -stopoption IMMEDIATE \
-    -instance {{ oracle_sid }} -dbname {{ db_name }}
+      -oraclehome {{ oracle_home }} {% if db_domain | default('', true) | length > 0 %}-domain {{ db_domain }}{% endif %} \
+      -spfile {{ oracle_home }}/dbs/spfile{{ db_name }}.ora \
+      -pwfile {{ oracle_home }}/dbs/orapw{{ db_name }} \
+      -role PHYSICAL_STANDBY \
+      -startoption MOUNT \
+      -stopoption IMMEDIATE \
+      -instance {{ oracle_sid }} \
+      -dbname {{ db_name }}
     srvctl start db -d {{ db_name }}{{ standby_suffix }}
   environment:
     ORACLE_HOME: "{{ oracle_home }}"
