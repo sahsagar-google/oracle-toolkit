@@ -38,7 +38,7 @@ Google Cloud VMs (where the Oracle software will be installed and the databases 
 
 1. The Google Cloud Web Console
 1. Terraform:
-   - Covered in detail in the complementary document [Terraform Infrastructure Provisioning for Oracle Toolkit for Google Cloud](../terraform/README.md)
+   - Covered in detail in the complementary document [Terraform Infrastructure Provisioning for Oracle Toolkit for Google Cloud](terraform.md)
 1. Google Cloud CLI (**gcloud**) commands:
    - This guide will focus on this option as it provides consistency, ease of deployment, and repeatability
 
@@ -88,7 +88,7 @@ curl -L -o oracle-toolkit-master.zip https://github.com/google/oracle-toolkit/ar
 
 ## Compute Engine VM Provisioning
 
-Compute Engine VMs for running Oracle databases can be provisioned using Terraform by following the steps outlined in the [Terraform Infrastructure Provisioning for Oracle Toolkit for Google Cloud](../terraform/README.md) guide.
+Compute Engine VMs for running Oracle databases can be provisioned using Terraform by following the steps outlined in the [Terraform Infrastructure Provisioning for Oracle Toolkit for Google Cloud](terraform.md) guide.
 
 Alternatively, they can be provisioned quickly and efficiently using the **gcloud** utility from the Google Cloud CLI. Most Google Cloud VM images already have the Google Cloud CLI pre-installed. However if you are using your own custom OS image, you may want to install the **gcloud** utility by following the [Install the gcloud CLI](https://cloud.google.com/sdk/docs/install) instructions.
 
