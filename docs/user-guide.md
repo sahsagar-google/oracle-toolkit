@@ -48,8 +48,9 @@ published: True
   - [Oracle Database Free Edition Specific Details and Changes](#oracle-database-free-edition-specific-details-and-changes)
     - [Free Edition Version Details](#free-edition-version-details)
     - [Sample Invocations for Oracle Database Free Edition](#sample-invocations-for-oracle-database-free-edition)
-    - [Example Toolkit Execution for Free Edition](#example-toolkit-execution-for-free-edition)
+    - [Example Oracle Toolkit Execution for Free Edition](#example-oracle-toolkit-execution-for-free-edition)
   - [Post installation tasks](#post-installation-tasks)
+    - [Validate the Oracle installation with ORAchk](#validate-the-oracle-installation-with-orachk)
     - [Reset passwords](#reset-passwords)
     - [Validate the environment](#validate-the-environment)
       - [Listing Oracle ASM devices](#listing-oracle-asm-devices)
@@ -64,7 +65,7 @@ published: True
 
 ## Command quick reference for single instance deployments
 
-Sample commands for a simple quick-start and basic toolkit usage for an Oracle
+Sample commands for a simple quick-start and basic oracle-toolkit usage for an Oracle
 "single instance" database. Refer to the remainder of this document for
 additional details and comprehensive explanations of the toolkit, scripting,
 options, and usage scenarios. All commands run from the "control node".
@@ -83,7 +84,7 @@ options, and usage scenarios. All commands run from the "control node".
    ssh ${INSTANCE_SSH_USER:-`whoami`}@${INSTANCE_IP_ADDR} sudo -u root hostname
    ```
 
-1. Review toolkit parameters:
+1. Review oracle-toolkit parameters:
 
    ```bash
    ./install-oracle.sh --help
@@ -120,7 +121,7 @@ Initial steps similar to those of the Single Instance installation.
    ssh ${INSTANCE_SSH_USER:-`whoami`}@${INSTANCE_IP_ADDR_NODE_2} sudo -u root hostname
    ```
 
-1. Review optional toolkit parameters:
+1. Review optional oracle-toolkit parameters:
 
    `./install-oracle.sh --help`
 
@@ -186,7 +187,7 @@ Unlike with other Oracle Database editions, the Free edition is available in [RP
    ssh ${INSTANCE_SSH_USER:-`whoami`}@${INSTANCE_IP_ADDR} sudo -u root hostname
    ```
 
-1. Review toolkit parameters:
+1. Review oracle-toolkit parameters:
 
    ```bash
    ./install-oracle.sh --help
@@ -214,6 +215,7 @@ This guide is for experienced professional users of Oracle software who are
 deploying Oracle Database software and preparing initial Oracle databases on
 Google Cloud [Bare Metal Solution](https://cloud.google.com/bare-metal), or on
 Google Cloud [Compute Engine](https://cloud.google.com/products/compute) .
+
 The toolkit defines default values for most options, so you can run the toolkit
 with only a few specifications. Your configuration options are listed later in
 this guide.
@@ -299,7 +301,7 @@ The control node can be any server capable of ssh.
 
 The control node must have the following software installed:
 
-- [Ansible](https://en.wikipedia.org/wiki/Ansible_(software))
+- [Ansible](<https://en.wikipedia.org/wiki/Ansible_(software)>)
   version 2.9 or higher.
 - If you are using a Cloud Storage bucket to stage your Oracle installation
   media, the [Google Cloud SDK](https://cloud.google.com/sdk/docs).
@@ -336,8 +338,8 @@ certification matrix in the "My Oracle Support" (MOS) site (sign in required):
 
 ## Installing the toolkit
 
-The latest version of the toolkit can be downloaded from Google Git
-Repositories: https://github.com/google/oracle-toolkit
+The latest version of the toolkit can be downloaded from GitHub:
+[https://github.com/google/oracle-toolkit](https://github.com/google/oracle-toolkit)
 
 On the `google/oracle-toolkit` home page in GitHub, download the toolkit to your
 control node by clicking the **Clone or Download** button and selecting
@@ -1023,7 +1025,7 @@ href="https://support.oracle.com/epmos/faces/PatchResultsNDetails?releaseId=8011
 </table>
 
 If the required software components are not properly downloaded and staged, the
-toolkit will fail.
+oracle-toolkit will fail.
 
 ### Staging the Oracle installation media
 
@@ -1332,6 +1334,41 @@ After installation is complete, you can adjust any of the attributes of the
 backup scheme. You can also replace any and all parts of the initial backup
 scheme or the backup script with your own scripts or backup tools.
 
+#### gcsfuse backup 
+
+You can use Cloud Storage buckets for Oracle rman scripts to write and store backups. 
+
+
+
+#### Cloud Storage bucket
+
+- A [Cloud Storage](https://cloud.google.com/storage/docs/introduction) bucket.
+- [Cloud Storage FUSE](https://cloud.google.com/storage/docs/gcs-fuse), an open
+  source [FUSE](http://fuse.sourceforge.net/) adapter that allows you to mount
+  Cloud Storage buckets as file systems on Linux or macOS systems.
+- Review backup [Cloud Storage bucket options](https://cloud.google.com/storage).
+
+  
+To use a Cloud Storage bucket for your backups, you need to follow the steps below:
+
+- Identify the Compute Engine instance service account. Go to:
+  - [Compute Engine VM instances](https://console.cloud.google.com/compute/instances)
+  - Select the Oracle Server to configure
+  - Identify Service account, for example: abcdefg-compute@developer.gserviceaccount.com
+  - Access the Cloud Storage bucket [Cloud Storage](https://console.cloud.google.com/storage/browser)
+  - Select the bucket that will store the backups, click on the three dots on the far right of the bucket selected and click Edit access.
+  - Click on Add Principal and add the identified Compute Engine VM instance service account from the Oracle Server to configure.
+  - In the Role drop down select Storage Legacy Bucket Owner and save.
+  
+#### Cloud Storage FUSE
+
+- With Cloud Storage FUSE, you can use the auth service account of the  Compute Engine instance to access and mount the Cloud Storage bucket. 
+- Follow the steps above on Cloud Storage bucket.
+- You can verify the auth service account by running the command as the Example below:
+  - ```gcloud compute ssh gce_vm_instance_name --command="sudo su -c 'gcloud auth list'"```
+  - You should see the same account in the auth list as the one used in the  Cloud Storage bucket configuration steps. 
+
+
 ### Parameters
 
 The following sections document the parameters, organized by installation task
@@ -1433,7 +1470,7 @@ No environment variable
 </pre></p>
 </td>
 <td>user defined<br>
-toolkit generated</td>
+oracle-toolkit generated</td>
 <td>Optional Ansible inventory file name. If not supplied, the toolkit
 generates a filename.</td>
 </tr>
@@ -1862,6 +1899,8 @@ on the CLI instead of the CLUSTER_CONFIG file.
 </tbody>
 </table>
 
+
+
 #### Backup configuration parameters
 
 <table>
@@ -1891,7 +1930,39 @@ shown above.<br>
 <br>
 If you are writing to a local file system, the
 directory does not have to exist, but initial backups will fail if the
-destination is not available or writeable.</td>
+destination is not available or writeable.
+<br>
+If you are writing to a gcsfuse bucket, the /gcsfuse must be used as parameter.</td>
+</tr>
+<tr>
+<td>GCS backup configuration</td>
+<td><p><pre>
+GCS_BACKUP_CONFIG
+--gcs-backup-config
+</pre></p></td>
+<td>user defined - no default<br>
+Example: manual</td>
+<td>The manual option requires all the steps from Cloud Storage Bucket and Cloud Storage Fuse for a successful configuration. The manual option requires the --gcs-backup-bucket parameter.</td>
+</tr>
+<tr>
+<td>GCS backup bucket</td>
+<td><p><pre>
+GCS_BACKUP_BUCKET
+--gcs-backup-bucket
+</pre></p></td>
+<td>user defined - no default<br>
+Example:  gs://[cloud-storage-bucket-name] </td>
+<td>The bucket name expected as  gs://[cloud-storage-bucket-name].</td>
+</tr>
+<tr>
+<td>GCS backup bucket</td>
+<td><p><pre>
+GCS_BACKUP_TEMP_PATH
+--gcs-backup-temp-path
+</pre></p></td>
+<td>user defined - /u01/gcsfusetmp <br>
+Example:  /u01/gcsfusetmp </td>
+<td>The temporary directory used by gcsfuse to write temporarily locally. The directory requires 2GB of free space for every backup channel.</td>
 </tr>
 <tr>
 <td>RMAN full DB backup redundancy</td>
@@ -2014,6 +2085,8 @@ requirements for this directory is minimal.</td>
 </tr>
 </tbody>
 </table>
+
+
 
 #### Additional operational parameters
 
@@ -2381,11 +2454,11 @@ However, Oracle Database "Free Edition" has a number of differences, including:
 1. Requires that the [Oracle Database Preinstallation RPM](https://docs.oracle.com/en/database/oracle/oracle-database/23/ladbi/about-the-oracle-preinstallation-rpm.html) be installed as it is a dependent package.
 1. Has CPU, memory, and user-data storage limits – see [Oracle Database Free FAQ – Installation](https://www.oracle.com/database/free/faq/#installation) for details.
 
-Similar to with the other editions, creation of an initial database and implementation of RMAN based backups is possible through this toolkit for Oracle Database free edition.
+Similar to with the other editions, creation of an initial database and implementation of RMAN based backups is possible through this oracle-toolkit for Oracle Database free edition.
 
 ### Free Edition Version Details
 
-Oracle has released serveral versions of free edition, often **without chaning the RPM file name**. This toolkit can install _any_ free edition version. Which version is actually installed depends on the the actual RPM file in the software library, and possibly the command line switches.
+Oracle has released serveral versions of free edition, often **without chaning the RPM file name**. The toolkit can install _any_ free edition version. Which version is actually installed depends on the the actual RPM file in the software library, and possibly the command line switches.
 
 Specific supported versions of Oracle Database 23 free edition currently includes:
 
@@ -2444,6 +2517,7 @@ ORA_VERSION
 <br>
 Defaults to the latest release.</td>
 </tr>
+<tr>
 <td>Data file destination</td>
 <td><p><pre>
 ORA_DATA_DESTINATION
@@ -2573,7 +2647,7 @@ Run the database creation steps only:
   --config-db
 ```
 
-Run the full toolkit end-to-end:
+Run the full oracle-toolkit end-to-end:
 
 ```bash
 ./install-oracle.sh \
@@ -2585,7 +2659,7 @@ Run the full toolkit end-to-end:
   --ora-pdb-name-prefix FREEPDB
 ```
 
-### Example Toolkit Execution for Free Edition
+### Example Oracle Toolkit Execution for Free Edition
 
 In the following example, environment variables are used to specify the
 following values:
@@ -2706,6 +2780,222 @@ ok: [db-23ai-free]
 ```
 
 ## Post installation tasks
+
+### Validate the Oracle installation with ORAchk
+
+The orachk utility can be used to validate the Oracle installation. 
+
+ORAchk will check for known problems with the Oracle installation and configuration, and provide recommendations for resolving any issues that are found.
+
+To run ORAchk, download the AHF utility from the Oracle support site.
+
+The following Oracle Support Note will provide the download link:
+
+  `Autonomous Health Framework (AHF) - Including Trace File Analyzer and Orachk/Exachk (Doc ID 2550798.1)`
+
+ORAchk is a part of the AHF utility.  It is not necessary to install the entire AHF utility to run ORAchk.
+
+The `check-oracle.sh` script provided with the toolkit will allow you to install, run and uninstall ORAchk on the target server.
+
+#### Options
+
+ORAchk can be installed on the target server using the following options:
+
+example 1:
+
+```text
+./check-oracle.sh \
+--ahf-install \
+--db-name <your-database-name> \
+--instance-ip-addr <your-instance-ip-address|server-name> \
+--ahf-location <path-to-ahf-zip-file>
+```
+
+example 2:
+
+```text
+./check-oracle.sh \
+--ahf-install \
+--inventory-file <path-to-inventory-file> \
+--ahf-location <path-to-ahf-zip-file>
+```
+
+Running ORAchk on the target server is similar to the installation process, but the '--ahf-location' option is not required.
+
+example 1:
+
+```text
+./check-oracle.sh \
+--run-orachk \
+--db-name <your-database-name> \
+--instance-ip-addr <your-instance-ip-address|server-name>
+```
+
+example 2:
+
+```text
+./check-oracle.sh \
+--run-orachk \
+--db-name <your-database-name> \
+--inventory-file <path-to-inventory-file>
+```
+
+#### The AHF Zip file.
+
+The zip file must be uploaded to a GCS media bucket.
+
+The default 'directory' for this is AHF.
+
+For instance, the file `AHF-LINUX_v25.1.0.zip` would be uploaded to `gs://oracle-software/AHF/AHF-LINUX_v25.1.0.zip`.
+
+#### Install and Run ORAchk
+
+Use the the `check-oracle.sh` script to install and run ORAchk in one command.
+
+```bash
+$  ./check-oracle.sh --help
+        Usage: check-oracle.sh
+         --instance-ip-addr <value>
+         [ --extra-vars <value> ]
+         [ --ahf-location <value> ]
+         [ --db-name <value> ]
+         [ --inventory-file <value> ]
+         [ --ahf-install ]
+         [ --ahf-uninstall ]
+         [ --run-orachk ]
+         [ --help ]
+         [ --debug ]
+
+--ahf-install and --run-orachk may be combined to install and run
+--extra-vars is used to pass any number of extra ansible vars
+  example:  --extra-vars 'var1=val1 var2=val2'
+
+```
+
+example output:
+Note: skipped steps are omitted
+
+```text
+
+./check-oracle.sh --ahf-install \
+  --instance-ip-addr 10.2.80.39 \
+  --db-name ORCL \
+  --ahf-location gs://oracle-software/AHF/AHF-LINUX_v25.1.0.zip
+
+PLAY [ORAchk: uninstall, install or run] ***********************************************************************************************************************************************************************************************************************************
+...
+PLAY [ORAchk: uninstall, install or run] ***********************************************************************************************************************************************************************************************************************************
+
+TASK [Check for AHF Installation] ******************************************************************************************************************************************************************************************************************************************
+ok: [ora-db-server-19c]
+...
+PLAY RECAP *****************************************************************************************************************************************************************************************************************************************************************
+ora-db-server-19c : ok=8    changed=2    unreachable=0    failed=0    skipped=24   rescued=0    ignored=0
+
+```
+
+#### Installing ORAchk
+
+Use the the `check-oracle.sh` script to install ORAchk.
+
+```bash
+
+./check-oracle.sh --ahf-install \
+   --inventory-file inventory_files/inventory_ora-db-server-19c_ORCL \
+   --ahf-location gs://oracle-software/AHF/AHF-LINUX_v25.1.0.zip
+
+```
+example output:
+Note: skipped steps are omitted
+
+```text
+PLAY [ORAchk: uninstall, install or run] **********************************************************************************************************************************************************************************************
+
+TASK [Create AHF directory] ***********************************************************************************************************************************************************************************************************
+ok: [ora-db-server-19c]
+
+...
+
+TASK [Run AHF setup] ******************************************************************************************************************************************************************************************************************
+changed: [ora-db-server-19c]
+
+PLAY RECAP ****************************************************************************************************************************************************************************************************************************
+ora-db-server-19c   : ok=7    changed=2    unreachable=0    failed=0    skipped=8    rescued=0    ignored=0
+
+```
+#### Running ORAchk
+
+```bash
+./check-oracle.sh --run-orachk \
+  --db-name ORCL \
+  --inventory-file inventory_files/inventory_ora-db-server-19c_ORCL
+```
+
+example output:
+Note: skipped steps are omitted
+
+```text
+
+PLAY [ORAchk: uninstall, install or run] **********************************************************************************************************************************************************************************************
+
+...
+
+TASK [Run ORAchk] *********************************************************************************************************************************************************************************************************************
+changed: [ora-db-server-19c]
+
+...
+
+TASK [Display local path of fetched file] *********************************************************************************************************************************************************************************************
+ok: [ora-db-server-19c] => {
+    "msg": "Fetched file is saved locally at: /tmp/orachk_ora-db-server-19c_ORCL_020525_193642.zip"
+}
+
+PLAY RECAP ****************************************************************************************************************************************************************************************************************************
+ora-db-server-19c   : ok=6    changed=3    unreachable=0    failed=0    skipped=9    rescued=0    ignored=0
+
+```
+
+As shown in the message, the orachk zip file is saved locally at `/tmp/orachk_ora-db-server-19c_ORCL_020525_193642.zip`.
+
+
+```text
+$ unzip -l /tmp/orachk_ora-db-server-19c_ORCL_020525_193642.zip | head -12
+Archive:  /tmp/orachk_ora-db-server-19c_ORCL_020525_193642.zip
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+        0  02-05-2025 19:40   orachk_ora-db-server-19c_ORCL_020525_193642/
+        0  02-05-2025 19:40   orachk_ora-db-server-19c_ORCL_020525_193642/.standalone_html_gen/
+        0  02-05-2025 19:41   orachk_ora-db-server-19c_ORCL_020525_193642/log/
+        0  02-05-2025 19:40   orachk_ora-db-server-19c_ORCL_020525_193642/outfiles/
+        0  02-05-2025 19:40   orachk_ora-db-server-19c_ORCL_020525_193642/reports/
+        0  02-05-2025 19:40   orachk_ora-db-server-19c_ORCL_020525_193642/scripts/
+        0  02-05-2025 19:40   orachk_ora-db-server-19c_ORCL_020525_193642/upload/
+   650915  02-05-2025 19:40   orachk_ora-db-server-19c_ORCL_020525_193642/orachk_ora-db-server-19c_ORCL_020525_193642.html
+     8959  02-05-2025 19:40   orachk_ora-db-server-19c_ORCL_020525_193642/localcmd.py.shell
+```
+
+Unzip the zip file, and open `orachk_ora-db-server-19c_ORCL_020525_193642/orachk_ora-db-server-19c_ORCL_020525_193642.html` in a browser
+
+#### Uninstalling ORAchk
+
+```bash
+./check-oracle.sh  --ahf-uninstall \
+      --db-name ORCL \
+      --oracle-server ora-db-server-19c
+```
+
+example output:
+Note: skipped steps are omitted
+
+```text
+PLAY [ORAchk: uninstall, install or run] **********************************************************************************************************************************************************************************************
+
+TASK [Uninstall AHF] ******************************************************************************************************************************************************************************************************************
+changed: [ora-db-server-19c]
+
+PLAY RECAP ****************************************************************************************************************************************************************************************************************************
+ora-db-server-19c   : ok=1    changed=1    unreachable=0    failed=0    skipped=14   rescued=0    ignored=0
+```
 
 ### Reset passwords
 
@@ -2962,12 +3252,12 @@ that is defined on the `--ora-version` parameter.
 To patch RAC databases, the toolkit performs the following actions:
 
 1. Stops the RAC databases in their homes by using the "stop home" option
-   from the master node.
+   from the first node.
 1. Stops TFA.
 1. Kills the `asmcmd` daemon processes.
 1. Executes `opatchauto apply`, patching both nodes.
 1. Restarts the services, including `start home`.
-1. On the master node only, runs the `datapatch` utility over several
+1. On the first node only, runs the `datapatch` utility over several
    iterations to resolve any PDB invalid states.
 
 Regardless of which script is used, the specifics about which patch files to
@@ -3095,6 +3385,7 @@ $ ./cleanup-oracle.sh --help
           [ --ora-staging <value> ]
           [ --ora-asm-disks <value> ]
           [ --ora-data-mounts <value> ]
+          [ --gcs-backup-path <value> ]
           [ --help ]
 ```
 
@@ -3108,7 +3399,8 @@ $ ./cleanup-oracle.sh --ora-version 19 \
 --ora-swlib-path /u02/oracle_install \
 --ora-staging /u02/oracle_install \
 --ora-asm-disks asm_disk_config.json \
---ora-data-mounts data_mounts_config.json
+--ora-data-mounts data_mounts_config.json \
+--gcs-backup-path /mnt/gcsfuse
 
 Running with parameters from command line or environment variables:
 
@@ -3120,6 +3412,7 @@ ORA_ROLE_SEPARATION=TRUE
 ORA_STAGING=/u02/oracle_install
 ORA_SWLIB_PATH=/u02/oracle_install
 ORA_VERSION=19.3.0.0.0
+GCS_BACKUP_PATH=/mnt/gcsfuse
 
 Ansible params:
 Found Ansible at /usr/bin/ansible-playbook

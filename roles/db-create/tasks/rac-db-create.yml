@@ -177,6 +177,8 @@
 - name: rac-db-create | Blocks of tasks if release is not base
   vars:
     startup_upgrade: upgrade
+  when: oracle_rel != "base"
+  tags: rac-db-create,newdb-datapatch
   block:
     - name: rac-db-create | Set cluster_database to false
       shell: |
@@ -311,5 +313,3 @@
       become: true
       become_user: "{{ oracle_user }}"
       when: oracle_ver != '11.2.0.4.0'
-  when: oracle_rel != "base"
-  tags: rac-db-create,newdb-datapatch

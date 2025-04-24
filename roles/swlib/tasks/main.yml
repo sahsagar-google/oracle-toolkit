@@ -13,7 +13,10 @@
 # limitations under the License.
 
 ---
-- block:
+- name: swlib | setup
+  become: true
+  become_user: root
+  block:
     - name: swlib | Create swlib folder
       file:
         path: "{{ swlib_path }}"
@@ -28,8 +31,6 @@
     - name: swlib | gcsfuse mount
       include_tasks: gcsfuse.yml
       when: swlib_mount_type == "gcsfuse"
-  become: true
-  become_user: root
 
 - name: swlib | gcscopy
   include_tasks: gcscopy.yml
