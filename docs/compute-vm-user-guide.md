@@ -52,32 +52,24 @@ Install Ansible via typical methods. See the [Installing Ansible](https://docs.a
 
 > **NOTE:** Ansible version 2.9 or higher is required.
 
-For example, in Debian-based Linux distributions:
-
-```bash
-sudo apt update && sudo apt install -y ansible
-```
-
-Similarly, in Enterprise Linux derivative distributions:
-
-```bash
-sudo yum install -y ansible-core
-```
-
-Install jmespath (for the same Python3 version that Ansible is using). For example, installing into a Python virtual environment:
+To install Ansible, and the required jmespath package, into a Python virtual environment called `venv` use:
 
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 
 pip3 install --upgrade pip
+
+pip3 install ansible
+pip3 list | grep ansible
+
 pip3 install jmespath
 pip3 list | grep jmespath
 ```
 
-> **BACKGROUND:** A Python "virtual environment" is a self-contained directory and isolated Python environment. Allowing you to add packages with less dependency complications, version conflicts, and without changing the system Python environment.
+> **BACKGROUND:** A Python "virtual environment" is a self-contained directory and isolated Python environment. Allowing you to add packages with less dependency complications, version conflicts, and without changing the system Python environment. This virual environment is "activated" using the `source venv/bin/activate` command - this command must be run for each new shell.
 
-Then download to your Ansible Control Node the Oracle Toolkit for Google Cloud from it's source site:
+Then download to your Ansible Control Node the Oracle Toolkit for Google Cloud from its source site:
 
 ```bash
 curl -L -o oracle-toolkit-master.zip https://github.com/google/oracle-toolkit/archive/refs/heads/master.zip && \
