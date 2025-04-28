@@ -13,7 +13,7 @@
 # limitations under the License.
 
 ---
-- name: Active-copy | Check if standby database is already running
+- name: Active-copy | Check if the standby database is already running
   shell: |
     srvctl status database -d {{ standby_name }} || true
   environment:
@@ -38,11 +38,57 @@
         owner: "{{ oracle_user }}"
         group: "{{ oracle_group }}"
 
-    - name: Active-copy | Generate random password
-      set_fact:
-        sys_pass: "{{ lookup('password', '/dev/null length=16 chars=ascii_letters,digits') }}0#_"
+    - name: Active-copy | Add static listener entry
+      lineinfile:
+        path: "{{ grid_home }}/network/admin/listener.ora"
+        regexp: "^SID_LIST_{{ listener_name }}"
+        line: "SID_LIST_{{ listener_name }}=(SID_LIST=(SID_DESC=(GLOBAL_DBNAME={{ standby_name }}{% if db_domain | default('', true) | length > 0 %}.{{ db_domain }}{% endif %})(ORACLE_HOME={{ oracle_home }})(SID_NAME={{ oracle_sid }})))"
+        owner: "{{ grid_user }}"
+        group: "{{ oracle_group }}"
+      register: standby_listener_update
+      become: true
+      become_user: "{{ grid_user }}"
 
-    - name: Active-copy | Get primary db password file information
+    - name: Active-copy | Reload listener
+      shell: "{{ grid_home }}/bin/lsnrctl reload {{ listener_name }}"
+      environment:
+        ORACLE_HOME: "{{ grid_home }}"
+        PATH: "{{ grid_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
+      become: true
+      become_user: "{{ grid_user }}"
+      when: standby_listener_update.changed
+
+    - name: Active-copy | Create audit dump directory
+      file:
+        path: "{{ oracle_base }}/admin/{{ oracle_sid }}/adump"
+        state: directory
+        owner: "{{ oracle_user }}"
+        group: "{{ oracle_group }}"
+        mode: "u=wrx,go="
+
+    - name: Active-copy | Create auxiliary init file
+      template:
+        src: initaux.ora.j2
+        dest: "{{ oracle_home }}/dbs/init{{ oracle_sid }}.ora"
+        owner: "{{ oracle_user }}"
+        group: "{{ oracle_group }}"
+        mode: "u=wr,go="
+
+    - name: Active-copy | Start auxiliary instance
+      shell: |
+        set -o pipefail
+        {{ oracle_home }}/bin/sqlplus -s -L / as sysdba <<EOF
+        startup nomount pfile={{ oracle_home }}/dbs/init{{ oracle_sid }}.ora force
+        alter system register;
+        EOF
+      environment:
+        ORACLE_HOME: "{{ oracle_home }}"
+        ORACLE_SID: "{{ oracle_sid }}"
+        PATH: "{{ oracle_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
+      become: true
+      become_user: "{{ oracle_user }}"
+
+    - name: Active-copy | Get the primary database password file information
       shell: |
         set -o pipefail
         srvctl config db -d {{ db_name }} | grep "^Password file"
@@ -56,7 +102,7 @@
       changed_when: false
       register: srvctl_output
 
-    - name: Active-copy | Password file variable
+    - name: Active-copy | Extract password file name
       set_fact:
         password_file: "{{ srvctl_output.stdout | regex_replace('^Password file:') | regex_replace('\\s') }}"
 
@@ -110,7 +156,12 @@
       become_user: "{{ grid_user }}"
       when: password_file is search('^\\+')
 
-    - name: Active-copy | Set sys password for primary db
+    - name: Active-copy | Generate random password
+      set_fact:
+        sys_pass: "{{ lookup('password', '/dev/null length=16 chars=ascii_letters,digits') }}0#_"
+      no_log: true
+
+    - name: Active-copy | Set sys password for primary database
       command:
         argv:
           - "{{ oracle_home }}/bin/orapwd"
@@ -125,57 +176,6 @@
       become: true
       become_user: "{{ oracle_user }}"
       no_log: true
-
-    - name: Active-copy | Add static listener entry
-      lineinfile:
-        path: "{{ grid_home }}/network/admin/listener.ora"
-        regexp: "^SID_LIST_{{ listener_name }}"
-        line: "SID_LIST_{{ listener_name }}=(SID_LIST=(SID_DESC=(GLOBAL_DBNAME={{ standby_name }}{% if db_domain | default('', true) | length > 0 %}.{{ db_domain }}{% endif %})(ORACLE_HOME={{ oracle_home }})(SID_NAME={{ oracle_sid }})))"
-        owner: "{{ grid_user }}"
-        group: "{{ oracle_group }}"
-      register: standby_listener_update
-      become: true
-      become_user: "{{ grid_user }}"
-
-    - name: Active-copy | Reload listener
-      shell: "{{ grid_home }}/bin/lsnrctl reload {{ listener_name }}"
-      environment:
-        ORACLE_HOME: "{{ grid_home }}"
-        PATH: "{{ grid_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
-      become: true
-      become_user: "{{ grid_user }}"
-      when: standby_listener_update.changed
-
-    - name: Active-copy | Create audit dump directory
-      file:
-        path: "{{ oracle_base }}/admin/{{ oracle_sid }}/adump"
-        state: directory
-        owner: "{{ oracle_user }}"
-        group: "{{ oracle_group }}"
-        mode: "u=wrx,go="
-
-    - name: Active-copy | Create auxiliary init file
-      template:
-        src: initaux.ora.j2
-        dest: "{{ oracle_home }}/dbs/init{{ oracle_sid }}.ora"
-        owner: "{{ oracle_user }}"
-        group: "{{ oracle_group }}"
-        mode: "u=wr,go="
-
-    - name: Active-copy | Start auxiliary instance
-      shell: |
-        set -o pipefail
-        {{ oracle_home }}/bin/sqlplus -s -L / as sysdba <<EOF
-        startup nomount pfile={{ oracle_home }}/dbs/init{{ oracle_sid }}.ora force
-        alter system register;
-        host sleep 60
-        EOF
-      environment:
-        ORACLE_HOME: "{{ oracle_home }}"
-        ORACLE_SID: "{{ oracle_sid }}"
-        PATH: "{{ oracle_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
-      become: true
-      become_user: "{{ oracle_user }}"
 
     - name: Active-copy | Set sys password for auxiliary instance
       command:
@@ -216,6 +216,7 @@
         PATH: "{{ oracle_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
       become: true
       become_user: "{{ oracle_user }}"
+      no_log: true
 
     - name: Active-copy | Add Oracle Restart configuration
       shell: |
