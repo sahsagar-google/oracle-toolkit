@@ -38,7 +38,7 @@
         owner: "{{ oracle_user }}"
         group: "{{ oracle_group }}"
 
-    - name: Active-copy | Set random password
+    - name: Active-copy | Generate random password
       set_fact:
         sys_pass: "{{ lookup('password', '/dev/null length=16 chars=ascii_letters,digits') }}0#_"
 
@@ -82,7 +82,7 @@
       set_fact:
         password_file_name: "{{ password_file if password_file | length > 0 else (oracle_home + '/dbs/orapw' + db_name) if orapw_home_stat.stat.exists else (oracle_base + '/dbs/orapw' + db_name) }}"
 
-    - name: Active-copy | Backup password file from file system
+    - name: Active-copy | Back up password file from file system
       copy:
         src: "{{ password_file_name }}"
         dest: "{{ oracle_home }}/dbs/orapw{{ db_name }}.{{ lookup('pipe', 'date +%Y-%m-%d-%H-%M') }}"
@@ -97,7 +97,7 @@
         - password_file is not search('^\\+')
         - (orapw_home_stat.stat.exists or orapw_base_stat.stat.exists)
 
-    - name: Active-copy | Backup password file from ASM
+    - name: Active-copy | Back up password file from ASM
       shell: |
         set -o pipefail
         asmcmd cp {{ password_file }} {{ grid_home }}/dbs/orapw{{ db_name }}.{{ lookup('pipe', 'date +%Y-%m-%d-%H-%M') }}
@@ -146,7 +146,7 @@
       become_user: "{{ grid_user }}"
       when: standby_listener_update.changed
 
-    - name: Active-copy | Create directories
+    - name: Active-copy | Create audit dump directory
       file:
         path: "{{ oracle_base }}/admin/{{ oracle_sid }}/adump"
         state: directory
@@ -192,7 +192,7 @@
       become_user: "{{ oracle_user }}"
       no_log: true
 
-    - name: Active-copy | Get duplicate script
+    - name: Active-copy | Generate duplicate script
       template:
         src: duplicate.cmd.j2
         dest: "{{ oracle_home }}/dbs/duplicate.cmd"
