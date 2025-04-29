@@ -2178,7 +2178,8 @@ instance is created.</td>
 --debug
 </pre></p></td>
 <td></td>
-<td>Run with the Ansible debugging flag enabled.</td>
+<td>Run with the Ansible debugging flag enabled.  With debugging
+enabled, passwords appear in logfiles.</td>
 </tr>
 </tbody>
 </table>
