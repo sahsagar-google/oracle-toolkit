@@ -50,7 +50,9 @@
       become_user: "{{ grid_user }}"
 
     - name: Active-copy | Reload listener
-      shell: "{{ grid_home }}/bin/lsnrctl reload {{ listener_name }}"
+      shell: |
+        {{ grid_home }}/bin/lsnrctl reload {{ listener_name }}
+        sleep 60
       environment:
         ORACLE_HOME: "{{ grid_home }}"
         PATH: "{{ grid_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
@@ -91,7 +93,7 @@
     - name: Active-copy | Get the primary database password file information
       shell: |
         set -o pipefail
-        srvctl config db -d {{ db_name }} | grep "^Password file"
+        (srvctl config db -d {{ db_name }} || true) | grep "^Password file"
       environment:
         ORACLE_HOME: "{{ oracle_home }}"
         ORACLE_SID: "{{ oracle_sid }}"
