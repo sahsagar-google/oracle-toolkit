@@ -105,10 +105,9 @@ prereq_option: "{% if oracle_ver_base in ('11.2', '12.1') %}-ignorePrereq{% else
 # section for DR
 
 # db_unique_name identifies uniqueness of a database in Data Guard configuration.
-# By default in the script it set to "_s" so it might be helpful to overwrite the variable
-# and set it to the suffix which identifies location of the standby database
-# (like "_sydney" for example)
-# The same suffix will be "attached" to the db name in DG configuration as well.
+# For the standby database, this is represented by the Ansible "standby_name"
+# variable. This variable can be customized as desired.  For example, using the
+# suffix "_s" or something location specific (i.e. "_sydney").
 standby_suffix: _s
 standby_name: "{{ db_name }}{{ standby_suffix }}"
 

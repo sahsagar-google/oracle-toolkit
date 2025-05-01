@@ -52,12 +52,17 @@
     - name: Active-copy | Reload listener
       shell: |
         {{ grid_home }}/bin/lsnrctl reload {{ listener_name }}
-        sleep 60
       environment:
         ORACLE_HOME: "{{ grid_home }}"
         PATH: "{{ grid_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
       become: true
       become_user: "{{ grid_user }}"
+      when: standby_listener_update.changed
+
+    - name: Active-copy | Pause for one minute to ensure that the listener has fully restarted and the LsnrAgt process has registered
+      wait_for:
+        timeout: 60
+      delegate_to: localhost
       when: standby_listener_update.changed
 
     - name: Active-copy | Create audit dump directory
