@@ -87,9 +87,8 @@
       become_user: "{{ oracle_user }}"
 
     - name: DG | Reset the password file on both servers
-      include_role:
-        name: dg-config
-        tasks_from: orapw_copy
+      include_tasks:
+        file: orapw_copy.yml
       when: oracle_ver_base | float > 19.3
 
     - name: DG | Copy script for creating the Data Guard configuration
