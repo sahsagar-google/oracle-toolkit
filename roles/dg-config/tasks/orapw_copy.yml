@@ -1,0 +1,62 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+- name: DG orapwd | Generate random password
+  set_fact:
+    sys_pass: "{{ lookup('password', '/dev/null length=16 chars=ascii_letters,digits') }}0#_"
+  no_log: true
+
+- name: DG orapwd | Set sys password for primary database
+  command:
+    argv:
+      - "{{ oracle_home }}/bin/orapwd"
+      - "file={{ oracle_base }}/dbs/orapw{{ db_name }}"
+      - "force=y"
+      - "password={{ sys_pass }}"
+  environment:
+    ORACLE_HOME: "{{ oracle_home }}"
+    ORACLE_BASE: "{{ oracle_base }}"
+    ORACLE_SID: "{{ oracle_sid }}"
+    PATH: "{{ oracle_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
+  delegate_to: primary1
+  become: true
+  become_user: "{{ oracle_user }}"
+  no_log: true
+
+- name: DG orapwd | Create a temporary file for transfer
+  tempfile:
+    state: file
+  register: temp_file
+
+- name: DG orapwd | Fetch password file from primary
+  fetch:
+    src: "{{ oracle_base }}/dbs/orapwORCL"
+    dest: "{{ temp_file.path }}"
+    flat: true
+  delegate_to: primary1
+
+- name: DG orapwd | Copy password file to standby
+  copy:
+    src: "{{ temp_file.path }}"
+    dest: "{{ oracle_base }}/dbs/orapwORCL"
+    owner: "{{ oracle_user }}"
+    group: "{{ oracle_group }}"
+    mode: "u=wr,go="
+
+- name: DG orapwd | Remove temporary file
+  file:
+    path: "{{ temp_file.path }}"
+    state: absent
+  when: temp_file.path is defined
