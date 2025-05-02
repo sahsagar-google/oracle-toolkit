@@ -70,6 +70,11 @@ Sample commands for a simple quick-start and basic oracle-toolkit usage for an O
 additional details and comprehensive explanations of the toolkit, scripting,
 options, and usage scenarios. All commands run from the "control node".
 
+> **NOTE:** If deploying a single-instance database on GCE, refer to the
+[Quickstart for Using the Oracle Toolkit for Google Cloud on Compute Engine VMs](compute-vm-quickstart.md)
+document for additional information on provisioning GCE infrastructure and
+getting started with this toolkit.
+
 1. Validate media specifying GCS storage bucket and optionally database:
 
    ```bash
@@ -126,6 +131,7 @@ Initial steps similar to those of the Single Instance installation.
    `./install-oracle.sh --help`
 
 1. Create the cluster configuration. You have two options:
+
    1. Edit the `cluster_config.json` JSON file template that is provided with the toolkit,
 and then specify its path using the `--cluster-config` parameter
    1. Pass the cluster configuration JSON as an argument to the `--cluster-config-json` parameter
@@ -218,6 +224,10 @@ Google Cloud [Compute Engine](https://cloud.google.com/products/compute) .
 The toolkit defines default values for most options, so you can run the toolkit
 with only a few specifications. Your configuration options are listed later in
 this guide.
+
+For additional information about using this toolkit on GCE virtual machines
+(instances) specifically, including details on infrastructure provisioning,
+refer to the [Oracle Toolkit for Google Cloud - Compute Engine VM User Guide](compute-vm-user-guide.md).
 
 The toolkit supports the following major releases of Oracle Database and applies
 the most recent quarterly patches, also known as Oracle Release Updates or
@@ -2168,7 +2178,8 @@ instance is created.</td>
 --debug
 </pre></p></td>
 <td></td>
-<td>Run with the Ansible debugging flag enabled.</td>
+<td>Run with the Ansible debugging flag enabled.  With debugging
+enabled, passwords appear in logfiles.</td>
 </tr>
 </tbody>
 </table>
@@ -2273,7 +2284,7 @@ INSTANCE_HOSTNAME=10.150.0.42
 INSTANCE_IP_ADDR=10.150.0.42
 INSTANCE_SSH_EXTRA_ARGS=''\''-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentityAgent=no'\'''
 INSTANCE_SSH_KEY='~/.ssh/id_rsa'
-INSTANCE_SSH_USER=goryunov
+INSTANCE_SSH_USER=janedoe
 ORA_ASM_DISKS=asm_disk_config.json
 ORA_DATA_DESTINATION=DATA
 ORA_DATA_MOUNTS=data_mounts_config.json
@@ -2366,7 +2377,7 @@ INSTANCE_HOSTNAME=dbserver
 INSTANCE_IP_ADDR=10.150.0.42
 INSTANCE_SSH_EXTRA_ARGS=''\''-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentityAgent=no'\'''
 INSTANCE_SSH_KEY='~/.ssh/id_rsa'
-INSTANCE_SSH_USER=goryunov
+INSTANCE_SSH_USER=janedoe
 ORA_ASM_DISKS=asm_disk_config.json
 ORA_DATA_DESTINATION=DATA
 ORA_DATA_MOUNTS=data_mounts_config.json
@@ -2706,7 +2717,7 @@ INSTANCE_HOSTNAME=db-23ai-free
 INSTANCE_IP_ADDR=10.2.83.197
 INSTANCE_SSH_EXTRA_ARGS=''\''-o ServerAliveInterval=60 -o ServerAliveCountMax=3 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentityAgent=no'\'''
 INSTANCE_SSH_KEY='~/.ssh/id_rsa'
-INSTANCE_SSH_USER=pane
+INSTANCE_SSH_USER=janedoe
 ORA_ASM_DISKS=asm_disk_config.json
 ORA_DATA_DESTINATION=/u02/oradata
 ORA_DATA_MOUNTS=data_mounts_config.json
