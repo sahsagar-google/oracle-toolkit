@@ -16,7 +16,7 @@
 - name: DG | Check if the Data Guard configuration already exists
   shell: |
     set -o pipefail
-    ({{ oracle_home }}/bin/dgmgrl -silent / "show configuration" || true) | awk '/Configuration Status:/ {getline; print $1}'
+    ({{ oracle_home }}/bin/dgmgrl -silent / "show database {{ standby_name }}" || true) | awk '/Database Status:/ {getline; print $1}'
   environment:
     ORACLE_HOME: "{{ oracle_home }}"
     ORACLE_SID: "{{ oracle_sid }}"
