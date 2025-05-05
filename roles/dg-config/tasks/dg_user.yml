@@ -13,21 +13,20 @@
 # limitations under the License.
 
 ---
-- name: DG orapwd | Generate random password
+- name: DG User | Generate random password for the Data Guard setup user
   set_fact:
-    sys_pass: "{{ lookup('password', '/dev/null length=16 chars=ascii_letters,digits') }}0#_"
+    dg_pass: "{{ lookup('password', '/dev/null length=16 chars=ascii_letters,digits') }}0#_"
   no_log: true
 
-- name: DG orapwd | Set sys password for primary database
-  command:
-    argv:
-      - "{{ oracle_home }}/bin/orapwd"
-      - "file={{ oracle_base }}/dbs/orapw{{ db_name }}"
-      - "force=y"
-      - "password={{ sys_pass }}"
+- name: DG User | Create use user for the Data Guard configuration setup
+  shell: |
+    set -o pipefail
+    {{ oracle_home }}/bin/sqlplus -s -L / as sysdba <<EOF
+    CREATE USER c##toolkit_dg_setup_user IDENTIFIED BY {{ dg_pass }};
+    GRANT sysdg TO c##toolkit_dg_setup_user;
+    EOF
   environment:
     ORACLE_HOME: "{{ oracle_home }}"
-    ORACLE_BASE: "{{ oracle_base }}"
     ORACLE_SID: "{{ oracle_sid }}"
     PATH: "{{ oracle_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
   delegate_to: primary1
@@ -35,19 +34,19 @@
   become_user: "{{ oracle_user }}"
   no_log: true
 
-- name: DG orapwd | Create a temporary file for transfer
+- name: DG User | Create a temporary file for transfer
   tempfile:
     state: file
   register: temp_file
 
-- name: DG orapwd | Fetch password file from primary
+- name: DG User | Fetch password file from primary
   fetch:
     src: "{{ oracle_base }}/dbs/orapwORCL"
     dest: "{{ temp_file.path }}"
     flat: true
   delegate_to: primary1
 
-- name: DG orapwd | Copy password file to standby
+- name: DG User | Copy password file to standby
   copy:
     src: "{{ temp_file.path }}"
     dest: "{{ oracle_base }}/dbs/orapwORCL"
@@ -55,7 +54,7 @@
     group: "{{ oracle_group }}"
     mode: "u=wr,go="
 
-- name: DG orapwd | Remove temporary file
+- name: DG User | Remove temporary file
   file:
     path: "{{ temp_file.path }}"
     state: absent

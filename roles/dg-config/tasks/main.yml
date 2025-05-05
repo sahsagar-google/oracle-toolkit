@@ -108,9 +108,9 @@
       become: true
       become_user: "{{ oracle_user }}"
 
-    - name: DG | Reset the password file on both servers
+    - name: DG | Create the DG setup user on both servers (21c and higher only)
       include_tasks:
-        file: orapw_copy.yml
+        file: dg_user.yml
       when: oracle_ver_base | float > 19.3
 
     - name: DG | Generate script for creating the Data Guard configuration
@@ -129,10 +129,11 @@
         set -o pipefail
         {{ oracle_home }}/bin/dgmgrl <<EOF
         {% if oracle_ver_base | float > 19.3 %}
-        connect sys/{{ sys_pass }}
+        connect c##toolkit_dg_setup_user/{{ dg_pass }}
         {% else %}
         connect /
         {% endif %}
+        spool "{{ oracle_home }}/dbs/create_dg_{{ db_name }}.log"
         @"{{ oracle_home }}/dbs/create_dg_{{ db_name }}.cmd"
         EOF
       environment:
