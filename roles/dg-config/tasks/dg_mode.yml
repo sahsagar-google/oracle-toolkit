@@ -30,7 +30,7 @@
 - name: DG Mode | Validate whether the desired protection mode change is possible
   assert:
     that:
-      - not (current_dg_mode.stdout | upper == "MAXPERFORMANCE" and data_guard_protection_mode | upper == "MAXPROTECTION")
+      - not (current_dg_mode.stdout | upper == "MAXPERFORMANCE" and data_guard_protection_mode | upper == "MAXIMUM PROTECTION")
     quiet: true
     fail_msg: "ERROR: Cannot change from MAXIMUM PERFORMANCE directly to MAXIMUM PROTECTION - must change to MAXIMUM AVAILABILITY first"
   tags: dg-mode,dg-create
@@ -72,13 +72,13 @@
   shell: |
     set -o pipefail
     {{ oracle_home }}/bin/dgmgrl / <<EOF
-    edit configuration set protection mode as {{ data_guard_protection_mode }};
+    edit configuration set protection mode as {{ data_guard_protection_mode | replace(' ', '') | replace('imum', '') | upper }};
     EOF
   environment:
     ORACLE_HOME: "{{ oracle_home }}"
     ORACLE_SID: "{{ oracle_sid }}"
     PATH: "{{ oracle_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
-  when: current_dg_mode.stdout | upper != data_guard_protection_mode | upper
+  when: current_dg_mode.stdout | upper != data_guard_protection_mode | replace(' ', '') | replace('imum', '') | upper
   become: true
   become_user: "{{ oracle_user }}"
   tags: dg-mode,dg-create
