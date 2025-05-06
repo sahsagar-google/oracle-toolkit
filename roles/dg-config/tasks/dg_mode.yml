@@ -229,5 +229,5 @@
 - name: DG Mode | Show output from inconsistency checks
   debug:
     var: dg_verification.stdout_lines
-    verbosity: 1
+    verbosity: 0
   tags: dg-mode,dg-create
