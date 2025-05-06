@@ -16,3 +16,4 @@
 # Specify one of the Data Guard protection modes: MAXPERFORMANCE, MAXAVAILABILITY, or MAXPROTECTION
 data_guard_protection_mode: "MAXAVAILABILITY"
 real_time_apply: true
+log_transport_mode: "{{ 'ASYNC' if data_guard_protection_mode | upper == 'MAXPERFORMANCE' else 'SYNC' }}"

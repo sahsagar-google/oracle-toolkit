@@ -35,10 +35,10 @@
     fail_msg: "ERROR: Cannot change from MAXIMUM PERFORMANCE directly to MAXIMUM PROTECTION - must change to MAXIMUM AVAILABILITY first"
   tags: dg-mode,dg-create
 
-- name: DG Mode | Capture the current redo transport mode for the primary
+- name: DG Mode | Capture the current redo transport mode
   shell: |
     set -o pipefail
-    {{ oracle_home }}/bin/dgmgrl -silent / "show database {{ db_name }} 'LogXptMode'" | grep "LogXptMode" | awk -F" " '{ print $3 }' | sed "s/'//g"
+    {{ oracle_home }}/bin/dgmgrl -silent / "show database {{ item }} 'LogXptMode'" | grep "LogXptMode" | awk -F" " '{ print $3 }' | sed "s/'//g"
   environment:
     ORACLE_HOME: "{{ oracle_home }}"
     ORACLE_SID: "{{ oracle_sid }}"
@@ -46,89 +46,26 @@
   become: true
   become_user: "{{ oracle_user }}"
   changed_when: false
-  register: primary_logxpt_mode
+  register: db_logxpt_mode
+  with_items:
+    - "{{ db_name }}"
+    - "{{ standby_name }}"
   tags: dg-mode,dg-create
 
-- name: DG Mode | Change the redo transport mode to SYNC on the primary
+- name: DG Mode | Change the redo transport mode to {{ log_transport_mode }}
   shell: |
     set -o pipefail
     {{ oracle_home }}/bin/dgmgrl / <<EOF
-    edit database {{ db_name }} set property 'LogXptMode'='SYNC';
+    edit database {{ item.db_name }} set property 'LogXptMode'='{{ log_transport_mode }}';
     EOF
   environment:
     ORACLE_HOME: "{{ oracle_home }}"
     ORACLE_SID: "{{ oracle_sid }}"
     PATH: "{{ oracle_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
-  when:
-    - data_guard_protection_mode | upper != 'MAXPERFORMANCE'
-    - primary_logxpt_mode.stdout | upper != 'SYNC'
+  when: item.current_transfer_mode | upper != log_transport_mode
   become: true
   become_user: "{{ oracle_user }}"
-  tags: dg-mode,dg-create
-
-- name: DG Mode | Change the redo transport mode to ASYNC on the primary
-  shell: |
-    set -o pipefail
-    {{ oracle_home }}/bin/dgmgrl / <<EOF
-    edit database {{ db_name }} set property 'LogXptMode'='ASYNC';
-    EOF
-  environment:
-    ORACLE_HOME: "{{ oracle_home }}"
-    ORACLE_SID: "{{ oracle_sid }}"
-    PATH: "{{ oracle_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
-  when:
-    - data_guard_protection_mode | upper == 'MAXPERFORMANCE'
-    - primary_logxpt_mode.stdout | upper != 'ASYNC'
-  become: true
-  become_user: "{{ oracle_user }}"
-  tags: dg-mode,dg-create
-
-- name: DG Mode | Capture the current redo transport mode for the standby
-  shell: |
-    set -o pipefail
-    {{ oracle_home }}/bin/dgmgrl -silent / "show database {{ standby_name }} 'LogXptMode'" | grep "LogXptMode" | awk -F" " '{ print $3 }' | sed "s/'//g"
-  environment:
-    ORACLE_HOME: "{{ oracle_home }}"
-    ORACLE_SID: "{{ oracle_sid }}"
-    PATH: "{{ oracle_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
-  become: true
-  become_user: "{{ oracle_user }}"
-  changed_when: false
-  register: standby_logxpt_mode
-  tags: dg-mode,dg-create
-
-- name: DG Mode | Change the redo transport mode to SYNC on the standby
-  shell: |
-    set -o pipefail
-    {{ oracle_home }}/bin/dgmgrl / <<EOF
-    edit database {{ standby_name }} set property 'LogXptMode'='SYNC';
-    EOF
-  environment:
-    ORACLE_HOME: "{{ oracle_home }}"
-    ORACLE_SID: "{{ oracle_sid }}"
-    PATH: "{{ oracle_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
-  when:
-    - data_guard_protection_mode | upper != 'MAXPERFORMANCE'
-    - standby_logxpt_mode.stdout | upper != 'SYNC'
-  become: true
-  become_user: "{{ oracle_user }}"
-  tags: dg-mode,dg-create
-
-- name: DG Mode | Change the redo transport mode to ASYNC on the standby
-  shell: |
-    set -o pipefail
-    {{ oracle_home }}/bin/dgmgrl / <<EOF
-    edit database {{ standby_name }} set property 'LogXptMode'='ASYNC';
-    EOF
-  environment:
-    ORACLE_HOME: "{{ oracle_home }}"
-    ORACLE_SID: "{{ oracle_sid }}"
-    PATH: "{{ oracle_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
-  when:
-    - data_guard_protection_mode | upper == 'MAXPERFORMANCE'
-    - standby_logxpt_mode.stdout | upper != 'ASYNC'
-  become: true
-  become_user: "{{ oracle_user }}"
+  with_items: "{{ db_logxpt_mode | json_query('results[*].{db_name:item,current_transfer_mode:stdout}') }}"
   tags: dg-mode,dg-create
 
 - name: DG Mode | Change the Data Guard protection mode
