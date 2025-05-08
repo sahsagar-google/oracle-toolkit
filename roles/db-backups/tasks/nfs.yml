@@ -39,20 +39,13 @@
     owner: "{{ oracle_user}}"
     group: backupdba
 
-- name: NFS values | Display NFS values
-  debug:
-    msg:
-      - "{{ backup_dest }}/{{ db_name }}"
-      - "{{ nfs_backup_config }},{{ nfs_mount_params }}"
-      - "{{ nfs_backup_mount }}"
-
 - name: nfs_backups | Mount NFS share (backup)
   become: true
   become_user: root
   mount:
     fstype: nfs
     name: "{{ backup_dest }}/{{ db_name }}"
-    opts: "{{ nfs_backup_config }},{{ nfs_mount_params }}"
+    opts: "user,{{ nfs_backup_config }},_netdev,rsize=32768,wsize=32768,timeo=14,intr"
     src: "{{ nfs_backup_mount }}"
     state: mounted
 
