@@ -1932,7 +1932,9 @@ If you are writing to a local file system, the
 directory does not have to exist, but initial backups will fail if the
 destination is not available or writeable.<br>
 <br>
-If you are writing to a NFS share, the NFS share directory uid and gid should be configured to match your ownership needs. The NFS option requires the --nfs-backup-config option.</td>
+If you are writing to a NFS share, the NFS share directory uid and gid should be configured
+to match your ownership needs. The configuration is done by the storage manager or systems engineer
+providing the remote filesystem. The NFS option requires the --nfs-backup-config option.</td>
 </tr>
 <br>
 If you are writing to a gcsfuse bucket, the /mnt must be used as parameter.</td>
