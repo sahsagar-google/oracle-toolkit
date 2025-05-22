@@ -86,7 +86,7 @@
 - name: check-swlib | Report gsutil failures (base)
   fail:
     msg: "ERROR locating {{ item.item.name }} {{ item.item.files }}: {{ item.stderr_lines }}"
-  when: item.failed_when_result and item.failed_when_result == true
+  when: item.failed_when_result is defined and item.failed_when_result == true
   with_items:
     - "{{ base_repo_files.results }}"
 
