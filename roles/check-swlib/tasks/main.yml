@@ -36,8 +36,8 @@
     {% endfor %}
   args:
     executable: /bin/bash
-  changed_when: false
   failed_when: "'ERROR' in base_repo_files.stdout"
+  changed_when: false
   ignore_errors: true
   with_items:
     - "{{ gi_software }}"
