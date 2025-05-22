@@ -26,7 +26,7 @@
     if ! ssh -i {{ ansible_ssh_private_key_file }} {{ ansible_ssh_extra_args }} {{ ansible_ssh_user }}@{{ ansible_ssh_host }} \
       "unzip -l {{ swlib_path }}/{{ f.name }}"
       then
-        gsutil cat gs://{{ swlib_mount_src }}/${f_name} | ssh -i {{ ansible_ssh_private_key_file }} {{ ansible_ssh_extra_args }} \
+        gsutil cat gs://"{{ swlib_mount_src }}"/"${f_name}" | ssh -i {{ ansible_ssh_private_key_file }} {{ ansible_ssh_extra_args }} \
           {{ ansible_ssh_user }}@{{ ansible_ssh_host }} "cat > {{ swlib_path }}/{{ f.name }}"
     fi
     {% endfor %}
@@ -108,7 +108,7 @@
     if ! ssh -i {{ ansible_ssh_private_key_file }} {{ ansible_ssh_extra_args }} {{ ansible_ssh_user }}@{{ ansible_ssh_host }} \
       "rpm -qp {{ swlib_path }}/{{ f.name }}"
       then
-        gsutil cat gs://{{ swlib_mount_src }}/{{ f.name }} | ssh -i {{ ansible_ssh_private_key_file }} {{ ansible_ssh_extra_args }} \
+        gsutil cat gs://"{{ swlib_mount_src }}"/"{{ f.name }}" | ssh -i {{ ansible_ssh_private_key_file }} {{ ansible_ssh_extra_args }} \
           {{ ansible_ssh_user }}@{{ ansible_ssh_host }} "cat > {{ swlib_path }}/{{ f.name }}" && echo "File copied"
     fi
     {% endfor %}

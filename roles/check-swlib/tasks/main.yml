@@ -17,28 +17,28 @@
   shell: |
     set -o pipefail
     {% for f in item.files %}
-    if gsutil ls gs://{{ swlib_mount_src }}/{{ f.name }} >/dev/null 2>&1; then
+    if gsutil -q stat gs://"{{ swlib_mount_src }}"/"{{ f.name }}"; then
       f_name="{{ f.name }}"
-      md5sum="{{ f.md5sum }}"
+      expected_md5="{{ f.md5sum }}"
     else
+      # use alternative file name
       f_name="{{ f.alt_name | default('x') }}"
-      md5sum="{{ f.alt_md5sum | default('x') }}"
+      expected_md5="{{ f.alt_md5sum | default('x') }}"
     fi
-    actual_md5=$(gsutil ls -L gs://{{ swlib_mount_src }}/${f_name} | awk '/md5/ { print $3 }')
-    if [ $? -ne 0 ] ; then
-      echo "ERROR locating {{ f.name }} {{ f.alt_name | default('') }}"
-      exit 1;
+    actual_md5=$(gsutil ls -L gs://"{{ swlib_mount_src }}"/"${f_name}" | awk '/md5/ { print $3 }')
+    if [[ $? -ne 0 ]] ; then
+      echo "ERROR locating {{ f.name }}{% if f.alt_name is defined and f.alt_name | length > 0 %} or {{ f.alt_name }}{% endif %}"
     else
-      if [ "$actual_md5" != "$md5sum" ]; then
-        echo "ERROR locating {{ item.name }}: md5 mismatch for ${f_name}"
-        exit 1
-      fi  
+      if [[ "$actual_md5" != "$expected_md5" ]]; then
+        echo "ERROR in {{ item.name }} md5: expected $expected_md5, but got $actual_md5 for ${f_name}"
+      fi
     fi
     {% endfor %}
   args:
     executable: /bin/bash
   changed_when: false
   ignore_errors: true
+  failed_when: 'ERROR' in base_repo_files.stdout
   with_items:
     - "{{ gi_software }}"
     - "{{ gi_interim_patches }}"
