@@ -38,7 +38,7 @@
     executable: /bin/bash
   changed_when: false
   ignore_errors: true
-  failed_when: 'ERROR' in base_repo_files.stdout
+  failed_when: "'ERROR' in base_repo_files.stdout"
   with_items:
     - "{{ gi_software }}"
     - "{{ gi_interim_patches }}"
