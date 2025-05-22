@@ -93,7 +93,7 @@
 - name: check-swlib | Report gsutil failures (patch)
   fail:
     msg: "ERROR locating {{ item.item.category }} patch {{ item.item.patchfile }}: {{ item.stderr_lines }}"
-  when: item.rc is defined and item.rc != 0
+  when: item.failed_when_result is defined and item.failed_when_result == true
   with_items:
     - "{{ patch_repo_files.results }}"
     - "{{ opatch_repo_files.results }}"
