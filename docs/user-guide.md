@@ -364,17 +364,10 @@ need and for complying with the applicable licenses.
 
 Oracle software is divided into two general categories: **base software** that
 you download from the [Oracle Software Delivery
-Cloud](https://edelivery.oracle.com/) site (also known as Oracle "eDelivery"),
-and **patches** that you download from Oracle's [My Oracle
+Cloud](https://edelivery.oracle.com/) site (also known as Oracle "eDelivery") or
+[Oracle Technology Network](https://www.oracle.com/database/technologies/oracle-database-software-downloads.html)
+(also known as OTN), and **patches** that you download from Oracle's [My Oracle
 Support](https://support.oracle.com/) (MOS) site.
-
-You can also download base software from
-[Oracle Technology Network](https://www.oracle.com/database/technologies/oracle-database-software-downloads.html#db_ee).
-
-In this case, please rename the downloaded files to the
-[software delivery cloud equivalent](#required-oracle-software---download-summary)
-names, and use `--no-patch` to skip patching. Note that unpatched software may
-have known defects and security vulnerabilities.
 
 One key exception: Oracle 11g base software can be downloaded directly from My
 Oracle Support. Only Oracle 12c or later base software needs to be downloaded
@@ -384,7 +377,7 @@ below.
 Before you download Oracle software and patches, review and acknowledge Oracle's
 license terms.
 
-Before using the toolkit, download all of the software pieces for your Oracle
+Before using the toolkit, download all the software pieces for your Oracle
 release, including the base release, patch sets, the OPatch utility, and any
 additional patches listed by Oracle (unless using `--no-patch`, at which
 point only the base release is installed).
@@ -415,9 +408,9 @@ Support")</th>
 <tbody>
 <tr>
 <td>21.3.0.0.0</td>
-<td>Base - eDelivery</td>
+<td>Base - eDelivery or OTN</td>
 <td>Oracle Database 21.3.0.0.0 for Linux x86-64</td>
-<td>V1011496-01.zip</td>
+<td>V1011496-01.zip or LINUX.X64_213000_db_home.zip</td>
 </tr>
 <tr>
 <td></td>
@@ -481,8 +474,9 @@ Support")</th>
 </tr>
 <tr>
 <td></td>
+<td>Base - eDelivery or OTN</td>
 <td>Oracle Grid Infrastructure 21.3.0.0.0 for Linux x86-64</td>
-<td>V1011504-01.zip</td>
+<td>V1011504-01.zip or LINUX.X64_213000_grid_home.zip</td>
 </tr>
 <tr>
 <td></td>
@@ -552,15 +546,15 @@ Support")</th>
 </tr>
 <tr>
 <td>19.3.0.0.0</td>
-<td>Base - eDelivery</td>
+<td>Base - eDelivery or OTN</td>
 <td>Oracle Database 19.3.0.0.0 for Linux x86-64</td>
-<td>V982063-01.zip</td>
+<td>V982063-01.zip or LINUX.X64_193000_db_home.zip</td>
 </tr>
 <tr>
 <td></td>
 <td></td>
 <td>Oracle Grid Infrastructure 19.3.0.0.0 for Linux x86-64</td>
-<td>V982068-01.zip</td>
+<td>V982068-01.zip or LINUX.X64_193000_grid_home.zip</td>
 </tr>
 <tr>
 <td></td>
