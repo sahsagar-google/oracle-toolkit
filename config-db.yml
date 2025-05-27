@@ -65,6 +65,5 @@
     - include_role:
         name: dg-config
         tasks_from: main
-      when:
-        - cluster_type == "DG"
+      when: cluster_type == "DG"
       tags: dg-create
