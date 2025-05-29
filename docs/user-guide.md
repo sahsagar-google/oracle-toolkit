@@ -474,6 +474,12 @@ Support")</th>
 </tr>
 <tr>
 <td></td>
+<td></td>
+<td>Database Release Update 21.18.0.0.0</td>
+<td>p37655430_210000_Linux-x86-64.zip</td>
+</tr>
+<tr>
+<td></td>
 <td>Base - eDelivery or OTN</td>
 <td>Oracle Grid Infrastructure 21.3.0.0.0 for Linux x86-64</td>
 <td>V1011504-01.zip or LINUX.X64_213000_grid_home.zip</td>
