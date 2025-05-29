@@ -19,7 +19,17 @@ import requests
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
 SEARCH_FORM = 'https://updates.oracle.com/Orion/SimpleSearch/process_form?search_type=patch&patch_number=%d&plat_lang=226P'
 DOWNLOAD_URL = r'https://updates.oracle.com/Orion/Download/process_form[^\"]*'
+LOGIN_FORM = 'https://updates.oracle.com/Orion/SavedSearches/switch_to_simple'
 
+def get_patch_auth(s: requests.models.Request) -> typing.List[str]:
+  """Obtains auth for login in order to download patches."""
+  r = s.get(LOGIN_FORM, allow_redirects=False)
+  if 'location' in r.headers:
+   # Do two separate requests to force auth on second request
+    r = s.get(r.headers['Location'])
+  assert r.status_code == 200, f'Got HTTP code {r.status_code} retrieving {LOGIN_FORM}'
+  url = re.findall(LOGIN_FORM, str(r.content))
+  return url
 
 def get_patch_url(s: requests.models.Request, patchnum: int) -> typing.List[str]:
   """Retrieves a download URL for a given patch number."""
@@ -63,7 +73,7 @@ def parse_patch(patch_file: str, patchnum: int) -> (str, str, str, str):
           logging.debug('Found title: %s', c.find('title').get_text())
           if 'JavaVM' in c.find('title').get_text():
             ojvm_subdir = m.group(1)
-          elif 'GI ' in c.find('title').get_text() or 'Grid Infrastructure' in c.find('title').get_text():
+          elif 'GI ' in c.find('title').get_text() or 'Grid Infrastructure' in c.find('title').get_text() or 'GI ' in c.find(string = re.compile("GI Release Update")).get_text():
             gi_subdir = m.group(1)
     assert 'ojvm_subdir' in locals(), f'Could not find an OJVM patch molecule in {patch_file}'
     assert 'gi_subdir' in locals(), f'Could not find a GI patch molecule in {patch_file}'
@@ -86,6 +96,7 @@ def main():
   s.headers.update({'User-Agent': USER_AGENT})
   s.auth = (mosuser, mospwd)
 
+  url = get_patch_auth(s)
   url = get_patch_url(s, patchnum)
   # Yes we ignore multipart patche:ws here.
   logging.debug('Found download URL: %s', url[0])

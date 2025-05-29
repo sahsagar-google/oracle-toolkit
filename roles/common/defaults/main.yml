@@ -146,6 +146,12 @@ gi_software:
       - { name: "p13390677_112040_Linux-x86-64_3of7.zip", sha256sum: "09C08AD3E1EE03DB1707F01C6221C7E3E75EC295316D0046CC5D82A65C7B928C", md5sum: "BM7zeZHbGPgZD31KGbJpEg==" }
 
 rdbms_software:
+  - name: 23ai_free_23_8
+    version: 23.8.0.25.04
+    edition: FREE
+    files:
+      - { name: "oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm", sha256sum: "4578e6d1cf566e04541e0216b07a0372725726a7c339423ee560255cb918138b", md5sum: "TmjqUT878Owv7NbXGECpTA=="}
+      - { name: "oracle-database-free-23ai-23.8-1.el8.x86_64.rpm", sha256sum: "cd0d16939150e6ec5e70999a762a13687bfa99b05c4f310593e7ca3892e1d0ce", md5sum: "hkL/hxeYbB7z5lz+3r3kww=="}
   - name: 23ai_free_23_7
     version: 23.7.0.25.01
     edition: FREE
@@ -240,7 +246,7 @@ opatch_patches:
   - { category: "OPatch", release: "12.2.0.1.0", patchnum: "6880880", patchfile: "p6880880_122010_Linux-x86-64.zip", md5sum: "" }
   - { category: "OPatch", release: "18.0.0.0.0", patchnum: "6880880", patchfile: "p6880880_180000_Linux-x86-64.zip", md5sum: "" }
   - { category: "OPatch", release: "19.3.0.0.0", patchnum: "6880880", patchfile: "p6880880_190000_Linux-x86-64.zip", md5sum: "" }
-  - { category: "OPatch", release: "21.3.0.0.0", patchnum: "6880880", patchfile: "p6880880_122010_Linux-x86-64.zip", md5sum: "" }
+  - { category: "OPatch", release: "21.3.0.0.0", patchnum: "6880880", patchfile: "p6880880_210000_Linux-x86-64.zip", md5sum: "" }
 
 gi_interim_patches:
   - category: "HAS_interim_patch"
@@ -328,6 +334,7 @@ gi_patches:
   - { category: "RU", base: "19.3.0.0.0", release: "19.24.0.0.240716", patchnum: "36522439", patchfile: "p36522439_190000_Linux-x86-64.zip", patch_subdir: "/36582629", prereq_check: false, method: "opatchauto apply", ocm: false, upgrade: false, md5sum: "ysQplJ/kY19rRPZmntFsMA==" }
   - { category: "RU", base: "19.3.0.0.0", release: "19.25.0.0.241015", patchnum: "36866740", patchfile: "p36866740_190000_Linux-x86-64.zip", patch_subdir: "/36916690", prereq_check: false, method: "opatchauto apply", ocm: false, upgrade: false, md5sum: "f8DKaIiP7v811/WaRyacTQ==" }
   - { category: "RU", base: "19.3.0.0.0", release: "19.26.0.0.250121", patchnum: "37262208", patchfile: "p37262208_190000_Linux-x86-64.zip", patch_subdir: "/37257886", prereq_check: false, method: "opatchauto apply", ocm: false, upgrade: false, md5sum: "zqZeJ3/ujDWcLr+reZOHpw==" }
+  - { category: "RU", base: "19.3.0.0.0", release: "19.27.0.0.250415", patchnum: "37591516", patchfile: "p37591516_190000_Linux-x86-64.zip", patch_subdir: "/37641958", prereq_check: false, method: "opatchauto apply", ocm: false, upgrade: false, md5sum: "kkyZC9RP8eolBgdu9Y3q7g==" }
 
 # 21c GRID RU - 21.4 and 21.7 are available only via SR
 #     RDBMS RU - 21.4 - 21.7 are available only via SR
@@ -344,6 +351,7 @@ gi_patches:
   - { category: "RU", base: "21.3.0.0.0", release: "21.15.0.0.0", patchnum: "36696109", patchfile: "p36696109_210000_Linux-x86-64.zip", patch_subdir: "/", prereq_check: false, method: "opatchauto apply", ocm: false, upgrade: false, md5sum: "9aPx+eWkCSEVS9vKqoVi/Q==" }
   - { category: "RU", base: "21.3.0.0.0", release: "21.16.0.0.0", patchnum: "36990664", patchfile: "p36990664_210000_Linux-x86-64.zip", patch_subdir: "/", prereq_check: false, method: "opatchauto apply", ocm: false, upgrade: false, md5sum: "N1p/HLEg+UFYAr04loujqg==" }
   - { category: "RU", base: "21.3.0.0.0", release: "21.17.0.0.0", patchnum: "37349593", patchfile: "p37349593_210000_Linux-x86-64.zip", patch_subdir: "/", prereq_check: false, method: "opatchauto apply", ocm: false, upgrade: false, md5sum: "Mt0Bw+IPKqoKh31YkneCrg==" }
+  - { category: "RU", base: "21.3.0.0.0", release: "21.18.0.0.0", patchnum: "37642955", patchfile: "p37642955_210000_Linux-x86-64.zip", patch_subdir: "/", prereq_check: false, method: "opatchauto apply", ocm: false, upgrade: false, md5sum: "b8YrXNXis6agqIHny746Xw==" }
 
 rdbms_patches:
 # 11.2.0.4 OJVM packages from Combo
@@ -412,6 +420,7 @@ rdbms_patches:
   - { category: "RU_Combo", base: "19.3.0.0.0", release: "19.24.0.0.240716", patchnum: "36522439", patchfile: "p36522439_190000_Linux-x86-64.zip", patch_subdir: "/36414915", prereq_check: true, method: "opatch apply", ocm: false, upgrade: true, md5sum: "ysQplJ/kY19rRPZmntFsMA==" }
   - { category: "RU_Combo", base: "19.3.0.0.0", release: "19.25.0.0.241015", patchnum: "36866740", patchfile: "p36866740_190000_Linux-x86-64.zip", patch_subdir: "/36878697", prereq_check: true, method: "opatch apply", ocm: false, upgrade: true, md5sum: "f8DKaIiP7v811/WaRyacTQ==" }
   - { category: "RU_Combo", base: "19.3.0.0.0", release: "19.26.0.0.250121", patchnum: "37262208", patchfile: "p37262208_190000_Linux-x86-64.zip", patch_subdir: "/37102264", prereq_check: true, method: "opatch apply", ocm: false, upgrade: true, md5sum: "zqZeJ3/ujDWcLr+reZOHpw==" }
+  - { category: "RU_Combo", base: "19.3.0.0.0", release: "19.27.0.0.250415", patchnum: "37591516", patchfile: "p37591516_190000_Linux-x86-64.zip", patch_subdir: "/37499406", prereq_check: true, method: "opatch apply", ocm: false, upgrade: true, md5sum: "kkyZC9RP8eolBgdu9Y3q7g==" }
 # 21c RDBMS RU - 21.4 - 21.7 are available only via SR
   - { category: "RU", base: "21.3.0.0.0", release: "21.8.0.0.0", patchnum: "34527084", patchfile: "p34527084_210000_Linux-x86-64.zip", patch_subdir: "/", prereq_check: false, method: "opatch apply", ocm: false, upgrade: false, md5sum: "niyd8DhbfJzZb67v98ElWA==" }
   - { category: "RU", base: "21.3.0.0.0", release: "21.9.0.0.0", patchnum: "34839741", patchfile: "p34839741_210000_Linux-x86-64.zip", patch_subdir: "/", prereq_check: false, method: "opatch apply", ocm: false, upgrade: false, md5sum: "VaJNd/YSjzbH4orQjBIt8g==" }
@@ -423,3 +432,4 @@ rdbms_patches:
   - { category: "RU", base: "21.3.0.0.0", release: "21.15.0.0.0", patchnum: "36696242", patchfile: "p36696242_210000_Linux-x86-64.zip", patch_subdir: "/", prereq_check: false, method: "opatch apply", ocm: false, upgrade: false, md5sum: "BfnTadblbMTHccGi7ZQaXw==" }
   - { category: "RU", base: "21.3.0.0.0", release: "21.16.0.0.0", patchnum: "36991631", patchfile: "p36991631_210000_Linux-x86-64.zip", patch_subdir: "/", prereq_check: false, method: "opatch apply", ocm: false, upgrade: false, md5sum: "qcuTf7+EzsEGvMdCXRKZlQ==" }
   - { category: "RU", base: "21.3.0.0.0", release: "21.17.0.0.0", patchnum: "37350281", patchfile: "p37350281_210000_Linux-x86-64.zip", patch_subdir: "/", prereq_check: false, method: "opatch apply", ocm: false, upgrade: false, md5sum: "dQjBqlXWOumEZU3QAJzD9Q==" }
+  - { category: "RU", base: "21.3.0.0.0", release: "21.18.0.0.0", patchnum: "37655430", patchfile: "p37655430_210000_Linux-x86-64.zip", patch_subdir: "/", prereq_check: false, method: "opatch apply", ocm: false, upgrade: false, md5sum: "4JhJvWSOeDMYUIupR0jFZA==" }
