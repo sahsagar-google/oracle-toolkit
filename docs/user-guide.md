@@ -1932,9 +1932,10 @@ If you are writing to a local file system, the
 directory does not have to exist, but initial backups will fail if the
 destination is not available or writeable.<br>
 <br>
-If you are writing to a NFS share, the NFS share directory uid and gid should be configured
-to match your ownership needs. The configuration is done by the storage manager or systems engineer
-providing the remote filesystem. The NFS option requires the --nfs-backup-config option.</td>
+If you are writing to a NFS share, the NFS share directory uid default group is 801  and gid is 809.
+The NFS exported filesystem  should be configured with the default ids or  match your ownership customization.
+The configuration is done by the storage manager or systems engineer providing the remote filesystem.
+The NFS option default value is nfsv3, in the case nfsv4 is required the --nfs-backup-config nfsv4 option can be used.</td>
 </tr>
 <br>
 If you are writing to a gcsfuse bucket, the /mnt must be used as parameter.</td>
@@ -1945,10 +1946,10 @@ If you are writing to a gcsfuse bucket, the /mnt must be used as parameter.</td>
 NFS_BACKUP_CONFIG
 --nfs-backup-config
 </pre></p></td>
-<td>user defined - no default<br>
-Example: vers=3 </td>
-<td>The NFS version of the export shared is defined with this option. The values accepted are ( vers=3 | vers=4 ).<br>
-</tr>
+<td>hiden defined - default nfsv3<br>
+Example: nfsv3 </td>
+<td>The NFS version of the export shared is defined with this option. The values accepted are ( nfsv3 | nfsv4 ).<br>
+</tr> 
 <tr>
 <td>NFS backup mount</td>
 <td><p><pre>
