@@ -1946,8 +1946,7 @@ destination is not available or writeable.<br>
 If you are writing to a NFS share, the NFS share directory uid default group is 801  and gid is 809.
 The NFS exported filesystem  should be configured with the default ids or  match your ownership customization.
 The configuration is done by the storage manager or systems engineer providing the remote filesystem.
-The NFS option default value is nfsv3, in the case nfsv4 is required the --nfs-backup-config nfsv4 option can be used.</td>
-</tr>
+The NFS option default value is nfsv3, in the case nfsv4 is required the --nfs-backup-config nfsv4 option can be used.
 <br>
 If you are writing to a gcsfuse bucket, the /mnt must be used as parameter.</td>
 </tr>
