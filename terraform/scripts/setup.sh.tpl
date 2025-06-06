@@ -10,6 +10,8 @@ control_node_zone="$(basename "$control_node_zone_full")"
 control_node_project_id="$(curl -s http://metadata.google.internal/computeMetadata/v1/project/project-id -H 'Metadata-Flavor: Google')"
   
 cleanup() {
+  echo "Deleting the public SSH key from the control node's service account OS Login profile"
+  gcloud --quiet 
   echo "Deleting '$control_node_name' GCE instance in zone '$control_node_zone' in project '$control_node_project_id'..."
   gcloud --quiet compute instances delete "$control_node_name" --zone="$control_node_zone" --project="$control_node_project_id"
 }
@@ -71,14 +73,7 @@ bash install-oracle.sh \
 %{ if ora_edition != "" }--ora-edition "${ora_edition}" %{ endif } \
 %{ if ora_listener_port != "" }--ora-listener-port "${ora_listener_port}" %{ endif } \
 %{ if ora_redo_log_size != "" }--ora-redo-log-size "${ora_redo_log_size}" %{ endif } \
-<<<<<<< HEAD
 %{ if skip_database_config }--skip-database-config %{ endif } \
 %{ if install_workload_agent }--install-workload-agent %{ endif } \
-%{ if oracle_metrics_secret != "" }--oracle-metrics-secret "${oracle_metrics_secret}" %{ endif }
-||||||| parent of c2d7743 (Retrieve DB passwords from Secret Manager)
-%{ if skip_database_config }--skip-database-config %{ endif }
-=======
-%{ if skip_database_config }--skip-database-config %{ endif } \
-%{ if sys_secret_path != "" }--sys-secret-path "${sys_secret_path}" %{ endif } \
-%{ if system_secret_path != "" }--system-secret-path "${system_secret_path}" %{ endif }
->>>>>>> c2d7743 (Retrieve DB passwords from Secret Manager)
+%{ if oracle_metrics_secret != "" }--oracle-metrics-secret "${oracle_metrics_secret}" %{ endif } \
+%{ if db_secret_path != "" }--db-secret-path "${db_secret_path}" %{ endif }
