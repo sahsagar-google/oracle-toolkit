@@ -68,6 +68,7 @@ module "instance_template" {
 
   metadata = {
     metadata_startup_script = var.metadata_startup_script
+    enable-oslogin          = "TRUE"
   }
 
   additional_disks = local.additional_disks
