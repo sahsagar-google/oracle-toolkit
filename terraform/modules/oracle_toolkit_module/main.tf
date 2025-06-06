@@ -151,5 +151,9 @@ resource "google_compute_instance" "control_node" {
     ora_redo_log_size   = var.ora_redo_log_size
   })
 
+  metadata = {
+    enable-oslogin = "TRUE"
+  }
+
   depends_on = [module.compute_instance]
 }
