@@ -91,9 +91,9 @@ module "oracle_toolkit" {
   ora_db_name       = ""            # example: "test"
   ora_db_container  = false         # example: false
   ntp_pref          = ""            # example: "169.254.169.254"
-  oracle_release    = ""            # example: "19.7.0.0.200414"
+  ora_release       = ""            # example: "19.7.0.0.200414"
   ora_edition       = ""            # example: "EE"
-  ora_listener_port = ""            # example: 1521 
+  ora_listener_port = ""            # example: 1521
   ora_redo_log_size = ""            # example: "100MB"
 
   ##############################################################################
