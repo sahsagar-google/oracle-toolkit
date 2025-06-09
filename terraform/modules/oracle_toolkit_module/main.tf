@@ -145,7 +145,7 @@ resource "google_compute_instance" "control_node" {
     ora_db_name         = var.ora_db_name
     ora_db_container    = lower(var.ora_db_container)
     ntp_pref            = var.ntp_pref
-    oracle_release      = var.oracle_release
+    ora_release         = var.ora_release
     ora_edition         = var.ora_edition
     ora_listener_port   = var.ora_listener_port
     ora_redo_log_size   = var.ora_redo_log_size

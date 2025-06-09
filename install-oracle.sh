@@ -257,7 +257,7 @@ COMPATIBLE_RDBMS_PARAM="^[0-9][0-9]\.[0-9].*"
 export ANSIBLE_DISPLAY_SKIPPED_HOSTS=false
 ###
 GETOPT_MANDATORY="ora-swlib-bucket:"
-GETOPT_OPTIONAL="gcs-backup-config:,gcs-backup-bucket:,gcs-backup-temp-path:,nfs-backup-config:,nfs-backup-mount:,backup-dest:,ora-version:,no-patch,ora-edition:,cluster-type:,cluster-config:,cluster-config-json:"
+GETOPT_OPTIONAL="gcs-backup-config:,gcs-backup-bucket:,gcs-backup-temp-path:,nfs-backup-config:,nfs-backup-mount:,backup-dest:,ora-version:,ora-release:,no-patch,ora-edition:,cluster-type:,cluster-config:,cluster-config-json:"
 GETOPT_OPTIONAL="$GETOPT_OPTIONAL,ora-staging:,ora-db-name:,ora-db-domain:,ora-db-charset:,ora-disk-mgmt:,ora-role-separation:"
 GETOPT_OPTIONAL="$GETOPT_OPTIONAL,ora-data-destination:,ora-data-diskgroup:,ora-reco-destination:,ora-reco-diskgroup:"
 GETOPT_OPTIONAL="$GETOPT_OPTIONAL,ora-asm-disks:,ora-asm-disks-json:,ora-data-mounts:,ora-data-mounts-json:,ora-listener-port:,ora-listener-name:"
@@ -293,6 +293,10 @@ while true; do
     if [[ "${ORA_VERSION}" = "12.2" ]] ; then ORA_VERSION="12.2.0.1.0"; fi
     if [[ "${ORA_VERSION}" = "12.1" ]] ; then ORA_VERSION="12.1.0.2.0"; fi
     if [[ "${ORA_VERSION}" = "11" ]]   ; then ORA_VERSION="11.2.0.4.0"; fi
+    shift
+    ;;
+  --ora-release)
+    ORA_RELEASE="$2"
     shift
     ;;
   --no-patch)
@@ -579,6 +583,10 @@ shopt -s nocasematch
 
 [[ ! "$ORA_VERSION" =~ $ORA_VERSION_PARAM ]] && {
   echo "Incorrect parameter provided for ora-version: $ORA_VERSION"
+  exit 1
+}
+[[ ! "$ORA_RELEASE" =~ $ORA_RELEASE_PARAM ]] && {
+  echo "Incorrect parameter provided for ora-release: $ORA_RELEASE"
   exit 1
 }
 [[ ! "$ORA_EDITION" =~ $ORA_EDITION_PARAM ]] && {

@@ -148,12 +148,12 @@ variable "ora_version" {
   }
 }
 
-variable "oracle_release" {
+variable "ora_release" {
   type        = string
   default     = "latest"
   description = "Oracle release update version (patchlevel)."
   validation {
-    condition     = var.oracle_release == "" || var.oracle_release == "latest" || can(regex("^\\d+(\\.\\d+)*$", var.oracle_release))
+    condition     = var.ora_release == "" || var.ora_release == "latest" || can(regex("^\\d+(\\.\\d+)*$", var.ora_release))
     error_message = "Invalid Oracle release version. It should be in the format '19.10', '21.3.0.0', etc."
   }
 }
