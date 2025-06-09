@@ -71,9 +71,9 @@ additional details and comprehensive explanations of the toolkit, scripting,
 options, and usage scenarios. All commands run from the "control node".
 
 > **NOTE:** If deploying a single-instance database on GCE, refer to the
-[Quickstart for Using the Oracle Toolkit for Google Cloud on Compute Engine VMs](compute-vm-quickstart.md)
-document for additional information on provisioning GCE infrastructure and
-getting started with this toolkit.
+> [Quickstart for Using the Oracle Toolkit for Google Cloud on Compute Engine VMs](compute-vm-quickstart.md)
+> document for additional information on provisioning GCE infrastructure and
+> getting started with this toolkit.
 
 1. Validate media specifying GCS storage bucket and optionally database:
 
@@ -364,17 +364,10 @@ need and for complying with the applicable licenses.
 
 Oracle software is divided into two general categories: **base software** that
 you download from the [Oracle Software Delivery
-Cloud](https://edelivery.oracle.com/) site (also known as Oracle "eDelivery"),
-and **patches** that you download from Oracle's [My Oracle
+Cloud](https://edelivery.oracle.com/) site (also known as Oracle "eDelivery") or
+[Oracle Technology Network](https://www.oracle.com/database/technologies/oracle-database-software-downloads.html)
+(also known as OTN), and **patches** that you download from Oracle's [My Oracle
 Support](https://support.oracle.com/) (MOS) site.
-
-You can also download base software from
-[Oracle Technology Network](https://www.oracle.com/database/technologies/oracle-database-software-downloads.html#db_ee).
-
-In this case, please rename the downloaded files to the
-[software delivery cloud equivalent](#required-oracle-software---download-summary)
-names, and use `--no-patch` to skip patching. Note that unpatched software may
-have known defects and security vulnerabilities.
 
 One key exception: Oracle 11g base software can be downloaded directly from My
 Oracle Support. Only Oracle 12c or later base software needs to be downloaded
@@ -384,7 +377,7 @@ below.
 Before you download Oracle software and patches, review and acknowledge Oracle's
 license terms.
 
-Before using the toolkit, download all of the software pieces for your Oracle
+Before using the toolkit, download all the software pieces for your Oracle
 release, including the base release, patch sets, the OPatch utility, and any
 additional patches listed by Oracle (unless using `--no-patch`, at which
 point only the base release is installed).
@@ -415,9 +408,9 @@ Support")</th>
 <tbody>
 <tr>
 <td>21.3.0.0.0</td>
-<td>Base - eDelivery</td>
+<td>Base - eDelivery or OTN</td>
 <td>Oracle Database 21.3.0.0.0 for Linux x86-64</td>
-<td>V1011496-01.zip</td>
+<td>V1011496-01.zip or LINUX.X64_213000_db_home.zip</td>
 </tr>
 <tr>
 <td></td>
@@ -481,8 +474,15 @@ Support")</th>
 </tr>
 <tr>
 <td></td>
+<td></td>
+<td>Database Release Update 21.18.0.0.0</td>
+<td>p37655430_210000_Linux-x86-64.zip</td>
+</tr>
+<tr>
+<td></td>
+<td>Base - eDelivery or OTN</td>
 <td>Oracle Grid Infrastructure 21.3.0.0.0 for Linux x86-64</td>
-<td>V1011504-01.zip</td>
+<td>V1011504-01.zip or LINUX.X64_213000_grid_home.zip</td>
 </tr>
 <tr>
 <td></td>
@@ -547,25 +547,37 @@ Support")</th>
 <tr>
 <td></td>
 <td></td>
+<td>GI Release Update 21.18.0.0.0</td>
+<td>p37642955_210000_Linux-x86-64.zip</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
 <td>OPatch Utility</td>
-<td><a href="https://updates.oracle.com/download/6880880.html"> p6880880_122010_Linux-x86-64.zip</a></td>
+<td><a href="https://updates.oracle.com/download/6880880.html"> p6880880_210000_Linux-x86-64.zip</a></td>
 </tr>
 <tr>
 <td>19.3.0.0.0</td>
-<td>Base - eDelivery</td>
+<td>Base - eDelivery or OTN</td>
 <td>Oracle Database 19.3.0.0.0 for Linux x86-64</td>
-<td>V982063-01.zip</td>
+<td>V982063-01.zip or LINUX.X64_193000_db_home.zip</td>
 </tr>
 <tr>
 <td></td>
 <td></td>
 <td>Oracle Grid Infrastructure 19.3.0.0.0 for Linux x86-64</td>
-<td>V982068-01.zip</td>
+<td>V982068-01.zip or LINUX.X64_193000_grid_home.zip</td>
 </tr>
 <tr>
 <td></td>
 <td>Patch - MOS</TD>
-<TD>COMBO OF OJVM RU COMPONENT 19.26.0.0.250100 + GI RU 19.26.0.0.250100</td>
+<TD>COMBO OF OJVM RU COMPONENT 19.27.0.0.250415 + GI RU 19.27.0.0.250415</td>
+<td>p37591516_190000_Linux-x86-64.zip</td>
+</tr>
+<tr>
+<td></td>
+<td>Patch - MOS</TD>
+<TD>COMBO OF OJVM RU COMPONENT 19.26.0.0.250121 + GI RU 19.26.0.0.250121</td>
 <td>p37262208_190000_Linux-x86-64.zip</td>
 </tr>
 <tr>
@@ -1339,11 +1351,9 @@ After installation is complete, you can adjust any of the attributes of the
 backup scheme. You can also replace any and all parts of the initial backup
 scheme or the backup script with your own scripts or backup tools.
 
-#### gcsfuse backup 
+#### gcsfuse backup
 
-You can use Cloud Storage buckets for Oracle rman scripts to write and store backups. 
-
-
+You can use Cloud Storage buckets for Oracle rman scripts to write and store backups.
 
 #### Cloud Storage bucket
 
@@ -1353,7 +1363,6 @@ You can use Cloud Storage buckets for Oracle rman scripts to write and store bac
   Cloud Storage buckets as file systems on Linux or macOS systems.
 - Review backup [Cloud Storage bucket options](https://cloud.google.com/storage).
 
-  
 To use a Cloud Storage bucket for your backups, you need to follow the steps below:
 
 - Identify the Compute Engine instance service account. Go to:
@@ -1364,15 +1373,14 @@ To use a Cloud Storage bucket for your backups, you need to follow the steps bel
   - Select the bucket that will store the backups, click on the three dots on the far right of the bucket selected and click Edit access.
   - Click on Add Principal and add the identified Compute Engine VM instance service account from the Oracle Server to configure.
   - In the Role drop down select Storage Legacy Bucket Owner and save.
-  
+
 #### Cloud Storage FUSE
 
-- With Cloud Storage FUSE, you can use the auth service account of the  Compute Engine instance to access and mount the Cloud Storage bucket. 
+- With Cloud Storage FUSE, you can use the auth service account of the Compute Engine instance to access and mount the Cloud Storage bucket.
 - Follow the steps above on Cloud Storage bucket.
 - You can verify the auth service account by running the command as the Example below:
-  - ```gcloud compute ssh gce_vm_instance_name --command="sudo su -c 'gcloud auth list'"```
-  - You should see the same account in the auth list as the one used in the  Cloud Storage bucket configuration steps. 
-
+  - `gcloud compute ssh gce_vm_instance_name --command="sudo su -c 'gcloud auth list'"`
+  - You should see the same account in the auth list as the one used in the Cloud Storage bucket configuration steps.
 
 ### Parameters
 
@@ -1904,8 +1912,6 @@ on the CLI instead of the CLUSTER_CONFIG file.
 </tbody>
 </table>
 
-
-
 #### Backup configuration parameters
 
 <table>
@@ -1926,7 +1932,7 @@ BACKUP_DEST
 </pre></p></td>
 <td>user defined - no default<br>
 Example: +RECO</td>
-<td>Disk group name or NFS file share location. Can include formatting options,
+<td>Disk group name, filesystem  or NFS file share location. Can include formatting options,
 such as "/u02/db_backups/ORCL_%I_%T_%s_%p.bak", for example.<br>
 <br>
 When writing to a non-ASM disk group location, include a valid RMAN format
@@ -1935,9 +1941,36 @@ shown above.<br>
 <br>
 If you are writing to a local file system, the
 directory does not have to exist, but initial backups will fail if the
-destination is not available or writeable.
+destination is not available or writeable.<br>
 <br>
-If you are writing to a gcsfuse bucket, the /gcsfuse must be used as parameter.</td>
+If you are writing to a NFS share, the NFS share directory uid default group is 801 and gid is 809.
+The NFS exported filesystem  should be configured with the default IDs or match your ownership customization.
+The configuration is done by the storage manager or systems engineer providing the remote filesystem.
+The NFS option defaults to nfsv3
+<br>
+If you are writing to a gcsfuse bucket, the /mnt must be used as parameter.</td>
+</tr>
+<tr>
+<td>NFS backup configuration</td>
+<td><p><pre>
+NFS_BACKUP_CONFIG
+--nfs-backup-config
+</pre></p></td>
+<td>user defined - default nfsv3<br>
+Example: nfsv3 </td>
+<td>The NFS version of the export shared is defined with this option. The values accepted are `nfsv3` or `nfsv4`.
+</td>
+</tr> 
+<tr>
+<td>NFS backup mount</td>
+<td><p><pre>
+NFS_BACKUP_MOUNT
+--nfs-backup-mount
+</pre></p></td>
+<td>user defined - no default<br>
+Example: remote-nfs-server:/nfs/backup </td>
+<td>The nfs remote share expected as [remote-nfs-server-name]:[/remote-share-mount]
+</td>
 </tr>
 <tr>
 <td>GCS backup configuration</td>
@@ -2090,8 +2123,6 @@ requirements for this directory is minimal.</td>
 </tr>
 </tbody>
 </table>
-
-
 
 #### Additional operational parameters
 
@@ -2468,14 +2499,15 @@ Oracle has released serveral versions of free edition, often **without chaning t
 
 Specific supported versions of Oracle Database 23 free edition currently includes:
 
-| Product | Specific Version | Software RPM Filename                            | Preinstall RPM Filename                                |
-| :-----: | :--------------: | :----------------------------------------------- | :----------------------------------------------------- |
-|  23ai   |   23.7.0.25.01   | `oracle-database-free-23ai-1.0-1.el8.x86_64.rpm` | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm` |
-|  23ai   |   23.6.0.24.10   | `oracle-database-free-23ai-1.0-1.el8.x86_64.rpm` | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm` |
-|  23ai   |   23.5.0.24.07   | `oracle-database-free-23ai-1.0-1.el8.x86_64.rpm` | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm` |
-|  23ai   |   23.4.0.24.05   | `oracle-database-free-23ai-1.0-1.el8.x86_64.rpm` | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm` |
-|   23c   |   23.3.0.23.09   | `oracle-database-free-23c-1.0-1.el8.x86_64.rpm`  | `oracle-database-preinstall-23c-1.0-1.el8.x86_64.rpm`  |
-|   23c   |    23.2.0.0.0    | `oracle-database-free-23c-1.0-1.el8.x86_64.rpm`  | `oracle-database-preinstall-23c-1.0-1.el8.x86_64.rpm`  |
+| Product | Specific Version | Software RPM Filename                             | Preinstall RPM Filename                                |
+| :-----: | :--------------: | :------------------------------------------------ | :----------------------------------------------------- |
+|  23ai   |   23.8.0.25.04   | `oracle-database-free-23ai-23.8-1.el8.x86_64.rpm` | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm` |
+|  23ai   |   23.7.0.25.01   | `oracle-database-free-23ai-1.0-1.el8.x86_64.rpm`  | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm` |
+|  23ai   |   23.6.0.24.10   | `oracle-database-free-23ai-1.0-1.el8.x86_64.rpm`  | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm` |
+|  23ai   |   23.5.0.24.07   | `oracle-database-free-23ai-1.0-1.el8.x86_64.rpm`  | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm` |
+|  23ai   |   23.4.0.24.05   | `oracle-database-free-23ai-1.0-1.el8.x86_64.rpm`  | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm` |
+|   23c   |   23.3.0.23.09   | `oracle-database-free-23c-1.0-1.el8.x86_64.rpm`   | `oracle-database-preinstall-23c-1.0-1.el8.x86_64.rpm`  |
+|   23c   |    23.2.0.0.0    | `oracle-database-free-23c-1.0-1.el8.x86_64.rpm`   | `oracle-database-preinstall-23c-1.0-1.el8.x86_64.rpm`  |
 
 Even though the file names may be the same while the version changes, the RPMs for the various versions can still be staged in the software library. Possibly by manually changing the file names for uniqueness (and then updating the `rdbms_software` variable in the [roles/common/defaults/main.yml](../roles/common/defaults/main.yml) file accoridingly.) Or more simply, by placing the unique files with the same file name in different Google Cloud Storage bucket **folders**.
 
@@ -2513,6 +2545,7 @@ ORA_VERSION
 --ora-version
 </pre></p></td>
 <td>
+23.8.0.25.04<br>
 23.7.0.25.01<br>
 23.6.0.24.10<br>
 23.5.0.24.07<br>
@@ -2789,7 +2822,7 @@ ok: [db-23ai-free]
 
 ### Validate the Oracle installation with ORAchk
 
-The orachk utility can be used to validate the Oracle installation. 
+The orachk utility can be used to validate the Oracle installation.
 
 ORAchk will check for known problems with the Oracle installation and configuration, and provide recommendations for resolving any issues that are found.
 
@@ -2797,9 +2830,9 @@ To run ORAchk, download the AHF utility from the Oracle support site.
 
 The following Oracle Support Note will provide the download link:
 
-  `Autonomous Health Framework (AHF) - Including Trace File Analyzer and Orachk/Exachk (Doc ID 2550798.1)`
+`Autonomous Health Framework (AHF) - Including Trace File Analyzer and Orachk/Exachk (Doc ID 2550798.1)`
 
-ORAchk is a part of the AHF utility.  It is not necessary to install the entire AHF utility to run ORAchk.
+ORAchk is a part of the AHF utility. It is not necessary to install the entire AHF utility to run ORAchk.
 
 The `check-oracle.sh` script provided with the toolkit will allow you to install, run and uninstall ORAchk on the target server.
 
@@ -2911,6 +2944,7 @@ Use the the `check-oracle.sh` script to install ORAchk.
    --ahf-location gs://oracle-software/AHF/AHF-LINUX_v25.1.0.zip
 
 ```
+
 example output:
 Note: skipped steps are omitted
 
@@ -2929,6 +2963,7 @@ PLAY RECAP *********************************************************************
 ora-db-server-19c   : ok=7    changed=2    unreachable=0    failed=0    skipped=8    rescued=0    ignored=0
 
 ```
+
 #### Running ORAchk
 
 ```bash
@@ -2962,7 +2997,6 @@ ora-db-server-19c   : ok=6    changed=3    unreachable=0    failed=0    skipped=
 ```
 
 As shown in the message, the orachk zip file is saved locally at `/tmp/orachk_ora-db-server-19c_ORCL_020525_193642.zip`.
-
 
 ```text
 $ unzip -l /tmp/orachk_ora-db-server-19c_ORCL_020525_193642.zip | head -12

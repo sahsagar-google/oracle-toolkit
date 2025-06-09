@@ -12,16 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-terraform {
-  required_version = ">= 1.5.7"
-  required_providers {
-    google = {
-      source  = "hashicorp/google"
-      version = "~> 6.20.0"
-    }
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.7.2"
-    }
-  }
-}
+---
+# Specify one of the Data Guard protection modes: "Maximum Performance", "Maximum Availability", or "Maximum Protection"
+data_guard_protection_mode: "Maximum Availability"
+real_time_apply: true
+log_transport_mode: "{{ 'ASYNC' if data_guard_protection_mode | upper == 'MAXIMUM PERFORMANCE' else 'SYNC' }}"
