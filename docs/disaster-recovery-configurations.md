@@ -1,23 +1,23 @@
 # Oracle Toolkit for Google Cloud - Disaster Recovery Configurations
 
-The Oracle Toolkit for Google Cloud supports Disaster Recovery (DR) through the provisioning of Oracle Data Guard configurations with a **physical standby** using the Data Guard Broker. Applicable with both Google Bare Metal Solution (BMS) and Compute Engine environments.
+The Oracle Toolkit for Google Cloud supports Disaster Recovery (DR) through the provisioning of Oracle Data Guard configurations with a [physical standby](https://docs.oracle.com/en/database/oracle/oracle-database/23/sbydb/introduction-to-oracle-data-guard-concepts.html#GUID-C49AC6F4-C89B-4487-BC18-428D65865B9A) using the [Data Guard Broker](https://docs.oracle.com/en/database/oracle/oracle-database/23/sbydb/introduction-to-oracle-data-guard-concepts.html#GUID-538B9DDD-1553-479D-8E1D-0B5C6848403E).
 
 At a high level, implementation involves two similar steps:
 
 1. Deployment of a Data Guard **primary** database instance via the normal toolkit deployment steps. For details on this see the [main toolkit user guide](user-guide.md) or the [Compute Engine deployment user guide](compute-vm-user-guide.md).
-2. Deployment of a Data Guard physical **standby** instance via a similar toolkit command, but with two additional parameters: the `-cluster-type DG` and `-primary_ip_addr [IP ADDRESS]`.
+2. Deployment of a Data Guard physical **standby** instance via a similar toolkit command, but with two additional parameters: the `--cluster-type DG` and `--primary_ip_addr [IP ADDRESS]`.
 
 Once provisioned, more advanced Oracle Data Guard High Availability (HA) and Disaster Recovery (DR) configurations can be manually added. Including having multiple standby database (in any location) in cascading, star, or far-sync topologies or any combination thereof. And/or implementation of a "fast-start failover observer".
 
 ## Example Toolkit Invocations
 
-The following examples provision a primary Oracle Database using this toolkit's typical options, and then in a second execution of the toolkit, an Oracle Data Guard physical standby by including the two additional options `-cluster-type` and `-primary-ip-addr`:
+The following examples provision a primary Oracle Database using this toolkit, and then in a second execution of the toolkit, an Oracle Data Guard physical standby by including the two additional options `-cluster-type` and `-primary-ip-addr`:
 
 ```bash
-export INSTANCE_IP_ADDR=10.0.10.101
+export PRIMARY_IP_ADDR=10.0.10.101
 
 ./install-oracle.sh \
-  --instance-ip-addr ${INSTANCE_IP_ADDR} \
+  --instance-ip-addr ${PRIMARY_IP_ADDR} \
   --instance-hostname primary-server-19c \
   --ora-version 19 \
   --ora-swlib-bucket gs://[BUCKET_NAME] \
@@ -25,11 +25,10 @@ export INSTANCE_IP_ADDR=10.0.10.101
   --ora-asm-disks-json '[{"diskgroup":"DATA","disks":[{"blk_device":"/dev/disk/by-id/google-oracle-asm-1","name":"DATA1"}]},{"diskgroup":"RECO","disks":[{"blk_device":"/dev/disk/by-id/google-oracle-asm-2","name":"RECO1"}]}]' \
   --backup-dest "+RECO"
 
-export PRIMARY_IP_ADDR=${INSTANCE_IP_ADDR}
-export INSTANCE_IP_ADDR=10.0.10.102
+export STANDBY_IP_ADDR=10.0.10.102
 
 ./install-oracle.sh \
-  --instance-ip-addr ${INSTANCE_IP_ADDR} \
+  --instance-ip-addr ${STANDBY_IP_ADDR} \
   --instance-hostname standby-server-19c \
   --ora-version 19 \
   --ora-swlib-bucket gs://[BUCKET_NAME] \
@@ -86,7 +85,7 @@ If required, change the protection mode that the toolkit deploys by adjusting th
 
 Changing the protection mode by re-running and including the `--tags dg-mode` option will only adjust the data guard configuration - it does not re-create any other aspects of the database or Data Guard configuration and it can be safely run while both the primary and standby databases are open and operational.
 
-> **IMPORTANT:** As per the Oracle documentation [Scenario 4: Setting the Configuration Protection Mode](https://docs.oracle.com/en/database/oracle/oracle-database/19/dgbkr/examples-using-data-guard-broker-DGMGRL-utility.html#GUID-82319941-58E8-4672-8609-7CC496D3DC29) moving from Maximum Performance mode directly to Maximum Protection mode is not possible. Instead, first move from Maximum Performance mode to Maximum Availability mode and then in a second execution, to Maximum Protection mode. The toolkit supports such a change by running it twice with the `--tags dg-mode` option, changing the Ansible `data_guard_protection_mode` parameter in the `roles/dg-config/defaults/main.yml` file each time.
+> **NOTE:** As per the Oracle documentation [Scenario 4: Setting the Configuration Protection Mode](https://docs.oracle.com/en/database/oracle/oracle-database/19/dgbkr/examples-using-data-guard-broker-DGMGRL-utility.html#GUID-82319941-58E8-4672-8609-7CC496D3DC29) moving from Maximum Performance mode directly to Maximum Protection mode is not possible. Instead, first move from Maximum Performance mode to Maximum Availability mode and then in a second execution, to Maximum Protection mode. The toolkit supports such a change by running it twice with the `--tags dg-mode` option, changing the Ansible `data_guard_protection_mode` parameter in the `roles/dg-config/defaults/main.yml` file each time.
 
 ## Switchover and Failover Scenarios
 
@@ -94,11 +93,11 @@ To properly manage an Oracle Database DR environment using Data Guard, it is imp
 
 - A **switchover** is a graceful role reversal. Usually performed proactively in a controlled scenario. When the switchover is initiated, Data Guard ensures that the physical standby is fully synchronized with the primary and then manages the change of roles. The end result is that both databases are still part of the configuration and physical replication between the two remains. And consequently, the DR protection is maintained. The difference is obviously that the roles are reversed and the former-standby is now the new-primary ready for application and user connections.
 
-- A **failover** is usually implemented in an emergency situation when the primary database becomes unavailable or unusable for some reason. In such a situation, the existing physical standby database is promoted to become the new primary database and starts accepting application and user connections. Replication back to the former-primary database is not automatically re-established after a failover and consequently the DR protection is compromised. The DBA must manually re-instantiate the former-primary database and the Data Guard replication after a failover.
+- A **failover** is usually implemented in an emergency situation when the primary database becomes unavailable or unusable for some reason. In such a situation, the existing physical standby database is promoted to become the new primary database and starts accepting application and user connections. Replication back to the former-primary database is not automatically re-established after a failover and consequently the DR protection is compromised. You must manually re-instantiate the former-primary database and the Data Guard replication after a failover.
 
 Additional details on switchover and failover operations are provided in the Oracle documentation: [Switchover and Failover Operations](https://docs.oracle.com/en/database/oracle/oracle-database/19/dgbkr/using-data-guard-broker-to-manage-switchovers-failovers.html) and more specific Data Guard broker commands in the sections [Scenario 9: Performing a Switchover Operation](https://docs.oracle.com/en/database/oracle/oracle-database/19/dgbkr/examples-using-data-guard-broker-DGMGRL-utility.html#GUID-1403D1C3-8944-42D0-8BDA-21D695C7958A) and [Scenario 10: Performing a Manual Failover Operation](https://docs.oracle.com/en/database/oracle/oracle-database/19/dgbkr/examples-using-data-guard-broker-DGMGRL-utility.html#GUID-D46A9644-136B-4149-8C74-BF4E845B3DE3).
 
-## General Data Guard Recommendations (Best-practices)
+## General Data Guard Recommendations
 
 Customize the Oracle databases and Data Guard configurations provisioned using this toolkit to meet your specific needs. However, when implementing Oracle Database disaster recovery configurations using Data Guard, the following recommendations (or best-practices) should be considered:
 
@@ -132,7 +131,7 @@ Customize the Oracle databases and Data Guard configurations provisioned using t
 
 8. Test the Switchover and Failover Scenarios:
 
-   - Ensuring that the implemented Data Guard configuration remains operable is critical for providing business continuity and database DR. Performing database DR exercises by switching-over and/or failing-over the database Data Guard DR configuration (and usually reverting back) is typically performed proactively on a regular cadence such as quarterly or semi-annually.
+   - Ensuring that the implemented Data Guard configuration remains operable is critical for providing business continuity and database DR. Performing database DR exercises by switching over and/or failing over the database Data Guard DR configuration (and usually reverting back) is typically performed proactively on a regular cadence such as quarterly or semi-annually.
 
 ## Troubleshooting Overview
 
