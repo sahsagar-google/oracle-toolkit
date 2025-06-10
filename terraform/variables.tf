@@ -196,13 +196,13 @@ variable "control_node_service_account" {
 variable "source_image_family" {
   description = "value of the image family to be used for the instance."
   type        = string
-  default     = "oracle-linux-8-stable"
+  default     = "oracle-linux-8"
 }
 
 variable "source_image_project" {
   description = "The project where the source image is located."
   type        = string
-  default     = "oracle-linux-8"
+  default     = "oracle-linux-cloud"
 }
 
 variable "subnetwork" {
