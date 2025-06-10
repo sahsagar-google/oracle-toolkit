@@ -160,13 +160,13 @@ variable "ora_release" {
   }
 }
 
-variable "os_disk_size" {
+variable "boot_disk_size" {
   description = "The size (in GB) of the base disk for the instance."
   type        = number
   default     = 50
 }
 
-variable "os_disk_type" {
+variable "boot_disk_type" {
   description = "The type of the base disk for the instance."
   type        = string
   default     = "hyperdisk-balanced"

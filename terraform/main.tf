@@ -61,8 +61,8 @@ module "instance_template" {
   machine_type         = var.machine_type
   source_image_family  = var.source_image_family
   source_image_project = var.source_image_project
-  disk_size_gb         = var.os_disk_size
-  disk_type            = var.os_disk_type
+  disk_size_gb         = var.boot_disk_size
+  disk_type            = var.boot_disk_type
   auto_delete          = true
 
 

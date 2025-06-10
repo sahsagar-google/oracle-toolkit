@@ -28,8 +28,8 @@ instance_name        = "orcl"
 source_image_family  = "oracle-linux-8"
 source_image_project = "oracle-linux-cloud"
 machine_type         = "n4-standard-2"
-os_disk_size         = "50"
-os_disk_type         = "hyperdisk-balanced"
+boot_disk_size       = "50"
+boot_disk_type       = "hyperdisk-balanced"
 
 # Disk settings
 # By default, the list below will create 1 disk for filesystem, 2 disks for ASM and 1 disk for swap, the minimum required for a basic Oracle installation.
