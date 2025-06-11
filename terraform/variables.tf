@@ -231,3 +231,9 @@ variable "gcs_source" {
     error_message = "The gcs_source must be a valid GCS path starting with 'gs://' and ending in '.zip'."
   }
 }
+
+variable "skip_database_config" {
+  description = "Whether to skip database creation, and to simply install the Oracle software; Set to true if planning to migrate an existing database."
+  type        = bool
+  default     = false
+}
