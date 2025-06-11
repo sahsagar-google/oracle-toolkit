@@ -71,7 +71,7 @@ Create a VPC firewall rule that allows ingress on TCP port 22 (or your custom SS
 Since both VMs reside in the same VPC, a rule permitting traffic on port 22 between their subnets or network tags is sufficient.
 
 ### 3. Terraform State Bucket
-Create a Cloud Storage bucket to store Terraform state files.  
+Create a Cloud Storage bucket to store Terraform state files.
 Authorize the control node service account with read and write access to this bucket.
 
 ### 4. Toolkit Source Bucket
@@ -104,11 +104,11 @@ repo-root/
 ├── config-db.yml
 ├── config-rac-db.yml
 └── terraform/
-    ├── main.tf                     # Main Terraform configuration
-    └── modules/
-        └── oracle_toolkit_module/
-            ├── main.tf             # Ansible integration module
-            └── variables.tf        # Module variables
+    ├── backend.tf                  # Backend confguration, from example
+    ├── terraform.tfvars            # Variables to set, from example
+    ├── main.tf                     # Main Terraform code
+    ├── variables.tf                # Variable definition
+    └── versions.tf                 # Version dependencies
 ```
 
 ---
@@ -135,7 +135,7 @@ gcloud config set project PROJECT_ID
 
 3. Review and Edit Terraform Module Configuration
 
-   Copy `terraform/main.tf.example` to `terraform/main.tf` and define your deployment settings. Add as many ASM disks you require in the `asm_disks` and `fs_disks` sections.
+   Copy `terraform/terraform.tfvars.example` to `terraform/terraform.tfvars` and define your deployment settings. Add as many ASM disks you require in the `asm_disks` and `fs_disks` sections.
 
 > **NOTE** There is no need to supply the toolkit script parameters `--instance-ip-addr`, `--instance-ssh-user`, and `--instance-ssh-key` - these are automatically added by the Terraform commands.
 
