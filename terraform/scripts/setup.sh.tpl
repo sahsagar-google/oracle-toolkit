@@ -70,4 +70,5 @@ bash install-oracle.sh \
 %{ if ora_release != "" }--ora-release "${ora_release}" %{ endif } \
 %{ if ora_edition != "" }--ora-edition "${ora_edition}" %{ endif } \
 %{ if ora_listener_port != "" }--ora-listener-port "${ora_listener_port}" %{ endif } \
-%{ if ora_redo_log_size != "" }--ora-redo-log-size "${ora_redo_log_size}" %{ endif }
+%{ if ora_redo_log_size != "" }--ora-redo-log-size "${ora_redo_log_size}" %{ endif } \
+%{ if skip_database_config }--skip-database-config %{ endif }

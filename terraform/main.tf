@@ -149,6 +149,7 @@ resource "google_compute_instance" "control_node" {
     ora_edition         = var.ora_edition
     ora_listener_port   = var.ora_listener_port
     ora_redo_log_size   = var.ora_redo_log_size
+    skip_database_config = var.skip_database_config
   })
 
   metadata = {

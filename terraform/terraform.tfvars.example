@@ -87,4 +87,5 @@ ora_db_container  = false
 ntp_pref          = "169.254.169.254"
 ora_listener_port = "1521"
 ora_redo_log_size = "100MB"
+skip_database_config = false
 
