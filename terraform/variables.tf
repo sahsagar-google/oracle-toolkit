@@ -231,13 +231,14 @@ variable "gcs_source" {
   }
 }
 
-variable "secret_path" {
-  description = "Secret Manager resource path containing the password to be used for both the Oracle SYS and SYSTEM users"
+variable "db_password_secret" {
+  description = "Google Cloud Secret Manager resource containing the password to be used for both the Oracle SYS and SYSTEM users"
   type        = string
+  default     = ""
 
   validation {
-    condition     = can(regex("^projects/[^/]+/secrets/[^/]+/versions/[^/]+$", var.secret_path))
-    error_message = "secret_path must be in the format: projects/<project>/secrets/<secret_name>/versions/<version>"
+    condition     = var.db_password_secret == "" || can(regex("^projects/[^/]+/secrets/[^/]+/versions/[^/]+$", var.db_password_secret))
+    error_message = "db_password_secret must be in the format: projects/<project>/secrets/<secret_name>/versions/<version>"
   }
 }
 

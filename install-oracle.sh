@@ -248,8 +248,8 @@ INSTANCE_SSH_EXTRA_ARGS_PARAM="^/.+$"
 NTP_PREF="${NTP_PREF}"
 NTP_PREF_PARAM=".*"
 
-SECRET_PATH="${SECRET_PATH}"
-SECRET_PATH_PARAM="^projects/[^/]+/secrets/[^/]+/versions/[^/]+$"
+DB_PASSWORD_SECRET="${DB_PASSWORD_SECRET}"
+DB_PASSWORD_SECRET_PARAM="^projects/[^/]+/secrets/[^/]+/versions/[^/]+$"
 
 SWAP_BLK_DEVICE="${SWAP_BLK_DEVICE}"
 SWAP_BLK_DEVICE_PARAM=".*"
@@ -274,8 +274,7 @@ GETOPT_OPTIONAL="$GETOPT_OPTIONAL,backup-start-hour:,backup-start-min:,archive-b
 GETOPT_OPTIONAL="$GETOPT_OPTIONAL,ora-swlib-type:,ora-swlib-path:,ora-swlib-credentials:,instance-ip-addr:,primary-ip-addr:,instance-ssh-user:"
 GETOPT_OPTIONAL="$GETOPT_OPTIONAL,instance-ssh-key:,instance-hostname:,ntp-pref:,inventory-file:,compatible-rdbms:,instance-ssh-extra-args:"
 GETOPT_OPTIONAL="$GETOPT_OPTIONAL,help,validate,check-instance,prep-host,install-sw,config-db,debug,allow-install-on-vm,skip-database-config,swap-blk-device:"
-GETOPT_OPTIONAL="$GETOPT_OPTIONAL,secret-path:"
-GETOPT_OPTIONAL="$GETOPT_OPTIONAL,install-workload-agent,oracle-metrics-secret:"
+GETOPT_OPTIONAL="$GETOPT_OPTIONAL,install-workload-agent,oracle-metrics-secret:,db-password-secret:"
 GETOPT_LONG="$GETOPT_MANDATORY,$GETOPT_OPTIONAL"
 GETOPT_SHORT="h"
 
@@ -527,15 +526,8 @@ while true; do
     SWAP_BLK_DEVICE="$2"
     shift
     ;;
-  --secret-path)
-    SECRET_PATH="$2"
-    shift
-    ;;
-  --install-workload-agent)
-    INSTALL_WORKLOAD_AGENT=true
-    ;;
-  --oracle-metrics-secret)
-    ORACLE_METRICS_SECRET="$2"
+  --db-password-secret)
+    DB_PASSWORD_SECRET="$2"
     shift
     ;;
   --install-workload-agent)
@@ -833,8 +825,8 @@ shopt -s nocasematch
   echo "Incorrect parameter provided for compatible-rdbms: $COMPATIBLE_RDBMS"
   exit 1
 }
-[[ -n "$SECRET_PATH" && ! "$SECRET_PATH" =~ $SECRET_PATH_PARAM ]] && {
-  echo "Incorrect parameter provided for secret-path: $SECRET_PATH"
+[[ -n "$DB_PASSWORD_SECRET" && ! "$DB_PASSWORD_SECRET" =~ $DB_PASSWORD_SECRET_PARAM ]] && {
+  echo "Incorrect parameter provided for db-password-secret: $DB_PASSWORD_SECRET"
   echo "Expected format: projects/<project>/secrets/<secret_name>/versions/<version>"
   exit 1
 }
@@ -1070,7 +1062,7 @@ export ORA_RELEASE
 export PB_LIST
 export PRIMARY_IP_ADDR
 export SWAP_BLK_DEVICE
-export SECRET_PATH
+export DB_PASSWORD_SECRET
 export INSTALL_WORKLOAD_AGENT
 export ORACLE_METRICS_SECRET
 

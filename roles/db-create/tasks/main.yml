@@ -95,57 +95,30 @@
     owner: root
     mode: u=rwx,go=rx
   when:
-    - secret_path | length == 0
+    - db_password_secret | length == 0
   tags: db-create
 
-- name: Generate command for password randomization (not 11.2) for non-GCP environment
+- name: Generate command for password randomization (not 11.2)
   set_fact:
     pwd_gen_cmd: echo -e "$({{ pass_param }})\n$({{ pass_param }})\n$({{ pass_param }})"
   when:
     - oracle_ver != "11.2.0.4.0"
-    - secret_path | length == 0
+    - db_password_secret | length == 0
   tags: db-create
 
-- name: Generate command for password randomization (11.2 only) for non-GCP environment
+- name: Generate command for password randomization (11.2 only)
   set_fact:
     pwd_gen_cmd: echo -e "$({{ pass_param }})\n$({{ pass_param }})"
   when: 
     - oracle_ver == "11.2.0.4.0"
-    - secret_path | length == 0
-  tags: db-create
-
-- name: Ensure the google-cloud-sdk yum repo is enabled
-  yum_repository:
-    name: google-cloud-sdk
-    file: google-cloud
-    description: Google Cloud SDK
-    baseurl: https://packages.cloud.google.com/yum/repos/cloud-sdk-el{{ ansible_distribution_major_version }}-x86_64
-    enabled: yes
-    gpgcheck: yes
-    repo_gpgcheck: no
-    gpgkey:
-      - https://packages.cloud.google.com/yum/doc/yum-key.gpg
-      - https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-  when: 
-    - ansible_os_family == "RedHat"
-    - secret_path | length > 0
-  tags: db-create
-
-- name: Install the Google Cloud CLI
-  dnf:
-    name: google-cloud-cli
-    state: present
-  when: 
-    - ansible_os_family == "RedHat"
-    - secret_path | length > 0
+    - db_password_secret | length == 0
   tags: db-create
 
 - name: Generate command for retrieving passwords from Secret Manager
   set_fact:
-    pwd_gen_cmd: secret=$(gcloud --quiet secrets versions access {{ secret_path }} || exit 1); echo -e "$secret\n$secret"
+    pwd_gen_cmd: password=$(gcloud --quiet secrets versions access {{ db_password_secret }}); echo -e "$password\n$password"
   when:
-    - ansible_os_family == "RedHat"
-    - secret_path | length > 0
+    - db_password_secret | length > 0
   tags: db-create
 
 - name: Create database using DBCA
