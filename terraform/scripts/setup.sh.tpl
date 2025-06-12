@@ -8,7 +8,7 @@ control_node_name="$(curl -s http://metadata.google.internal/computeMetadata/v1/
 control_node_zone_full="$(curl -s http://metadata.google.internal/computeMetadata/v1/instance/zone -H 'Metadata-Flavor: Google')"
 control_node_zone="$(basename "$control_node_zone_full")"
 control_node_project_id="$(curl -s http://metadata.google.internal/computeMetadata/v1/project/project-id -H 'Metadata-Flavor: Google')"
-  
+
 cleanup() {
   echo "Deleting '$control_node_name' GCE instance in zone '$control_node_zone' in project '$control_node_project_id'..."
   gcloud --quiet compute instances delete "$control_node_name" --zone="$control_node_zone" --project="$control_node_project_id"
@@ -71,4 +71,6 @@ bash install-oracle.sh \
 %{ if ora_edition != "" }--ora-edition "${ora_edition}" %{ endif } \
 %{ if ora_listener_port != "" }--ora-listener-port "${ora_listener_port}" %{ endif } \
 %{ if ora_redo_log_size != "" }--ora-redo-log-size "${ora_redo_log_size}" %{ endif } \
-%{ if skip_database_config }--skip-database-config %{ endif }
+%{ if skip_database_config }--skip-database-config %{ endif } \
+%{ if pga_target_mb != ""}--pga-target-mb "${pga_target_mb}" %{ endif } \
+%{ if sga_target_mb != ""}--sga-target-mb "${sga_target_mb}" %{ endif }
