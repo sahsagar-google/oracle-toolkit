@@ -37,7 +37,7 @@ swap_disk_size_gb    = "50"
 # You can add more disks to the list below to create additional disks for ASM or filesystem.
 # fs_disks will be mounted as /u01, /u02, /u03, etc and formatted as XFS
 
-binaries_disk = {
+oracle_home_disk = {
   size_gb = 50
 }
 data_disk = {

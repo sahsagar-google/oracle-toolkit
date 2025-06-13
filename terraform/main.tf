@@ -17,9 +17,9 @@ locals {
     {
       auto_delete  = true
       boot         = false
-      device_name  = "binaries"
-      disk_size_gb = var.binaries_disk.size_gb
-      disk_type    = var.binaries_disk.type
+      device_name  = "oracle_home"
+      disk_size_gb = var.oracle_home_disk.size_gb
+      disk_type    = var.oracle_home_disk.type
       disk_labels  = { purpose = "software" } # Do not modify this label
     }
   ]

@@ -171,7 +171,7 @@ variable "swap_disk_type" {
   default     = "hyperdisk-balanced"
 }
 
-variable "binaries_disk" {
+variable "oracle_home_disk" {
   description = "The Oracle binaries (/u01) disk."
   type = object({
     size_gb = optional(number, 100)
