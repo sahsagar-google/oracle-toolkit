@@ -28,52 +28,24 @@ instance_name        = "orcl"
 source_image_family  = "oracle-linux-8"
 source_image_project = "oracle-linux-cloud"
 machine_type         = "n4-standard-2"
-boot_disk_size       = "50"
-boot_disk_type       = "hyperdisk-balanced"
+boot_disk_size_gb    = "50"
+swap_disk_size_gb    = "50"
 
 # Disk settings
 # By default, the list below will create 1 disk for filesystem, 2 disks for ASM and 1 disk for swap, the minimum required for a basic Oracle installation.
 # Feel free to adjust the disk sizes and types to match your requirements.
 # You can add more disks to the list below to create additional disks for ASM or filesystem.
 # fs_disks will be mounted as /u01, /u02, /u03, etc and formatted as XFS
-fs_disks = [
-  {
-    auto_delete  = true
-    boot         = false
-    device_name  = "oracle-u01"
-    disk_size_gb = 50
-    disk_type    = "hyperdisk-balanced"
-    disk_labels  = { purpose = "software" } # Do not modify this label
-  }
-]
 
-asm_disks = [
-  {
-    auto_delete  = true
-    boot         = false
-    device_name  = "oracle-data-1"
-    disk_size_gb = 50
-    disk_type    = "hyperdisk-balanced"
-    disk_labels  = { diskgroup = "data", purpose = "asm" }
-  },
-  {
-    auto_delete  = true
-    boot         = false
-    device_name  = "oracle-reco-2"
-    disk_size_gb = 50
-    disk_type    = "hyperdisk-balanced"
-    disk_labels  = { diskgroup = "reco", purpose = "asm" }
-  },
-  # Attributes other than disk_size_gb and disk_type should NOT be modified for the swap disk
-  {
-    auto_delete  = true
-    boot         = false
-    device_name  = "swap"
-    disk_size_gb = 50
-    disk_type    = "hyperdisk-balanced"
-    disk_labels  = { purpose = "swap" }
-  }
-]
+binaries_disk = {
+  size_gb = 50
+}
+data_disk = {
+  size_gb = 50
+}
+reco_disk = {
+  size_gb = 50
+}
 
 # Parameters below are optional
 # A full list of parameters can be found here https://google.github.io/oracle-toolkit/user-guide.html#parameters
@@ -88,4 +60,3 @@ ntp_pref          = "169.254.169.254"
 ora_listener_port = "1521"
 ora_redo_log_size = "100MB"
 skip_database_config = false
-
