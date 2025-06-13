@@ -11,7 +11,9 @@ Once provisioned, more advanced Oracle Data Guard High Availability (HA) and Dis
 
 ## Example Toolkit Invocations
 
-The following examples show the provisioning of a primary Oracle Database using this toolkit. In the second command, an Oracle Data Guard physical standby will be provisioned by including the two additional options `--cluster-type` and `--primary-ip-addr`:
+The following examples show the provisioning of a primary Oracle Database using this toolkit. In the second command, an Oracle Data Guard physical standby will be provisioned by including the two additional options `--cluster-type` and `--primary-ip-addr`.
+
+[Create the Data Guard primary instance:](#create-data-guard-primary)
 
 ```bash
 export PRIMARY_IP_ADDR=10.0.10.101
@@ -24,7 +26,11 @@ export PRIMARY_IP_ADDR=10.0.10.101
   --ora-data-mounts-json '[{"purpose":"software","blk_device":"/dev/disk/by-id/google-oracle-disk-1","name":"u01","fstype":"xfs","mount_point":"/u01","mount_opts":"nofail"}]' \
   --ora-asm-disks-json '[{"diskgroup":"DATA","disks":[{"blk_device":"/dev/disk/by-id/google-oracle-asm-1","name":"DATA1"}]},{"diskgroup":"RECO","disks":[{"blk_device":"/dev/disk/by-id/google-oracle-asm-2","name":"RECO1"}]}]' \
   --backup-dest "+RECO"
+```
 
+[Create the Data Guard standby instance:](#create-data-guard-standby)
+
+```bash
 export STANDBY_IP_ADDR=10.0.10.102
 
 ./install-oracle.sh \
@@ -102,35 +108,35 @@ Additional details on switchover and failover operations are provided in the Ora
 
 Customize the Oracle databases and Data Guard configurations provisioned using this toolkit to meet your specific needs. However, when implementing Oracle Database DR configurations using Data Guard, the following recommendations should be considered:
 
-1. Create the Data Guard configuration environment early in your database's lifecycle:
+1. [**Create the Data Guard configuration environment early in your database's lifecycle**](#create-the-data-guard-configuration-environment-early)
 
    - While the physical standby database and the Data Guard configuration can be added at any time, provisioning the standby database involves using RMAN and the "active duplicate" option to clone the primary database. Performing this provisioning early on, while the primary database is small and without application data, will allow this step to complete quickly and efficiently. This is especially relevant if your primary and standby databases are in different regions, which will potentially result in slower data transfer between the two instances.
 
-2. Decide on your required separation and instance locations before running the toolkit:
+2. [**Decide on your required separation and instance locations before running the toolkit**](#decide-on-locations-before-running)
 
    - Data Guard member databases can exist anywhere as long as the two servers are properly networked. Decide on your requirements, choosing to either deploy between two machines in different zones within the same region or in two different regions early on, before using the toolkit.
 
-3. Use the same Oracle Database versions during deployment:
+3. [**Use the same Oracle Database versions during deployment**](#use-the-same-oracle-versions)
 
    - When initially provisioning and implementing the Data Guard configuration using this toolkit, ensure both the primary and standby are deployed using the same Oracle version and patch level.
 
-4. Use the maximum availability protection mode with the real-time apply option:
+4. [**Use the maximum availability protection mode with the real-time apply option**](#use-maximum-availability-with-rta)
 
    - The toolkit implements these settings by default. However, they are optional and can be adjusted pre- or post-deployment, if required. The maximum availability protection mode, combined with the real-time apply option is generally considered the sweet spot that allows the standby database to be as up-to-date as possible (minimal lag) without risking the availability of the primary database in the case of intermittent and temporary network disruptions. Maximum performance mode risks more potential data loss in the event of a failure as not all transactions may be written to disk by the standby database. And maximum protection mode risks primary database shutdown to ensure zero data loss, if the standby becomes unavailable.
 
-5. Use the Data Guard Broker:
+5. [**Use the Data Guard Broker**](#use-the-data-guard-broker)
 
    - The Data Guard broker, an optional component implemented by this toolkit, simplifies management by offering a command-line utility, simplified commands, and unified monitoring of the Data Guard configuration, treating its various members as an integrated unit. As of Oracle 12cR2, the broker also supports advanced topologies such as cascading standbys. For additional details, refer to the Oracle documentation [Oracle Data Guard Broker Concepts](https://docs.oracle.com/en/database/oracle/oracle-database/19/dgbkr/oracle-data-guard-broker-concepts.html).
 
-6. Use the Flashback Database feature:
+6. [**Use the Flashback Database feature**](#use-flashback-database)
 
    - This toolkit enables the [Flashback Database](https://docs.oracle.com/en/database/oracle/oracle-database/19/rcmrf/FLASHBACK-DATABASE.html) feature on both the primary and standby database. This can be beneficial for re-instantiation of the old primary after a failover as it allows the failed-primary to be "rewound" to a specific and known state (SCN). Flashing backwards can be significantly faster than the alternative of restoring from a physical backup, and rolling forward. If your environment and available disk space cannot support flashback redo logs, disable the flashback database feature (on either or both databases) post-deployment.
 
-7. Implement advanced Data Guard topologies once the initial cluster is stable:
+7. [**Implement advanced Data Guard topologies once the initial cluster is stable**](#ensure-operational-stability-before-expanding)
 
    - Use this toolkit to implement a Data Guard physical standby pair and ensure its operational stability, including resilience to reboots of either instance. Then, proceed incrementally to more complex topologies, such as adding additional standbys or a Fast-Start Failover observer, if greater configuration protection is desired. Always balance the benefits with the costs and risks, such as an inadvertent Fast-Start Failover during planned maintenance.
 
-8. Test the Switchover and Failover scenarios:
+8. [**Test the Switchover and Failover scenarios**](#test-switchover-and-failover)
 
    - Ensuring the implemented Data Guard configuration remains operable is critical for providing business continuity and database DR. Performing database DR exercises by switching over and/or failing over the database Data Guard DR configuration (and usually reverting back) is typically performed proactively on a regular cadence such as quarterly or semi-annually.
 
