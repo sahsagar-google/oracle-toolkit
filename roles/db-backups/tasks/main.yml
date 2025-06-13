@@ -90,7 +90,7 @@
     minute: "{{ arch_bu_start_min }}"
     user: "{{ oracle_user }}"
     job: "{{ scripts_dir }}/rman_delete_arch.sh {{ oracle_sid }} {{ rman_arch_retention_hours }}"
-  when: not backup_dest|bool
+  when: not (backup_dest|bool)
   tags: db-backups,add-backups
 
 - name: Run initial full backup
