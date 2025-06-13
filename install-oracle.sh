@@ -172,11 +172,11 @@ ORA_DATA_MOUNTS_PARAM="^.*$"
 ORA_DATA_MOUNTS_JSON="${ORA_DATA_MOUNTS_JSON}"
 ORA_DATA_MOUNTS_JSON_PARAM="^\[.+purpose.+\]$"
 
-PGA_TARGET_MB="${PGA_TARGET_MB}:-0"
-PGA_TARGET_MB_PARAM="[0-9]+"
+ORA_PGA_TARGET_MB="${ORA_PGA_TARGET_MB}:-0"
+ORA_PGA_TARGET_MB_PARAM="[0-9]+"
 
-SGA_TARGET_MB="${SGA_TARGET_MB}:-0"
-SGA_TARGET_MB_PARAM="[0-9]+"
+ORA_SGA_TARGET_MB="${ORA_SGA_TARGET_MB}:-0"
+ORA_SGA_TARGET_MB_PARAM="[0-9]+"
 
 CLUSTER_CONFIG="${CLUSTER_CONFIG:-cluster_config.json}"
 CLUSTER_CONFIG_PARAM="^.*$"
@@ -269,7 +269,7 @@ GETOPT_OPTIONAL="$GETOPT_OPTIONAL,ora-staging:,ora-db-name:,ora-db-domain:,ora-d
 GETOPT_OPTIONAL="$GETOPT_OPTIONAL,ora-data-destination:,ora-data-diskgroup:,ora-reco-destination:,ora-reco-diskgroup:"
 GETOPT_OPTIONAL="$GETOPT_OPTIONAL,ora-asm-disks:,ora-asm-disks-json:,ora-data-mounts:,ora-data-mounts-json:,ora-listener-port:,ora-listener-name:"
 GETOPT_OPTIONAL="$GETOPT_OPTIONAL,ora-db-ncharset:,ora-db-container:,ora-db-type:,ora-pdb-name-prefix:,ora-pdb-count:,ora-redo-log-size:"
-GETOPT_OPTIONAL="$GETOPT_OPTIONAL,pga-target-mb:,sga-target-mb:"
+GETOPT_OPTIONAL="$GETOPT_OPTIONAL,ora-pga-target-mb:,ora-sga-target-mb:"
 GETOPT_OPTIONAL="$GETOPT_OPTIONAL,backup-redundancy:,archive-redundancy:,archive-online-days:,backup-level0-days:,backup-level1-days:"
 GETOPT_OPTIONAL="$GETOPT_OPTIONAL,backup-start-hour:,backup-start-min:,archive-backup-min:,backup-script-location:,backup-log-location:"
 GETOPT_OPTIONAL="$GETOPT_OPTIONAL,ora-swlib-type:,ora-swlib-path:,ora-swlib-credentials:,instance-ip-addr:,primary-ip-addr:,instance-ssh-user:"
@@ -430,12 +430,12 @@ while true; do
     ORA_REDO_LOG_SIZE="$2"
     shift
     ;;
-  --pga-target-mb)
-    PGA_TARGET_MB="$2"
+  --ora-pga-target-mb)
+    ORA_PGA_TARGET_MB="$2"
     shift
     ;;
-  --sga-target-mb)
-    SGA_TARGET_MB="$2"
+  --ora-sga-target-mb)
+    ORA_SGA_TARGET_MB="$2"
     shift
     ;;
   --backup-dest)
@@ -722,12 +722,12 @@ shopt -s nocasematch
   echo "Incorrect parameter provided for ora-redo-log-size: $ORA_REDO_LOG_SIZE"
   exit 1
 }
-[[ ! "$PGA_TARGET_MB" =~ $PGA_TARGET_MB_PARAM ]] && {
-  echo "Incorrect parameter provided for pga-target-mb: $PGA_TARGET_MB"
+[[ ! "$ORA_PGA_TARGET_MB" =~ $ORA_PGA_TARGET_MB_PARAM ]] && {
+  echo "Incorrect parameter provided for ora-pga-target-mb: $ORA_PGA_TARGET_MB"
   exit 1
 }
-[[ ! "$SGA_TARGET_MB" =~ $SGA_TARGET_MB_PARAM ]] && {
-  echo "Incorrect parameter provided for sga-target-mb: $SGA_TARGET_MB"
+[[ ! "$ORA_SGA_TARGET_MB" =~ $ORA_SGA_TARGET_MB_PARAM ]] && {
+  echo "Incorrect parameter provided for ora-sga-target-mb: $ORA_SGA_TARGET_MB"
   exit 1
 }
 [[ ! "$BACKUP_DEST" =~ $BACKUP_DEST_PARAM ]] && [[ "$PB_LIST" =~ "config-db.yml" ]] && {
@@ -1050,9 +1050,9 @@ export ORA_SWLIB_PATH
 export ORA_VERSION
 export ORA_RELEASE
 export PB_LIST
-export PGA_TARGET_MB
+export ORA_PGA_TARGET_MB
 export PRIMARY_IP_ADDR
-export SGA_TARGET_MB
+export ORA_SGA_TARGET_MB
 export SWAP_BLK_DEVICE
 
 echo -e "Running with parameters from command line or environment variables:\n"

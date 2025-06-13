@@ -238,13 +238,13 @@ variable "skip_database_config" {
   default     = false
 }
 
-variable "pga_target_mb" {
+variable "ora_pga_target_mb" {
   description = "Oracle session private memory aggregate target, in MB."
   type        = number
   default     = 0
 }
 
-variable "sga_target_mb" {
+variable "ora_sga_target_mb" {
   description = "Oracle shared memory target, in MB."
   type        = number
   default     = 0

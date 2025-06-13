@@ -72,5 +72,5 @@ bash install-oracle.sh \
 %{ if ora_listener_port != "" }--ora-listener-port "${ora_listener_port}" %{ endif } \
 %{ if ora_redo_log_size != "" }--ora-redo-log-size "${ora_redo_log_size}" %{ endif } \
 %{ if skip_database_config }--skip-database-config %{ endif } \
-%{ if pga_target_mb != ""}--pga-target-mb "${pga_target_mb}" %{ endif } \
-%{ if sga_target_mb != ""}--sga-target-mb "${sga_target_mb}" %{ endif }
+%{ if ora_pga_target_mb != ""}--ora-pga-target-mb "${pga_target_mb}" %{ endif } \
+%{ if ora_sga_target_mb != ""}--ora-sga-target-mb "${sga_target_mb}" %{ endif }
