@@ -19,6 +19,8 @@ logs_dir: "/home/{{ oracle_user }}/logs"
 rman_db_bu_redundancy: 2
 rman_arch_redundancy: 2
 rman_archs_online_days: 7
+# Archivelog retention when no backups are defined.
+rman_arch_retention_hours: 2
 
 full_bu_level0_day: "0"
 full_bu_level1_days: "1-6"

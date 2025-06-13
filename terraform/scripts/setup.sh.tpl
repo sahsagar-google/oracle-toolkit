@@ -73,4 +73,6 @@ bash install-oracle.sh \
 %{ if ora_redo_log_size != "" }--ora-redo-log-size "${ora_redo_log_size}" %{ endif } \
 %{ if skip_database_config }--skip-database-config %{ endif } \
 %{ if ora_pga_target_mb != ""}--ora-pga-target-mb "${ora_pga_target_mb}" %{ endif } \
-%{ if ora_sga_target_mb != ""}--ora-sga-target-mb "${ora_sga_target_mb}" %{ endif }
+%{ if ora_sga_target_mb != ""}--ora-sga-target-mb "${ora_sga_target_mb}" %{ endif } \
+%{ if install_workload_agent }--install-workload-agent %{ endif } \
+%{ if oracle_metrics_secret != "" }--oracle-metrics-secret "${oracle_metrics_secret}" %{ endif }
