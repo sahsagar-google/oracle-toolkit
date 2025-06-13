@@ -38,12 +38,13 @@ variable "control_node_name_prefix" {
 variable "machine_type" {
   description = "The machine type to be used for the instance (e.g., n4-standard-2)."
   type        = string
+  default     = "n4-standard-2"
 }
 
 variable "control_node_machine_type" {
   description = "The machine type to be used for the instance (e.g., n2-standard-2)."
   type        = string
-  default     = "e2-medium"
+  default     = "e2-standard-2"
 }
 
 variable "metadata_startup_script" {
@@ -60,8 +61,8 @@ variable "network_tags" {
 
 variable "ntp_pref" {
   type        = string
-  description = "NTP preference. For cloud installs, this must be set to '169.254.169.254'."
-  default     = ""
+  description = "NTP preference. For cloud installs, this should be set to '169.254.169.254'."
+  default     = "169.254.169.254"
 
   validation {
     condition     = var.ntp_pref == "" || var.ntp_pref == "169.254.169.254"
@@ -72,7 +73,7 @@ variable "ntp_pref" {
 variable "ora_backup_dest" {
   type        = string
   description = "Backup destination for Oracle database. Example: '+RECO' or '/backup/path'. Leave empty if not needed."
-  default     = ""
+  default     = "+RECO"
 
   validation {
     condition     = can(regex("^\\+?[A-Za-z0-9/_-]+$", var.ora_backup_dest))
@@ -82,7 +83,7 @@ variable "ora_backup_dest" {
 
 variable "ora_db_container" {
   type        = string
-  default     = ""
+  default     = "false"
   description = "Defines whether the database is a container database (true/false)."
   validation {
     condition     = var.ora_db_container == "" || contains(["true", "false"], lower(var.ora_db_container))
@@ -102,7 +103,7 @@ variable "ora_db_name" {
 
 variable "ora_edition" {
   type        = string
-  default     = ""
+  default     = "EE"
   description = "Oracle Edition: EE, SE, SE2, or FREE."
   validation {
     condition     = var.ora_edition == "" || contains(["EE", "SE", "SE2", "FREE"], var.ora_edition)
@@ -112,7 +113,7 @@ variable "ora_edition" {
 
 variable "ora_listener_port" {
   type        = string
-  default     = ""
+  default     = "1521"
   description = "TCP port for Oracle listener."
   validation {
     condition     = var.ora_listener_port == "" || can(regex("^[0-9]+$", var.ora_listener_port))
@@ -122,11 +123,11 @@ variable "ora_listener_port" {
 
 variable "ora_redo_log_size" {
   type        = string
-  default     = ""
-  description = "Redo log size, must be a number or include MB/GB (e.g., '100MB', '1GB', '500')."
+  default     = "100MB"
+  description = "Redo log size, followed by MB"
   validation {
-    condition     = var.ora_redo_log_size == "" || can(regex("^(\\d+)(MB|GB)?$", var.ora_redo_log_size))
-    error_message = "Invalid redo log size. Specify a number or use MB/GB (e.g., '100MB', '1GB', '500')."
+    condition     = var.ora_redo_log_size == "" || can(regex("^[0-9]+MB$", var.ora_redo_log_size))
+    error_message = "Invalid redo log size. Specify a number followed by MB (e.g., '100MB', '1GB', '500')."
   }
 }
 
@@ -141,6 +142,7 @@ variable "ora_swlib_bucket" {
 
 variable "ora_version" {
   type        = string
+  default     = "19"
   description = "Oracle database version (e.g., 19, 19.3.0.0.0)"
   validation {
     condition     = can(regex("^\\d+(\\.\\d+)*$", var.ora_version))
@@ -148,25 +150,26 @@ variable "ora_version" {
   }
 }
 
-variable "oracle_release" {
+variable "ora_release" {
   type        = string
   default     = "latest"
   description = "Oracle release update version (patchlevel)."
   validation {
-    condition     = var.oracle_release == "" || var.oracle_release == "latest" || can(regex("^\\d+(\\.\\d+)*$", var.oracle_release))
+    condition     = var.ora_release == "" || var.ora_release == "latest" || can(regex("^\\d+(\\.\\d+)*$", var.ora_release))
     error_message = "Invalid Oracle release version. It should be in the format '19.10', '21.3.0.0', etc."
   }
 }
 
-variable "os_disk_size" {
+variable "boot_disk_size" {
   description = "The size (in GB) of the base disk for the instance."
   type        = number
   default     = 50
 }
 
-variable "os_disk_type" {
+variable "boot_disk_type" {
   description = "The type of the base disk for the instance."
   type        = string
+  default     = "hyperdisk-balanced"
 }
 
 variable "project_id" {
@@ -177,6 +180,7 @@ variable "project_id" {
 variable "region" {
   description = "The GCP region where the instance and related resources will be deployed (e.g., us-central1)."
   type        = string
+  default     = "us-central1"
 }
 
 variable "vm_service_account" {
@@ -192,11 +196,13 @@ variable "control_node_service_account" {
 variable "source_image_family" {
   description = "value of the image family to be used for the instance."
   type        = string
+  default     = "oracle-linux-8"
 }
 
 variable "source_image_project" {
   description = "The project where the source image is located."
   type        = string
+  default     = "oracle-linux-cloud"
 }
 
 variable "subnetwork" {
@@ -208,6 +214,7 @@ variable "subnetwork" {
 variable "zone" {
   description = "The specific availability zone within the selected GCP region (e.g., us-central1-b)."
   type        = string
+  default     = "us-central1-b"
 }
 
 variable "assign_public_ip" {
@@ -223,4 +230,10 @@ variable "gcs_source" {
     condition     = can(regex("^gs://.+\\.zip$", var.gcs_source))
     error_message = "The gcs_source must be a valid GCS path starting with 'gs://' and ending in '.zip'."
   }
+}
+
+variable "skip_database_config" {
+  description = "Whether to skip database creation, and to simply install the Oracle software; Set to true if planning to migrate an existing database."
+  type        = bool
+  default     = false
 }

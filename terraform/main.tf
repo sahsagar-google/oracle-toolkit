@@ -61,8 +61,8 @@ module "instance_template" {
   machine_type         = var.machine_type
   source_image_family  = var.source_image_family
   source_image_project = var.source_image_project
-  disk_size_gb         = var.os_disk_size
-  disk_type            = var.os_disk_type
+  disk_size_gb         = var.boot_disk_size
+  disk_type            = var.boot_disk_type
   auto_delete          = true
 
 
@@ -145,10 +145,11 @@ resource "google_compute_instance" "control_node" {
     ora_db_name         = var.ora_db_name
     ora_db_container    = lower(var.ora_db_container)
     ntp_pref            = var.ntp_pref
-    oracle_release      = var.oracle_release
+    ora_release         = var.ora_release
     ora_edition         = var.ora_edition
     ora_listener_port   = var.ora_listener_port
     ora_redo_log_size   = var.ora_redo_log_size
+    skip_database_config = var.skip_database_config
   })
 
   metadata = {

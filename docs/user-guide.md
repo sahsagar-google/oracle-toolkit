@@ -1519,6 +1519,17 @@ ORA_VERSION
 <td>All mainstream major releases.</td>
 </tr>
 <tr>
+<td>Oracle software release (patch level)</td>
+<td><p><pre>
+ORA_RELEASE
+--ora-release
+</pre></p>
+</td>
+<td>A fully-qualified release number, such as 19.7.0.0.200414<br>
+Default: latest</td>
+<td>Oracle patch level to apply as part of installation.</td>
+</tr>
+<tr>
 <td>Oracle edition</td>
 <td><p><pre>
 ORA_EDITION

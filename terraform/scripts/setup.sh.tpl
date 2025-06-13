@@ -67,7 +67,8 @@ bash install-oracle.sh \
 %{ if ora_db_name != "" }--ora-db-name "${ora_db_name}" %{ endif } \
 %{ if ora_db_container != "" }--ora-db-container "${ora_db_container}" %{ endif } \
 %{ if ntp_pref != "" }--ntp-pref "${ntp_pref}" %{ endif } \
-%{ if oracle_release != "" }--oracle-release "${oracle_release}" %{ endif } \
+%{ if ora_release != "" }--ora-release "${ora_release}" %{ endif } \
 %{ if ora_edition != "" }--ora-edition "${ora_edition}" %{ endif } \
 %{ if ora_listener_port != "" }--ora-listener-port "${ora_listener_port}" %{ endif } \
-%{ if ora_redo_log_size != "" }--ora-redo-log-size "${ora_redo_log_size}" %{ endif }
+%{ if ora_redo_log_size != "" }--ora-redo-log-size "${ora_redo_log_size}" %{ endif } \
+%{ if skip_database_config }--skip-database-config %{ endif }
