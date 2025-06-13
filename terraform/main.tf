@@ -150,8 +150,8 @@ resource "google_compute_instance" "control_node" {
     ora_listener_port   = var.ora_listener_port
     ora_redo_log_size   = var.ora_redo_log_size
     skip_database_config = var.skip_database_config
-    ora_ora_pga_target_mb       = var.ora_ora_pga_target_mb
-    ora_ora_sga_target_mb       = var.ora_ora_sga_target_mb
+    ora_pga_target_mb       = var.ora_pga_target_mb
+    ora_sga_target_mb       = var.ora_sga_target_mb
   })
 
   metadata = {
