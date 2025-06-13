@@ -61,10 +61,9 @@ variable "ntp_pref" {
 variable "ora_backup_dest" {
   type        = string
   description = "Backup destination for Oracle database. Example: '+RECO' or '/backup/path'. Leave empty if not needed."
-  default     = "+RECO"
 
   validation {
-    condition     = can(regex("^\\+?[A-Za-z0-9/_-]+$", var.ora_backup_dest))
+    condition     = var.ora_backup_dest == "" || can(regex("^\\+?[A-Za-z0-9/_-]+$", var.ora_backup_dest))
     error_message = "Invalid backup destination. It must be a valid ASM disk group (e.g., '+RECO') or a valid file path."
   }
 }
@@ -253,6 +252,23 @@ variable "gcs_source" {
   validation {
     condition     = can(regex("^gs://.+\\.zip$", var.gcs_source))
     error_message = "The gcs_source must be a valid GCS path starting with 'gs://' and ending in '.zip'."
+  }
+}
+
+variable "install_workload_agent" {
+  description = "Whether to install workload-agent on the database VM."
+  type        = bool
+  default     = false
+}
+
+variable "oracle_metrics_secret" {
+  description = "Fully qualified name of the Secret Manager secret that stores the Oracle database user's password. This user is specifically configured for the workload-agent to enable metric collection."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = var.oracle_metrics_secret == "" || can(regex("^projects/[^/]+/secrets/[^/]+/versions/[^/]+$", var.oracle_metrics_secret))
+    error_message = "oracle_metrics_secret must be in the format: projects/<project>/secrets/<secret_name>/versions/<version>"
   }
 }
 
