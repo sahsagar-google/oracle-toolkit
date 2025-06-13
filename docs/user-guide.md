@@ -1351,7 +1351,7 @@ After installation is complete, you can adjust any of the attributes of the
 backup scheme. You can also replace any and all parts of the initial backup
 scheme or the backup script with your own scripts or backup tools.
 
-#### gcsfuse backup
+#### gcsfuse backups
 
 You can use Cloud Storage buckets for Oracle rman scripts to write and store backups.
 
@@ -1959,7 +1959,10 @@ The NFS exported filesystem  should be configured with the default IDs or match 
 The configuration is done by the storage manager or systems engineer providing the remote filesystem.
 The NFS option defaults to nfsv3
 <br>
-If you are writing to a gcsfuse bucket, the /mnt must be used as parameter.</td>
+If you are writing to a gcsfuse bucket, the /mnt must be used as parameter.<br>
+If you would rather not schedule backups at all, set to an empty string "".
+The toolkit will schedule a job to periodically delete accumulated archivelog files.
+</td>
 </tr>
 <tr>
 <td>NFS backup configuration</td>

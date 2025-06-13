@@ -73,10 +73,9 @@ variable "ntp_pref" {
 variable "ora_backup_dest" {
   type        = string
   description = "Backup destination for Oracle database. Example: '+RECO' or '/backup/path'. Leave empty if not needed."
-  default     = "+RECO"
 
   validation {
-    condition     = can(regex("^\\+?[A-Za-z0-9/_-]+$", var.ora_backup_dest))
+    condition     = var.ora_backup_dest == "" || can(regex("^\\+?[A-Za-z0-9/_-]+$", var.ora_backup_dest))
     error_message = "Invalid backup destination. It must be a valid ASM disk group (e.g., '+RECO') or a valid file path."
   }
 }
