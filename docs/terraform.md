@@ -135,7 +135,7 @@ gcloud config set project PROJECT_ID
 
 3. Review and Edit Terraform Module Configuration
 
-   Copy `terraform/terraform.tfvars.example` to `terraform/terraform.tfvars` and define your deployment settings. Add as many ASM disks you require in the `asm_disks` and `fs_disks` sections.
+   Copy `terraform/terraform.tfvars.example` to `terraform/terraform.tfvars` and define your deployment settings.
 
 > **NOTE** There is no need to supply the toolkit script parameters `--instance-ip-addr`, `--instance-ssh-user`, and `--instance-ssh-key` - these are automatically added by the Terraform commands.
 
