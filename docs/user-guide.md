@@ -2232,12 +2232,12 @@ enabled, passwords appear in logfiles.</td>
 --db-password-secret
 </pre></p></td>
 <td></td>
-<td>Google Cloud Secret Manager resource path containing the password to be used for both the Oracle SYS and SYSTEM users. Expected format: projects/<project>/secrets/<secret_name>/versions/<version></td>
+<td>Google Cloud Secret Manager resource path containing the password to be used for both the Oracle SYS and SYSTEM users. Expected format: "projects/your-project/secrets/your-secret-name/versions/your-version</td>
 </tr>
 <tr>
 <td></td>
 <td><p><pre>
---install_workload_agent
+--install-workload-agent
 </pre></p></td>
 <td></td>
 <td>Whether to install <a href="https://cloud.google.com/compute/docs/instances/agent-for-compute-workloads">Google Cloud Agent for Compute Workloads</a></td>
@@ -2245,10 +2245,10 @@ enabled, passwords appear in logfiles.</td>
 <tr>
 <td></td>
 <td><p><pre>
---oracle_metrics_secret
+--oracle-metrics-secret
 </pre></p></td>
 <td></td>
-<td>Fully qualified name of the Secret Manager secret that stores the Oracle database user's password. This user is specifically configured for the workload-agent to enable metric collection. Expected format: "projects/your-project/secrets/your-secret-name/versions/version"</td>
+<td>Fully qualified name of the Secret Manager secret that stores the Oracle database user's password. This user is specifically configured for the workload-agent to enable metric collection. Expected format: "projects/your-project/secrets/your-secret-name/versions/your-version"</td>
 </tr>
 </tbody>
 </table>
