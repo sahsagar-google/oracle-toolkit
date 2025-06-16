@@ -194,6 +194,7 @@ resource "google_compute_instance" "control_node" {
 
   metadata = {
     enable-oslogin = "TRUE"
+    serial-port-logging-enable = true
   }
 
   depends_on = [module.compute_instance]
