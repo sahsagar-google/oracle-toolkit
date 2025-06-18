@@ -88,7 +88,8 @@ module "instance_template" {
   name_prefix        = format("%s-template", var.instance_name)
   region             = var.region
   project_id         = local.project_id
-  subnetwork         = var.subnetwork
+  network            = coalesce(var.network, var.subnetwork)
+  subnetwork         = coalesce(var.subnetwork, var.network)
   subnetwork_project = local.project_id
   service_account = {
     email  = var.vm_service_account
@@ -119,7 +120,8 @@ module "compute_instance" {
 
   region              = var.region
   zone                = var.zone
-  subnetwork          = var.subnetwork
+  network            = coalesce(var.network, var.subnetwork)
+  subnetwork         = coalesce(var.subnetwork, var.network)
   subnetwork_project  = local.project_id
   hostname            = var.instance_name
   instance_template   = module.instance_template.self_link
@@ -155,7 +157,9 @@ resource "google_compute_instance" "control_node" {
   }
 
   network_interface {
-    network       = var.subnetwork
+    network            = coalesce(var.network, var.subnetwork)
+    subnetwork         = coalesce(var.subnetwork, var.network)
+    subnetwork_project = local.project_id
 
     dynamic "access_config" {
       for_each = var.assign_public_ip ? [1] : []

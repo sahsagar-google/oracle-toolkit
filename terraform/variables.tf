@@ -228,10 +228,16 @@ variable "source_image_project" {
   default     = "oracle-linux-cloud"
 }
 
-variable "subnetwork" {
-  description = "The name of the GCP subnetwork to which the instance will be attached."
+variable "network" {
+  description = "The name of the GCP network to which the instance will be attached."
   type        = string
   default     = "default"
+}
+
+variable "subnetwork" {
+  description = "The name of the GCP subnetwork to which the instance will be attached; customize if using custom subnet creation mode."
+  type        = string
+  default     = ""
 }
 
 variable "zone" {
