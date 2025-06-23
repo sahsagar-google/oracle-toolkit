@@ -57,6 +57,9 @@ swap_blk_device: "{{ lookup('env','SWAP_BLK_DEVICE')|lower|default('',true) }}"
 # ntp preferred server
 ntp_preferred: "{{ lookup('env','NTP_PREF')|lower|default('',true) }}"
 
+# Google Cloud Secret Manager resource containing the password to be used for both the Oracle SYS and SYSTEM users
+db_password_secret: "{{ lookup('env','DB_PASSWORD_SECRET')|lower|default('',true) }}"
+
 # DB configuration related variables:
 db_name: "{{ lookup('env','ORA_DB_NAME')|default('ORCL',true) }}"
 db_domain: "{{ lookup('env','ORA_DB_DOMAIN')|default('',true) }}"
@@ -111,6 +114,11 @@ arch_bu_start_min: "{{ lookup('env','ARCHIVE_BACKUP_MIN')|default('30',true) }}"
 # backup_mount_src: "192.168.185.82:/backups" #an nfs share of some sort
 # backup_mount_path: "/backups" #an nfs mount point
 
+# workload-agent related variables
+install_workload_agent: "{{ lookup('env','INSTALL_WORKLOAD_AGENT')|lower|default(false) }}"
+oracle_metrics_secret: "{{ lookup('env','ORACLE_METRICS_SECRET')|lower|default('', true)}}"
+
+
 ## End of customizable Global Variables
 
 ################################################################################
@@ -132,6 +140,7 @@ home_name: "{% if free_edition %}dbhomeFree{% else %}dbhome_1{% endif %}"
 oracle_sid: "{% if db_config_type == 'SI' %}{{ db_name }}{% else %}{{ db_name }}{{ instance_num }}{% endif %}"
 asm_sid: "{% if db_config_type == 'SI' %}+ASM{% else %}+ASM{{ instance_num }}{% endif %}"
 run_initial_bu: true
+password_pattern: "^[a-zA-Z0-9@+~*]{1,30}$"
 
 # Installation options:
 create_db: true

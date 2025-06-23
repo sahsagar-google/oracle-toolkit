@@ -248,16 +248,23 @@ INSTANCE_SSH_EXTRA_ARGS_PARAM="^/.+$"
 NTP_PREF="${NTP_PREF}"
 NTP_PREF_PARAM=".*"
 
+DB_PASSWORD_SECRET="${DB_PASSWORD_SECRET}"
+DB_PASSWORD_SECRET_PARAM="^projects/[^/]+/secrets/[^/]+/versions/[^/]+$"
+
 SWAP_BLK_DEVICE="${SWAP_BLK_DEVICE}"
 SWAP_BLK_DEVICE_PARAM=".*"
 
 COMPATIBLE_RDBMS="${COMPATIBLE_RDBMS:-0}"
 COMPATIBLE_RDBMS_PARAM="^[0-9][0-9]\.[0-9].*"
 
+ORACLE_METRICS_SECRET="${ORACLE_METRICS_SECRET}"
+ORACLE_METRICS_SECRET_PARAM="^projects/[^/]+/secrets/[^/]+/versions/[^/]+$"
+
+
 export ANSIBLE_DISPLAY_SKIPPED_HOSTS=false
 ###
 GETOPT_MANDATORY="ora-swlib-bucket:"
-GETOPT_OPTIONAL="gcs-backup-config:,gcs-backup-bucket:,gcs-backup-temp-path:,nfs-backup-config:,nfs-backup-mount:,backup-dest:,ora-version:,no-patch,ora-edition:,cluster-type:,cluster-config:,cluster-config-json:"
+GETOPT_OPTIONAL="gcs-backup-config:,gcs-backup-bucket:,gcs-backup-temp-path:,nfs-backup-config:,nfs-backup-mount:,backup-dest:,ora-version:,ora-release:,no-patch,ora-edition:,cluster-type:,cluster-config:,cluster-config-json:"
 GETOPT_OPTIONAL="$GETOPT_OPTIONAL,ora-staging:,ora-db-name:,ora-db-domain:,ora-db-charset:,ora-disk-mgmt:,ora-role-separation:"
 GETOPT_OPTIONAL="$GETOPT_OPTIONAL,ora-data-destination:,ora-data-diskgroup:,ora-reco-destination:,ora-reco-diskgroup:"
 GETOPT_OPTIONAL="$GETOPT_OPTIONAL,ora-asm-disks:,ora-asm-disks-json:,ora-data-mounts:,ora-data-mounts-json:,ora-listener-port:,ora-listener-name:"
@@ -267,6 +274,7 @@ GETOPT_OPTIONAL="$GETOPT_OPTIONAL,backup-start-hour:,backup-start-min:,archive-b
 GETOPT_OPTIONAL="$GETOPT_OPTIONAL,ora-swlib-type:,ora-swlib-path:,ora-swlib-credentials:,instance-ip-addr:,primary-ip-addr:,instance-ssh-user:"
 GETOPT_OPTIONAL="$GETOPT_OPTIONAL,instance-ssh-key:,instance-hostname:,ntp-pref:,inventory-file:,compatible-rdbms:,instance-ssh-extra-args:"
 GETOPT_OPTIONAL="$GETOPT_OPTIONAL,help,validate,check-instance,prep-host,install-sw,config-db,debug,allow-install-on-vm,skip-database-config,swap-blk-device:"
+GETOPT_OPTIONAL="$GETOPT_OPTIONAL,install-workload-agent,oracle-metrics-secret:,db-password-secret:"
 GETOPT_LONG="$GETOPT_MANDATORY,$GETOPT_OPTIONAL"
 GETOPT_SHORT="h"
 
@@ -293,6 +301,10 @@ while true; do
     if [[ "${ORA_VERSION}" = "12.2" ]] ; then ORA_VERSION="12.2.0.1.0"; fi
     if [[ "${ORA_VERSION}" = "12.1" ]] ; then ORA_VERSION="12.1.0.2.0"; fi
     if [[ "${ORA_VERSION}" = "11" ]]   ; then ORA_VERSION="11.2.0.4.0"; fi
+    shift
+    ;;
+  --ora-release)
+    ORA_RELEASE="$2"
     shift
     ;;
   --no-patch)
@@ -514,6 +526,17 @@ while true; do
     SWAP_BLK_DEVICE="$2"
     shift
     ;;
+  --db-password-secret)
+    DB_PASSWORD_SECRET="$2"
+    shift
+    ;;
+  --install-workload-agent)
+    INSTALL_WORKLOAD_AGENT=true
+    ;;
+  --oracle-metrics-secret)
+    ORACLE_METRICS_SECRET="$2"
+    shift
+    ;;
   --check-instance)
     PARAM_PB_CHECK_INSTANCE="${PB_CHECK_INSTANCE}"
     ;;
@@ -579,6 +602,10 @@ shopt -s nocasematch
 
 [[ ! "$ORA_VERSION" =~ $ORA_VERSION_PARAM ]] && {
   echo "Incorrect parameter provided for ora-version: $ORA_VERSION"
+  exit 1
+}
+[[ ! "$ORA_RELEASE" =~ $ORA_RELEASE_PARAM ]] && {
+  echo "Incorrect parameter provided for ora-release: $ORA_RELEASE"
   exit 1
 }
 [[ ! "$ORA_EDITION" =~ $ORA_EDITION_PARAM ]] && {
@@ -798,6 +825,21 @@ shopt -s nocasematch
   echo "Incorrect parameter provided for compatible-rdbms: $COMPATIBLE_RDBMS"
   exit 1
 }
+[[ -n "$DB_PASSWORD_SECRET" && ! "$DB_PASSWORD_SECRET" =~ $DB_PASSWORD_SECRET_PARAM ]] && {
+  echo "Incorrect parameter provided for db-password-secret: $DB_PASSWORD_SECRET"
+  echo "Expected format: projects/<project>/secrets/<secret_name>/versions/<version>"
+  exit 1
+}
+[[ -n "$ORACLE_METRICS_SECRET" && ! "$ORACLE_METRICS_SECRET" =~ $ORACLE_METRICS_SECRET_PARAM ]] && {
+  echo "Incorrect parameter provided for oracle-metrics-secret: $ORACLE_METRICS_SECRET"
+  echo "Expected format: projects/<project>/secrets/<secret_name>/versions/<version>"
+  exit 1
+}
+# if ORACLE_METRICS_SECRET is specified, INSTALL_WORKLOAD_AGENT must be as well
+if [[ -n "$ORACLE_METRICS_SECRET" && "$INSTALL_WORKLOAD_AGENT" == false ]]; then
+  echo "--install-workload-agent must be specified when using --oracle-metrics-secret"
+  exit 1
+fi
 
 # Parameter overrides for features that Free Edition does not support
 # (incl. RAC, ASM, role separation, and customized database name)
@@ -1020,6 +1062,9 @@ export ORA_RELEASE
 export PB_LIST
 export PRIMARY_IP_ADDR
 export SWAP_BLK_DEVICE
+export DB_PASSWORD_SECRET
+export INSTALL_WORKLOAD_AGENT
+export ORACLE_METRICS_SECRET
 
 echo -e "Running with parameters from command line or environment variables:\n"
 set | grep -E '^(ORA_|BACKUP_|GCS_|ARCHIVE_|INSTANCE_|PB_|ANSIBLE_|CLUSTER|PRIMARY)' | grep -v '_PARAM='
