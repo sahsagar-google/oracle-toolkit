@@ -203,3 +203,9 @@ resource "google_compute_instance" "control_node" {
 
   depends_on = [module.compute_instance]
 }
+
+output "control_node_log_url" {
+  description = "Logs Explorer URL with Oracle Toolkit output"
+  value       = "https://console.cloud.google.com/logs/query;query=resource.labels.instance_id%3D${urlencode(google_compute_instance.control_node.instance_id)};duration=P30D?project=${urlencode(var.project_id)}"
+}
+
