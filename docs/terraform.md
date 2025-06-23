@@ -56,15 +56,21 @@ To use this Terraform and Ansible integration, ensure you have the following too
 Grant the service account attached to the control node VM the following IAM roles:
 
 - `roles/compute.osAdminLogin`
-  Grants OS Login access with sudo privileges, required by the Ansible playbooks.
+   Grants OS Login access with sudo privileges, required by the Ansible playbooks.
 - `roles/iam.serviceAccountUser` on the **target VM's service account**  
-  Allows the control node to impersonate the target service account during SSH sessions.
+   Allows the control node to impersonate the target service account during SSH sessions.
 - `roles/storage.objectViewer` on the bucket specified in var.gcs_source to download the ZIP archive of the oracle-toolkit
 - `roles/storage.objectUser` on the Terraform state bucket specified in backend.tf to write Terraform state.
 - `roles/compute.instanceAdmin.v1` (or a custom role including compute.instances.delete)
    Required to delete the ephemeral control node VM after the deployment is complete.
 - `roles/logging.logWriter`
   Requred to write to Google Cloud Logging.
+
+### 2. Service Account for the database VM
+
+- `roles/secretmanager.secretAccessor` - Grants access to retrieve passwords from Secret Manager. Must be granted in the project containing the secrets either at the project or individual secret level.
+- `roles/monitoring.metricWriter` - Required only if the --install-workload-agent and --oracle-metrics-secret flags are set. This allows the Google Cloud Agent for Compute Workloads to write metrics to Cloud Monitoring.
+- `roles/compute.viewer` -  Required only if the --install-workload-agent and --oracle-metrics-secret flags are set. Needed by the Google Cloud Agent for Compute Workloads.
 
 ### 2. Firewall Rule for Internal IP Access
 Create a VPC firewall rule that allows ingress on TCP port 22 (or your custom SSH port) from the control node VM to the target VM.  
@@ -135,7 +141,7 @@ gcloud config set project PROJECT_ID
 
 3. Review and Edit Terraform Module Configuration
 
-   Copy `terraform/terraform.tfvars.example` to `terraform/terraform.tfvars` and define your deployment settings. Add as many ASM disks you require in the `asm_disks` and `fs_disks` sections.
+   Copy `terraform/terraform.tfvars.example` to `terraform/terraform.tfvars` and define your deployment settings.
 
 > **NOTE** There is no need to supply the toolkit script parameters `--instance-ip-addr`, `--instance-ssh-user`, and `--instance-ssh-key` - these are automatically added by the Terraform commands.
 

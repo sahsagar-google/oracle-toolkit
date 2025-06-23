@@ -117,6 +117,28 @@
     - not (ansible_distribution == 'RedHat' and ansible_distribution_major_version | int == 7)
   tags: os-packages
 
+- name: Skip Google Cloud CLI installation if non-RHEL OS detected
+  debug:
+    msg: "Non-RHEL OS detected. Skipping the installation of Google Cloud CLI"
+  when: ansible_os_family != "RedHat"
+  tags: install-google-cloud-cli
+
+- name: Install Google Cloud CLI
+  include_tasks:
+    file: google_cloud_cli.yml
+  when:
+    - ansible_os_family == "RedHat"
+    - install_workload_agent | bool
+    - oracle_metrics_secret | length > 0
+  tags: install-google-cloud-cli
+
+- name: Fetch and validate DB passwords
+  include_tasks:
+    file: validate_passwords.yml
+  when:
+  - ansible_os_family == "RedHat"
+  tags: validate-db-passwords
+
 - name: Add OS groups
   group:
     name: "{{ item.group }}"

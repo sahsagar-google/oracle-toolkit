@@ -1353,7 +1353,7 @@ After installation is complete, you can adjust any of the attributes of the
 backup scheme. You can also replace any and all parts of the initial backup
 scheme or the backup script with your own scripts or backup tools.
 
-#### gcsfuse backup
+#### gcsfuse backups
 
 You can use Cloud Storage buckets for Oracle rman scripts to write and store backups.
 
@@ -1961,7 +1961,10 @@ The NFS exported filesystem  should be configured with the default IDs or match 
 The configuration is done by the storage manager or systems engineer providing the remote filesystem.
 The NFS option defaults to nfsv3
 <br>
-If you are writing to a gcsfuse bucket, the /mnt must be used as parameter.</td>
+If you are writing to a gcsfuse bucket, the /mnt must be used as parameter.<br>
+If you would rather not schedule backups at all, set to an empty string "".
+The toolkit will schedule a job to periodically delete accumulated archivelog files.
+</td>
 </tr>
 <tr>
 <td>NFS backup configuration</td>
@@ -2224,6 +2227,30 @@ instance is created.</td>
 <td></td>
 <td>Run with the Ansible debugging flag enabled.  With debugging
 enabled, passwords appear in logfiles.</td>
+</tr>
+<tr>
+<td></td>
+<td><p><pre>
+--db-password-secret
+</pre></p></td>
+<td></td>
+<td>Google Cloud Secret Manager resource path containing the password to be used for both the Oracle SYS and SYSTEM users. Expected format: "projects/your-project/secrets/your-secret-name/versions/your-version</td>
+</tr>
+<tr>
+<td></td>
+<td><p><pre>
+--install-workload-agent
+</pre></p></td>
+<td></td>
+<td>Whether to install <a href="https://cloud.google.com/compute/docs/instances/agent-for-compute-workloads">Google Cloud Agent for Compute Workloads</a></td>
+</tr>
+<tr>
+<td></td>
+<td><p><pre>
+--oracle-metrics-secret
+</pre></p></td>
+<td></td>
+<td>Fully qualified name of the Secret Manager secret that stores the Oracle database user's password. This user is specifically configured for the workload-agent to enable metric collection. Expected format: "projects/your-project/secrets/your-secret-name/versions/your-version"</td>
 </tr>
 </tbody>
 </table>
