@@ -174,13 +174,12 @@ This process will perform the following steps:
 - After configuration, the ephemeral control node is deleted to minimize resource usage.
 
 5. View startup execution logs
-   To view logs from startup script execution on the control node VM, run the following query in the Cloud Logging. Make sure to replace <my-project> and <instance-id> with your actual project ID and instance ID:
+   To view logs from startup script execution on the control node VM, fetch the
+   Terraform output variable `control_node_log_url` and paste into a browser
+   to open Logs Explorer, filtered to control node output only.
 
-```plaintext
-log_name="projects/<my-project>/logs/google_metadata_script_runner"
-resource.type="gce_instance"
-resource.labels.instance_id="<instance-id>"
-resource.labels.project_id="<my-project>"
+```bash
+terraform output control_node_log_url
 ```
 
 6. Verify Ansible Execution
