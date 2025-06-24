@@ -13,9 +13,46 @@
 # limitations under the License.
 
 locals {
+  fs_disks = [
+    {
+      auto_delete  = true
+      boot         = false
+      device_name  = "oracle_home"
+      disk_size_gb = var.oracle_home_disk.size_gb
+      disk_type    = var.oracle_home_disk.type
+      disk_labels  = { purpose = "software" } # Do not modify this label
+    }
+  ]
+  asm_disks = [
+    {
+      auto_delete  = true
+      boot         = false
+      device_name  = "data"
+      disk_size_gb = var.data_disk.size_gb
+      disk_type    = var.data_disk.type
+      disk_labels  = { diskgroup = "data", purpose = "asm" }
+    },
+    {
+      auto_delete  = true
+      boot         = false
+      device_name  = "reco"
+      disk_size_gb = var.reco_disk.size_gb
+      disk_type    = var.reco_disk.type
+      disk_labels  = { diskgroup = "reco", purpose = "asm" }
+    },
+    {
+      auto_delete  = true
+      boot         = false
+      device_name  = "swap"
+      disk_size_gb = var.swap_disk_size_gb
+      disk_type    = var.swap_disk_type
+      disk_labels  = { purpose = "swap" }
+    }
+  ]
+
   # Takes the list of filesystem disks and converts them into a list of objects with the required fields by ansible
   data_mounts_config = [
-    for i, d in var.fs_disks : {
+    for i, d in local.fs_disks : {
       purpose     = d.disk_labels.purpose
       blk_device  = "/dev/disk/by-id/google-${d.device_name}"
       name        = format("u%02d", i + 1)
@@ -27,10 +64,10 @@ locals {
 
   # Takes the list of asm disks and converts them into a list of objects with the required fields by ansible
   asm_disk_config = [
-    for g in distinct([for d in var.asm_disks : d.disk_labels.diskgroup if lookup(d.disk_labels, "diskgroup", null) != null]) : {
+    for g in distinct([for d in local.asm_disks : d.disk_labels.diskgroup if lookup(d.disk_labels, "diskgroup", null) != null]) : {
       diskgroup = upper(g)
       disks = [
-        for d in var.asm_disks : {
+        for d in local.asm_disks : {
           blk_device = "/dev/disk/by-id/google-${d.device_name}"
           name       = d.device_name
         } if lookup(d.disk_labels, "diskgroup", null) == g
@@ -39,7 +76,7 @@ locals {
   ]
 
   # Concatenetes both lists to be passed down to the instance module
-  additional_disks = concat(var.fs_disks, var.asm_disks)
+  additional_disks = concat(local.fs_disks, local.asm_disks)
 
   project_id = var.project_id
 }
@@ -51,7 +88,8 @@ module "instance_template" {
   name_prefix        = format("%s-template", var.instance_name)
   region             = var.region
   project_id         = local.project_id
-  subnetwork         = var.subnetwork
+  network            = coalesce(var.network, var.subnetwork)
+  subnetwork         = coalesce(var.subnetwork, var.network)
   subnetwork_project = local.project_id
   service_account = {
     email  = var.vm_service_account
@@ -61,7 +99,7 @@ module "instance_template" {
   machine_type         = var.machine_type
   source_image_family  = var.source_image_family
   source_image_project = var.source_image_project
-  disk_size_gb         = var.boot_disk_size
+  disk_size_gb         = var.boot_disk_size_gb
   disk_type            = var.boot_disk_type
   auto_delete          = true
 
@@ -82,7 +120,8 @@ module "compute_instance" {
 
   region              = var.region
   zone                = var.zone
-  subnetwork          = var.subnetwork
+  network            = coalesce(var.network, var.subnetwork)
+  subnetwork         = coalesce(var.subnetwork, var.network)
   subnetwork_project  = local.project_id
   hostname            = var.instance_name
   instance_template   = module.instance_template.self_link
@@ -118,7 +157,9 @@ resource "google_compute_instance" "control_node" {
   }
 
   network_interface {
-    network       = var.subnetwork
+    network            = coalesce(var.network, var.subnetwork)
+    subnetwork         = coalesce(var.subnetwork, var.network)
+    subnetwork_project = local.project_id
 
     dynamic "access_config" {
       for_each = var.assign_public_ip ? [1] : []
@@ -149,6 +190,7 @@ resource "google_compute_instance" "control_node" {
     ora_edition = var.ora_edition
     ora_listener_port = var.ora_listener_port
     ora_redo_log_size = var.ora_redo_log_size
+    db_password_secret = var.db_password_secret
     install_workload_agent = var.install_workload_agent
     oracle_metrics_secret = var.oracle_metrics_secret
     skip_database_config = var.skip_database_config
@@ -162,3 +204,9 @@ resource "google_compute_instance" "control_node" {
 
   depends_on = [module.compute_instance]
 }
+
+output "control_node_log_url" {
+  description = "Logs Explorer URL with Oracle Toolkit output"
+  value       = "https://console.cloud.google.com/logs/query;query=resource.labels.instance_id%3D${urlencode(google_compute_instance.control_node.instance_id)};duration=P30D?project=${urlencode(var.project_id)}"
+}
+

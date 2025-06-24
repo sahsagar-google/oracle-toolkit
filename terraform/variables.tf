@@ -12,18 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-variable "asm_disks" {
-  description = "List of ASM disks"
-  type        = list(any)
-  default     = []
-}
-
-variable "fs_disks" {
-  description = "List of filesystem disks"
-  type        = list(any)
-  default     = []
-}
-
 variable "instance_name" {
   description = "The name prefix for the target VM instance."
   type        = string
@@ -159,16 +147,52 @@ variable "ora_release" {
   }
 }
 
-variable "boot_disk_size" {
-  description = "The size (in GB) of the base disk for the instance."
+variable "boot_disk_size_gb" {
+  description = "The size of the boot disk for the database VM."
   type        = number
   default     = 50
 }
 
 variable "boot_disk_type" {
-  description = "The type of the base disk for the instance."
+  description = "The type of the boot disk for the database VM."
   type        = string
   default     = "hyperdisk-balanced"
+}
+
+variable "swap_disk_size_gb" {
+  description = "The size of the swap disk for the database VM."
+  type        = number
+  default     = 50
+}
+
+variable "swap_disk_type" {
+  description = "The type of the swap disk for the database VM."
+  type        = string
+  default     = "hyperdisk-balanced"
+}
+
+variable "oracle_home_disk" {
+  description = "The Oracle binaries (/u01) disk."
+  type = object({
+    size_gb = optional(number, 100)
+    type    = optional(string, "hyperdisk-balanced")
+  })
+}
+
+variable "data_disk" {
+  description = "The Oracle data disk."
+  type = object({
+    size_gb = optional(number, 100)
+    type    = optional(string, "hyperdisk-balanced")
+  })
+}
+
+variable "reco_disk" {
+  description = "The Oracle fast recovery area disk."
+  type = object({
+    size_gb = optional(number, 100)
+    type    = optional(string, "hyperdisk-balanced")
+  })
 }
 
 variable "project_id" {
@@ -185,11 +209,21 @@ variable "region" {
 variable "vm_service_account" {
   description = "The service account used for managing compute instance permissions."
   type        = string
+
+  validation {
+    condition     = can(regex("^[a-z0-9._-]+@[a-z0-9.-]+[.]gserviceaccount[.]com$", var.vm_service_account))
+    error_message = "vm_service_account must look like an e-mail address ending in a subdomain of gserviceaccount.com https://cloud.google.com/iam/docs/service-account-types"
+  }
 }
 
 variable "control_node_service_account" {
   description = "The service account used by the control node."
   type        = string
+
+  validation {
+    condition     = can(regex("^[a-z0-9._-]+@[a-z0-9.-]+[.]gserviceaccount[.]com$", var.control_node_service_account))
+    error_message = "control_node_service_account must look like an e-mail address ending in a subdomain of gserviceaccount.com https://cloud.google.com/iam/docs/service-account-types"
+  }
 }
 
 variable "source_image_family" {
@@ -204,10 +238,16 @@ variable "source_image_project" {
   default     = "oracle-linux-cloud"
 }
 
-variable "subnetwork" {
-  description = "The name of the GCP subnetwork to which the instance will be attached."
+variable "network" {
+  description = "The name of the GCP network to which the instance will be attached."
   type        = string
   default     = "default"
+}
+
+variable "subnetwork" {
+  description = "The name of the GCP subnetwork to which the instance will be attached; customize if using custom subnet creation mode."
+  type        = string
+  default     = ""
 }
 
 variable "zone" {
@@ -231,10 +271,21 @@ variable "gcs_source" {
   }
 }
 
+variable "db_password_secret" {
+  description = "Google Cloud Secret Manager resource containing the password to be used for both the Oracle SYS and SYSTEM users"
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = var.db_password_secret == "" || can(regex("^projects/[^/]+/secrets/[^/]+/versions/[^/]+$", var.db_password_secret))
+    error_message = "db_password_secret must be in the format: projects/<project>/secrets/<secret_name>/versions/<version>"
+  }
+}
+
 variable "install_workload_agent" {
   description = "Whether to install workload-agent on the database VM."
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "oracle_metrics_secret" {
