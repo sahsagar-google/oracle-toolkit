@@ -18,6 +18,9 @@ disable_firewall: false
 disable_selinux: true
 firewall_service: "{% if ansible_distribution_major_version | int == 6 %}iptables{% elif ansible_distribution_major_version | int >= 7 %}firewalld{% else %}0{% endif %}"
 
+# Ratio of hugepage size to SGA size.  A value of 1.05 allocates 5% more hugepage memory than SGA size would dictate.
+hugepages_ratio: 1.05
+
 package_repository_files:
   - "redhat.repo"
   - "rh-cloud.repo"
