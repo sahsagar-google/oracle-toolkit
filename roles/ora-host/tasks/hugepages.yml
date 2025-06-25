@@ -38,7 +38,7 @@
 - name: hugepages | Assert that vm.nr_hugepages matches the expected value of {{ v_hugepages_required }}
   assert:
     that:
-      - v_actual_hugepages_allocated.stdout | int == v_hugepages_required
+      - v_actual_hugepages_allocated.stdout | int == v_hugepages_required | int
     fail_msg: "Requested {{ v_hugepages_required }} hugepages to accommodate ora_sga_target_mb={{ ora_sga_target_mb }}, but only got {{ v_actual_hugepages_allocated.stdout }}.  Your requested SGA memory size is likely too large for the available memory."
 
 - name: hugepages | Capture transparent hugepage status
