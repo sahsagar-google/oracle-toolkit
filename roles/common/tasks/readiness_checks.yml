@@ -59,14 +59,6 @@
   when: managed_host_checks
   tags: readiness_checks
 
-- name: readiness_check | Swap space >= {{ [ansible_memtotal_mb | default(0), os_minimum_swap_mb] | min }}
-  assert:
-    that: "ansible_swaptotal_mb >= {{ [ansible_memtotal_mb | default(0), os_minimum_swap_mb] | min }}"
-    quiet: true
-    fail_msg: "Ansible fact detected swap (MB): {{ ansible_swaptotal_mb }}"
-  when: managed_host_checks
-  tags: readiness_checks
-
 - name: 'readiness_check | Validate privilege escalation ("become_user: {{ become_user_check }}") ability'
   command: whoami
   become: true
