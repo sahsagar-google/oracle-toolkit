@@ -194,12 +194,20 @@ resource "google_compute_instance" "control_node" {
     install_workload_agent = var.install_workload_agent
     oracle_metrics_secret = var.oracle_metrics_secret
     skip_database_config = var.skip_database_config
+    ora_pga_target_mb = var.ora_pga_target_mb
+    ora_sga_target_mb = var.ora_sga_target_mb
+    deployment_name = var.deployment_name
   })
 
   metadata = {
     enable-oslogin = "TRUE"
-    serial-port-logging-enable = true
   }
 
   depends_on = [module.compute_instance]
 }
+
+output "control_node_log_url" {
+  description = "Logs Explorer URL with Oracle Toolkit output"
+  value       = "https://console.cloud.google.com/logs/query;query=resource.labels.instance_id%3D${urlencode(google_compute_instance.control_node.instance_id)};duration=P30D?project=${urlencode(var.project_id)}"
+}
+
