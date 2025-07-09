@@ -100,6 +100,12 @@
   remote_user: "{{ oracle_user }}" # Connect as the oracle OS user
   become: true
   become_user: oracle
+  pre_tasks:
+    - name: Determine specific release
+      include_role:
+        name: common
+        tasks_from: populate-vars.yml
+
   environment:
     ORACLE_HOME: "{{ oracle_home }}"
     ORACLE_SID: "{{ oracle_sid }}"
