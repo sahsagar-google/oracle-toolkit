@@ -13,26 +13,28 @@
 # limitations under the License.
 
 ---
-- name: gcscopy | Check if gcloud is available on the Managed Host
-  shell: GCLOUD_FOUND=$(which gcloud 2>/dev/null || true) && echo $GCLOUD_FOUND
+- name: gcscopy | Check if gcloud is available on the Managed Host and the storage bucket is accessible
+  shell:  |
+    gcloud storage ls gs://{{ swlib_mount_src }} >/dev/null 2>&1
+    echo $?
   register: gcloud_found
   changed_when: false
 
 - name: gscopy | Download files directly on Managed Host target
-  when: gcloud_found.stdout != ""
+  when: gcloud_found.stdout == "0"
   block:
     - name: gcscopy | Copy RDBMS and GI software from GCS to target instance
       shell: |
         set -o pipefail
         {% for f in item.files %}
-        if gcloud storage ls gs://"{{ swlib_mount_src }}/{{ f.name }}" >/dev/null 2>&1; then
+        if gcloud storage ls gs://{{ swlib_mount_src }}/{{ f.name }} >/dev/null 2>&1; then
           f_name="{{ f.name }}"
         else
           f_name="{{ f.alt_name | default('x') }}"
         fi
         if ! unzip -l "{{ swlib_path }}/{{ f.name }}"
           then
-            gcloud storage cp gs://"{{ swlib_mount_src }}/${f_name}" "{{ swlib_path }}/{{ f.name }}"
+            gcloud storage cp gs://{{ swlib_mount_src }}/${f_name} "{{ swlib_path }}/{{ f.name }}"
         fi
         {% endfor %}
       register: shell_result
@@ -53,7 +55,7 @@
         set -o pipefail
         if ! unzip -l "{{ swlib_path }}/{{ item.patchfile }}"
           then
-            gcloud storage cp gs://"{{ swlib_mount_src }}/{{ item.patchfile }}" "{{ swlib_path }}/{{ item.patchfile }}"
+            gcloud storage cp gs://{{ swlib_mount_src }}/{{ item.patchfile }} "{{ swlib_path }}/{{ item.patchfile }}"
         fi
       register: shell_result
       args:
@@ -70,7 +72,7 @@
     - name: gcscopy | Copy GI OPatch update files from GCS to target instance
       shell: |
         set -o pipefail
-        gcloud storage cp gs://"{{ swlib_mount_src }}/{{ item.patchfile }}" "{{ swlib_path }}/{{ item.patchfile }}"
+        gcloud storage cp gs://{{ swlib_mount_src }}/{{ item.patchfile }} "{{ swlib_path }}/{{ item.patchfile }}"
       register: shell_result
       args:
         executable: /bin/bash
@@ -86,7 +88,7 @@
         set -o pipefail
         if ! unzip -l "{{ swlib_path }}/{{ item.patchfile }}"
           then
-            gcloud storage cp gs://"{{ swlib_mount_src }}/{{ item.patchfile }}" "{{ swlib_path }}/{{ item.patchfile }}"
+            gcloud storage cp gs://{{ swlib_mount_src }}/{{ item.patchfile }} "{{ swlib_path }}/{{ item.patchfile }}"
         fi
       register: shell_result
       args:
@@ -103,7 +105,7 @@
         {% for f in item.files %}
         if ! rpm -qp "{{ swlib_path }}/{{ f.name }}"
           then
-            gcloud storage cp gs://"{{ swlib_mount_src }}/{{ f.name }}" "{{ swlib_path }}/{{ f.name }}" && echo "File copied"
+            gcloud storage cp gs://{{ swlib_mount_src }}/{{ f.name }} "{{ swlib_path }}/{{ f.name }}" && echo "File copied"
         fi
         {% endfor %}
       register: shell_result
@@ -117,7 +119,7 @@
       changed_when: "'File copied' in shell_result.stdout"
 
 - name: gcscopy | Use Ansible Control Node for file downloads
-  when: gcloud_found.stdout == ""
+  when: gcloud_found.stdout != "0"
   block:
     # files with alt_name are stored as name for simplicity
     - name: gcscopy | Transfer RDBMS and GI software from GCS to target instance
