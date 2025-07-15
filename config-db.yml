@@ -103,6 +103,7 @@
     ORACLE_HOME: "{{ oracle_home }}"
     ORACLE_SID: "{{ oracle_sid }}"
     PATH: "{{ oracle_home }}/bin:{{ ansible_env.PATH }}"
+  when: ansible_facts['product_name'] == "Google Compute Engine"
   tasks:
     - name: Execute SQL query to get DBID
       ansible.builtin.shell: |
