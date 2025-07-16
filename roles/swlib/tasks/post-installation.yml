@@ -22,5 +22,5 @@
     state: directory
   become: true
   become_user: root
-  when: swlib_mount_type == "gcs" # Keep this condition as the issue is specific to GCS copy
+  when: swlib_mount_type == "gcs"
   tags: fix-swlib-ownership
