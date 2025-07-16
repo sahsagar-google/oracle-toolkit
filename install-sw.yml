@@ -160,4 +160,4 @@
       include_role:
         name: swlib
         tasks_from: main.yml
-      tags: fix_swlib_ownership
+      tags: fix-swlib-ownership
