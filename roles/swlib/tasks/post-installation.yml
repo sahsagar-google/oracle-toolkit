@@ -13,25 +13,14 @@
 # limitations under the License.
 
 ---
-- name: swlib | setup
+- name: "swlib | Ensure {{ swlib_path }} and its contents are owned by {{ oracle_user }}:{{ oracle_group }}"
+  ansible.builtin.file:
+    path: "{{ swlib_path }}"
+    owner: "{{ oracle_user }}"
+    group: "{{ oracle_group }}"
+    recurse: yes
+    state: directory
   become: true
   become_user: root
-  block:
-    - name: swlib | Create swlib folder
-      file:
-        path: "{{ swlib_path }}"
-        state: directory
-        mode: ug=rwx,o=r
-        owner: "{{ ansible_ssh_user }}"
-        group: dba
-      when: swlib_mount_type != "nfs"
-    - name: swlib | NFS mount
-      include_tasks: nfs.yml
-      when: swlib_mount_type == "nfs"
-    - name: swlib | gcsfuse mount
-      include_tasks: gcsfuse.yml
-      when: swlib_mount_type == "gcsfuse"
-
-- name: swlib | gcscopy
-  include_tasks: gcscopy.yml
-  when: swlib_mount_type == "gcs"
+  when: swlib_mount_type == "gcs" # Keep this condition as the issue is specific to GCS copy
+  tags: fix-swlib-ownership

@@ -156,8 +156,8 @@
   become: true
   become_user: root
   tasks:
-    - name: Run swlib post-copy task for ownership fix
+    - name: Run swlib post-installation ownership fix
       include_role:
         name: swlib
-        tasks_from: main.yml
+        tasks_from: post-installation.yml
       tags: fix-swlib-ownership
