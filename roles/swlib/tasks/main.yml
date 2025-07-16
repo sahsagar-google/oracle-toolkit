@@ -35,3 +35,15 @@
 - name: swlib | gcscopy
   include_tasks: gcscopy.yml
   when: swlib_mount_type == "gcs"
+  
+- name: "swlib | Ensure {{ swlib_path }} and its contents are owned by {{ oracle_user }}:{{ oracle_group }}"
+  ansible.builtin.file:
+    path: "{{ swlib_path }}"
+    owner: "{{ oracle_user }}"
+    group: "{{ oracle_group }}"
+    recurse: yes
+    state: directory
+  become: true
+  become_user: root
+  when: swlib_mount_type == "gcs"
+  tags: fix-swlib-ownership
