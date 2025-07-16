@@ -111,4 +111,4 @@
         - oracle_home is defined
         - oracle_sid is defined
         - ansible_facts['product_name'] == "Google Compute Engine"
-      tags: log_dbid
+      tags: log-dbid
