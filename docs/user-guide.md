@@ -150,6 +150,8 @@ and then specify its path using the `--cluster-config` parameter
 
 ## Command quick reference for DR deployments
 
+> **NOTE:** For additional background and further details on implementing Oracle Database Disaster Recovery (DR) using this toolkit, see the complementary document [Oracle Toolkit for Google Cloud - Disaster Recovery Configurations](disaster-recovery-configurations.md).
+
 The primary database must exist before you can create a standby database.
 
 When you create the primary database, omit the `--cluster-type` option or set it to `NONE`. To create the primary database, see [Single Instance Deployments section](#command-quick-reference-for-single-instance-deployments).
@@ -2267,6 +2269,14 @@ enabled, passwords appear in logfiles.</td>
 </pre></p></td>
 <td></td>
 <td>Fully qualified name of the Secret Manager secret that stores the Oracle database user's password. This user is specifically configured for the workload-agent to enable metric collection. Expected format: "projects/your-project/secrets/your-secret-name/versions/your-version"</td>
+</tr>
+<tr>
+<td></td>
+<td><p><pre>
+--data-guard-protection-mode
+</pre></p></td>
+<td></td>
+<td>Specify one of the Data Guard protection modes: "Maximum Performance", "Maximum Availability", or "Maximum Protection".</td>
 </tr>
 </tbody>
 </table>
