@@ -99,10 +99,6 @@
   remote_user: "{{ oracle_user }}"
   become: true
   become_user: oracle
-  environment:
-    ORACLE_HOME: "{{ oracle_home }}"
-    ORACLE_SID: "{{ oracle_sid }}"
-    PATH: "{{ oracle_home }}/bin:{{ ansible_env.PATH }}"
   tasks:
     - name: Include DBID logging role for current database instance
       include_role:
@@ -110,5 +106,4 @@
       when:
         - oracle_home is defined
         - oracle_sid is defined
-        - ansible_facts['product_name'] == "Google Compute Engine"
       tags: log-dbid
