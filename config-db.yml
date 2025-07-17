@@ -29,16 +29,6 @@
         managed_host_checks: true
         become_user_check: root
       tags: readiness_checks
-      
-    - name: Determine specific release and ensure core Oracle variables are set
-      block:
-        - include_role:
-            name: common
-            tasks_from: populate-vars.yml
-        - name: Explicitly set oracle_home and oracle_sid as facts
-          ansible.builtin.set_fact:
-            oracle_home: "{{ oracle_base }}/product/{{ oracle_ver_dir }}/{{ home_name }}"
-            oracle_sid: "{% if db_config_type == 'SI' %}{{ db_name }}{% else %}{{ db_name }}{{ instance_num }}{% endif %}"
 
   tasks:
     - include_role:
