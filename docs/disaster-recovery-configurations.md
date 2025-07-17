@@ -134,7 +134,7 @@ Customize the Oracle databases and Data Guard configurations provisioned using t
 
 7. <a name="ensure-operational-stability-before-expanding"></a>**Implement advanced Data Guard topologies once the initial cluster is stable**
 
-   - Use this toolkit to implement a Data Guard physical standby pair and ensure its operational stability, including resilience to reboots of either instance. Then, proceed incrementally to more complex topologies, such as adding additional standbys or a Fast-Start Failover observer, if greater configuration protection is desired. Always balance the benefits with the costs and risks, such as an inadvertent Fast-Start Failover during planned maintenance.
+   - Use this toolkit to implement a Data Guard physical standby and ensure its operational stability, including resilience to reboots of either instance. Then, proceed incrementally to more complex topologies, such as adding additional standbys or a Fast-Start Failover observer, if greater configuration protection is desired. Always balance the benefits with the costs and risks, such as an inadvertent Fast-Start Failover during planned maintenance.
 
 8. <a name="test-switchover-and-failover"></a>**Test the Switchover and Failover scenarios**
 
