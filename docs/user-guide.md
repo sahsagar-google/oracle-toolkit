@@ -1059,11 +1059,30 @@ repository types:
 
 #### Cloud Storage bucket
 
-To use a Cloud Storage bucket to stage your installation media, you need the
-`gsutil` tool installed on your control node. The [`gsutil` tool](https://cloud.google.com/storage/docs/gsutil)
-is a Python application that lets you access Cloud Storage from the command
-line. To get the `gsutil` tool, install the [Cloud
-SDK](https://cloud.google.com/sdk/docs).
+If you stage your installation media in a Cloud Storage bucket, the toolkit
+will copy the required files to the software library path location on your
+target server using the Google Cloud CLI `gcloud storage` command. Either
+directly downloading the files on the target server or by transferring them
+through your Ansible Control Node. Consequently, the CLI must be installed on
+your Ansible Control Node or the target server. To install, refer to [Install
+the gcloud CLI](https://cloud.google.com/sdk/docs/install).
+
+When the `--ora-swlib-type` argument is used and set to `GCSDIRECT`, the
+toolkit will directly copy the media from the GCS bucket to the library path
+on the target server. This direct copy requires the gcloud utility to be
+available and the storage bucket accessible from the target server. This is
+often the most performant method for copying media from storage buckets.
+
+If the argument value is `GCSTRANSFER`, the toolkit will instead copy the
+media files through your Ansible Control Node. This method also uses the
+gcloud command, but runs it from your Ansible Control Node. And still
+writes the contents to the software library path on the target server.
+
+When the argument value is `GCS` or is not provided, the toolkit will
+determine which method to use. If the gcloud utility is available on the
+target server and the GCS bucket is accessible from it, the direct method will
+be used. Otherwise, if either condition is not met, the toolkit will revert to
+the transfer method.
 
 #### Cloud Storage FUSE
 
@@ -1550,6 +1569,8 @@ ORA_SWLIB_TYPE
 </pre></p>
 </td>
 <td>GCS<br>
+GCSDIRECT<br>
+GCSTRANSFER<br>
 GCSFUSE<br>
 NFS</td>
 <td>Remote storage type acting as a software library where the required
@@ -1566,7 +1587,7 @@ Example: gs://oracle-software</td>
 <td>GCS bucket where the required base software and patches have been
 downloaded and staged.<br>
 <br>
-Only used when ORA_SWLIB_TYPE=GCS.</td>
+Only used when ORA_SWLIB_TYPE=GCS|GCSDIRECT|GCSTRANSFER.</td>
 </tr>
 <tr>
 <td>Software library path</td>
@@ -1579,7 +1600,7 @@ ORA_SWLIB_PATH
 <td>Path where the required base software and patches have been downloaded and
 staged.<br>
 <br>
-Not used when ORA_SWLIB_TYPE=GCS.</td>
+Not used when ORA_SWLIB_TYPE=GCS|GCSDIRECT|GCSTRANSFER.</td>
 </tr>
 <tr>
 <td>Service account key file</td>
@@ -1994,7 +2015,7 @@ NFS_BACKUP_CONFIG
 Example: nfsv3 </td>
 <td>The NFS version of the export shared is defined with this option. The values accepted are `nfsv3` or `nfsv4`.
 </td>
-</tr> 
+</tr>
 <tr>
 <td>NFS backup mount</td>
 <td><p><pre>
