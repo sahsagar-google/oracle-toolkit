@@ -103,7 +103,4 @@
     - name: Include DBID logging role for current database instance
       include_role:
         name: dbid-logger
-      when:
-        - oracle_home is defined
-        - oracle_sid is defined
       tags: log-dbid
