@@ -32,8 +32,8 @@ DCHAR="$(cat /dev/urandom | tr -dc [:digit:] | head -c1)"
 # have a symbol
 SCHAR="$(cat /dev/urandom | tr -dc ${PWSYM} | head -c1)"
 # upper, lower, digit, some symbols
-RCHAR="$(cat /dev/urandom | tr -dc [:alnum:]${PWSYM} | head -c$((PWLEN - 5)))"
+RCHAR="$(cat /dev/urandom | tr -dc [:alnum:]${PWSYM} | head -c$((PWLEN - 6)))"
 # wrap the symbol into the password
-RPASS="$(echo "${UCHAR}${LCHAR}${SCHAR}${RCHAR}" | fold -c -w1 | shuf | tr -d '\n')"
+RPASS="$(echo "${UCHAR}${LCHAR}${DCHAR}${SCHAR}${RCHAR}" | fold -c -w1 | shuf | tr -d '\n')"
 
 echo "${FCHAR}${RPASS}${FCHAR}"
