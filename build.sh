@@ -3,7 +3,7 @@ set -e
 
 # --- Script Variables ---
 # IMPORTANT: Update with the build GCP Project ID.
-PROJECT_ID="gcp-oracle-sandbox"
+PROJECT_ID="sagarsahai-gke-dev"
 PACKAGE_NAME="oracle-toolkit-infra-manager.zip"
 SIGNED_ARTIFACT_EXTENSION=".jar" # Signed zip is effectively a JAR.
 ARTIFACT_BASE_GCS_BUCKET="gs://cloudoracledeploystaging/terraform/oracle-toolkit"
