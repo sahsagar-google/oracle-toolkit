@@ -94,7 +94,7 @@
       when: cluster_type == "DG"
       tags: dg-create,dg-mode
 
-- name: Get and Log Oracle DBID for All Databases
+- name: Get and Log Oracle DBID
   hosts: dbasm
   remote_user: "{{ oracle_user }}"
   become: true

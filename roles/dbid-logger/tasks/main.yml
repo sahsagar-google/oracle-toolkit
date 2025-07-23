@@ -32,7 +32,7 @@
   ansible.builtin.set_fact:
     oracle_dbid: "{{ dbid_query_result.stdout_lines | select('match', '^\\d+$') | first | default('') | trim }}"
 
-- name: Output DBID for Cloud Logging pipeline
+- name: Output DBID
   ansible.builtin.debug:
     msg: "ORACLE_DBID: {{ oracle_dbid }}"
   when: oracle_dbid is defined and oracle_dbid | length > 0

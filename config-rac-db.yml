@@ -44,7 +44,7 @@
       when: create_db | bool
   tags: rac-db-adjustments,rac-db-backups,rac-validation-scripts
   
-- name: Get and Log Oracle DBID for All Databases
+- name: Get and Log Oracle DBID
   hosts: dbasm
   remote_user: "{{ oracle_user }}"
   become: true
