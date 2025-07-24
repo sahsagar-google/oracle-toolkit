@@ -573,6 +573,12 @@ Support")</th>
 <tr>
 <td></td>
 <td>Patch - MOS</TD>
+<TD>COMBO OF OJVM RU COMPONENT 19.28.0.0.250715 + GI RU 19.28.0.0.250715</td>
+<td>p37952382_190000_Linux-x86-64.zip</td>
+</tr>
+<tr>
+<td></td>
+<td>Patch - MOS</TD>
 <TD>COMBO OF OJVM RU COMPONENT 19.27.0.0.250415 + GI RU 19.27.0.0.250415</td>
 <td>p37591516_190000_Linux-x86-64.zip</td>
 </tr>
