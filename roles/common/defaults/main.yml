@@ -339,6 +339,8 @@ gi_patches:
   - { category: "RU", base: "19.3.0.0.0", release: "19.25.0.0.241015", patchnum: "36866740", patchfile: "p36866740_190000_Linux-x86-64.zip", patch_subdir: "/36916690", prereq_check: false, method: "opatchauto apply", ocm: false, upgrade: false, md5sum: "f8DKaIiP7v811/WaRyacTQ==" }
   - { category: "RU", base: "19.3.0.0.0", release: "19.26.0.0.250121", patchnum: "37262208", patchfile: "p37262208_190000_Linux-x86-64.zip", patch_subdir: "/37257886", prereq_check: false, method: "opatchauto apply", ocm: false, upgrade: false, md5sum: "zqZeJ3/ujDWcLr+reZOHpw==" }
   - { category: "RU", base: "19.3.0.0.0", release: "19.27.0.0.250415", patchnum: "37591516", patchfile: "p37591516_190000_Linux-x86-64.zip", patch_subdir: "/37641958", prereq_check: false, method: "opatchauto apply", ocm: false, upgrade: false, md5sum: "kkyZC9RP8eolBgdu9Y3q7g==" }
+  - { category: "RU", base: "19.3.0.0.0", release: "19.28.0.0.250715", patchnum: "37952382", patchfile: "p37952382_190000_Linux-x86-64.zip", patch_subdir: "/37957391", prereq_check: FALSE, method: "opatchauto apply", ocm: FALSE, upgrade: FALSE, md5sum: "GL89d7Hnfe+fG0kVCgcwSw==" }
+
 
 # 21c GRID RU - 21.4 and 21.7 are available only via SR
 #     RDBMS RU - 21.4 - 21.7 are available only via SR
@@ -425,6 +427,7 @@ rdbms_patches:
   - { category: "RU_Combo", base: "19.3.0.0.0", release: "19.25.0.0.241015", patchnum: "36866740", patchfile: "p36866740_190000_Linux-x86-64.zip", patch_subdir: "/36878697", prereq_check: true, method: "opatch apply", ocm: false, upgrade: true, md5sum: "f8DKaIiP7v811/WaRyacTQ==" }
   - { category: "RU_Combo", base: "19.3.0.0.0", release: "19.26.0.0.250121", patchnum: "37262208", patchfile: "p37262208_190000_Linux-x86-64.zip", patch_subdir: "/37102264", prereq_check: true, method: "opatch apply", ocm: false, upgrade: true, md5sum: "zqZeJ3/ujDWcLr+reZOHpw==" }
   - { category: "RU_Combo", base: "19.3.0.0.0", release: "19.27.0.0.250415", patchnum: "37591516", patchfile: "p37591516_190000_Linux-x86-64.zip", patch_subdir: "/37499406", prereq_check: true, method: "opatch apply", ocm: false, upgrade: true, md5sum: "kkyZC9RP8eolBgdu9Y3q7g==" }
+  - { category: "RU_Combo", base: "19.3.0.0.0", release: "19.28.0.0.250715", patchnum: "37952382", patchfile: "p37952382_190000_Linux-x86-64.zip", patch_subdir: "/37847857", prereq_check: TRUE, method: "opatch apply", ocm: FALSE, upgrade: TRUE, md5sum: "GL89d7Hnfe+fG0kVCgcwSw==" }
 # 21c RDBMS RU - 21.4 - 21.7 are available only via SR
   - { category: "RU", base: "21.3.0.0.0", release: "21.8.0.0.0", patchnum: "34527084", patchfile: "p34527084_210000_Linux-x86-64.zip", patch_subdir: "/", prereq_check: false, method: "opatch apply", ocm: false, upgrade: false, md5sum: "niyd8DhbfJzZb67v98ElWA==" }
   - { category: "RU", base: "21.3.0.0.0", release: "21.9.0.0.0", patchnum: "34839741", patchfile: "p34839741_210000_Linux-x86-64.zip", patch_subdir: "/", prereq_check: false, method: "opatch apply", ocm: false, upgrade: false, md5sum: "VaJNd/YSjzbH4orQjBIt8g==" }
