@@ -29,8 +29,8 @@ deployment_id="projects/gcp-oracle-benchmarks/locations/us-central1/deployments/
 apk add --no-cache zip jq
 
 echo "Zipping CWD into /tmp/${toolkit_zip_file_name} and uploading to ${gcs_bucket}/..."
-zip -r /tmp/${toolkit_zip_file_name} . -x ".git*" -x ".terraform*" -x "terraform*" -x OWNERS > /dev/null
-gcloud storage cp /tmp/${toolkit_zip_file_name} "${gcs_bucket}/"
+zip -r /tmp/"${toolkit_zip_file_name}" . -x ".git*" -x ".terraform*" -x "terraform*" -x OWNERS > /dev/null
+gcloud storage cp /tmp/"${toolkit_zip_file_name}" "${gcs_bucket}/"
 
 sed -i "s|@deployment_name@|$deployment_name|g" "${tfvars_file}"
 sed -i "s|@gcs_source@|$gcs_source|g" "${tfvars_file}"
@@ -44,7 +44,7 @@ gcloud infra-manager deployments apply "${deployment_id}" \
   --inputs-file="${tfvars_file}"
 
 cleanup() {
-  echo "Cleaning up: deleting "${gcs_source}" GCS object and ${deployment_id} Infra Manager deployment..."
+  echo "Cleaning up: deleting ${gcs_source} GCS object and ${deployment_id} Infra Manager deployment..."
   if gcloud infra-manager deployments describe "${deployment_id}" >/dev/null 2>&1; then
     gcloud --quiet infra-manager deployments delete "${deployment_id}" 
   fi
@@ -55,18 +55,20 @@ cleanup() {
 
 trap cleanup SIGINT SIGTERM EXIT
 
-SLEEP_SECONDS=60
-TIMEOUT_SECONDS=7200
-START_TIME=$(date +%s)
+sleep_seconds=60
+timeout_seconds=7200
+timeout_hours="$((timeout_seconds / 3600))"
+timeout_minutes="$(((timeout_seconds % 3600) / 60))"
+start_time="$(date +%s)"
 
-echo "Waiting up to 2 hours for control node's startup script to complete..."
+echo "Waiting up to ${timeout_hours} hours and ${timeout_minutes} minutes for control node's startup script to complete..."
 
 while true; do
-  CURRENT_TIME=$(date +%s)
-  ELAPSED=$((CURRENT_TIME - START_TIME))
+  current_time="$(date +%s)"
+  elapsed="$((current_time - start_time))"
 
-  if [[ "${ELAPSED}" -ge "${TIMEOUT_SECONDS}" ]]; then
-    echo "Timeout reached after 2 hours. No completion log found."
+  if [[ "${elapsed}" -ge "${timeout_seconds}" ]]; then
+    echo "Timeout reached after ${timeout_hours} hours and ${timeout_minutes} minutes. No completion log found."
     exit 1
   fi
 
@@ -89,5 +91,5 @@ while true; do
     exit 1
   fi
 
-  sleep "${SLEEP_SECONDS}"
+  sleep "${sleep_seconds}"
 done
