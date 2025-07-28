@@ -31,26 +31,21 @@ source_image_family = "oracle-linux-8"
 source_image_project = "oracle-linux-cloud"
 machine_type = "n4-standard-2"
 boot_disk_type = "hyperdisk-balanced"
-boot_disk_size_gb = "50"
-swap_disk_size_gb = "50"
+boot_disk_size_gb = "20"
+swap_disk_size_gb = "5"
 zone1 = "us-central1-b"
 subnetwork1 = "projects/gcp-oracle-benchmarks/regions/us-central1/subnetworks/github-presubmit-tests-us-central1"
 oracle_home_disk = {
-  size_gb = 50
+  size_gb = 10
 }
 data_disk = {
-  size_gb = 50
+  size_gb = 10
 }
 reco_disk = {
-  size_gb = 50
+  size_gb = 10
 }
 ora_version = "19"
 ora_release = "latest"
 ora_edition = "EE"
 ora_backup_dest = "+RECO"
 ora_db_name = "orcl"
-ora_db_container = false
-ntp_pref = "169.254.169.254"
-ora_listener_port = "1521"
-ora_redo_log_size = "100MB"
-skip_database_config = false

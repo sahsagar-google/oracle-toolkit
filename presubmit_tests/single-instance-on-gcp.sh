@@ -37,7 +37,6 @@ sed -i "s|@gcs_source@|$gcs_source|g" "${tfvars_file}"
 sed -i "s|@instance_name@|$instance_name|g" "${tfvars_file}"
 
 echo "Applying Infra Manager deployment: ${deployment_id}"
-
 gcloud infra-manager deployments apply "${deployment_id}" \
   --service-account="projects/gcp-oracle-benchmarks/serviceAccounts/infra-manager-deployer@gcp-oracle-benchmarks.iam.gserviceaccount.com" \
   --local-source="./terraform" \
@@ -72,16 +71,16 @@ while true; do
     exit 1
   fi
 
-  result=$(gcloud logging read \
+  result="$(gcloud logging read \
     "resource.type=global AND \
     log_name=projects/gcp-oracle-benchmarks/logs/Ansible_logs AND \
     jsonPayload.deployment_name=${deployment_name} AND \
     jsonPayload.event_type=ANSIBLE_RUNNER_SCRIPT_END" \
     --order=desc \
     --limit=1 \
-    --format=json)
+    --format=json)"
 
-  state=$(echo "${result}" | jq -r '.[0].jsonPayload.state // empty')
+  state="$(echo "${result}" | jq -r '.[0].jsonPayload.state // empty')"
 
   if [[ "${state}" == "ansible_completed_success" ]]; then
     echo "Control node's startup script completed successfully."
