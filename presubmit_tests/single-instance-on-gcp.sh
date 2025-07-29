@@ -23,8 +23,25 @@ toolkit_zip_file_name="oracle-toolkit-${BUILD_ID}.zip"
 tfvars_file="./presubmit_tests/single-instance.tfvars"
 instance_name="github-presubmit-si-${BUILD_ID}"
 deployment_name="presubmit-si-${BUILD_ID}"
+location="us-central1"
+project="gcp-oracle-benchmarks"
 gcs_source="${gcs_bucket}/${toolkit_zip_file_name}"
-deployment_id="projects/gcp-oracle-benchmarks/locations/us-central1/deployments/${deployment_name}"
+deployment_id="projects/${project}/locations/${location}/deployments/${deployment_name}"
+
+cleanup() {
+  if [[ -n "${tail_pid}" ]]; then
+    kill "${tail_pid}"
+  fi
+  echo "Cleaning up: deleting ${gcs_source} GCS object and ${deployment_id} Infra Manager deployment..."
+  if gcloud infra-manager deployments describe "${deployment_id}" >/dev/null 2>&1; then
+    gcloud --quiet infra-manager deployments delete "${deployment_id}" 
+  fi
+  if gcloud storage objects describe "${gcs_source}" >/dev/null 2>&1; then
+    gcloud --quiet storage rm "${gcs_source}"
+  fi
+}
+
+trap cleanup SIGINT SIGTERM EXIT
 
 apk add --no-cache zip jq
 
@@ -38,21 +55,63 @@ sed -i "s|@instance_name@|$instance_name|g" "${tfvars_file}"
 
 echo "Applying Infra Manager deployment: ${deployment_id}"
 gcloud infra-manager deployments apply "${deployment_id}" \
-  --service-account="projects/gcp-oracle-benchmarks/serviceAccounts/infra-manager-deployer@gcp-oracle-benchmarks.iam.gserviceaccount.com" \
+  --service-account="projects/${project}/serviceAccounts/infra-manager-deployer@${project}.iam.gserviceaccount.com" \
   --local-source="./terraform" \
-  --inputs-file="${tfvars_file}"
+  --inputs-file="${tfvars_file}" || exit 1
 
-cleanup() {
-  echo "Cleaning up: deleting ${gcs_source} GCS object and ${deployment_id} Infra Manager deployment..."
-  if gcloud infra-manager deployments describe "${deployment_id}" >/dev/null 2>&1; then
-    gcloud --quiet infra-manager deployments delete "${deployment_id}" 
-  fi
-  if gcloud storage objects describe "${gcs_source}" >/dev/null 2>&1; then
-    gcloud --quiet storage rm "${gcs_source}"
-  fi
-}
+echo "List resources for a deployment revision:"
+gcloud infra-manager resources list \
+--deployment="${deployment_name}" \
+--location="${location}" \
+--revision=r-0 \
+--format=json
 
-trap cleanup SIGINT SIGTERM EXIT
+# Extract the id of the control node resource
+# The format is: projects/<project>/zones/<zone>/instances/control-node-<random-suffix>
+control_node_resource_id="$(gcloud infra-manager resources list \
+--deployment="${deployment_name}" \
+--location="${location}" \
+--revision=r-0 \
+--format=json | jq -r '.[] | select(.terraformInfo.address == "google_compute_instance.control_node") | .terraformInfo.id')"
+
+if [[ -z "${control_node_resource_id}" ]]; then
+  echo "Could not retrieve control node's resource ID."
+  exit 1
+fi
+echo "Control node resource ID: ${control_node_resource_id}"
+
+control_node_instance_zone="$(echo "${control_node_resource_id}" | cut -d'/' -f4)"
+if [[ -z "${control_node_instance_zone}" ]]; then
+  echo "Could not extract control node's zone."
+  exit 1
+fi
+echo "Control node zone: ${control_node_instance_zone}"
+
+control_node_instance_name="$(echo "${control_node_resource_id}" | cut -d'/' -f6)"
+if [[ -z "${control_node_instance_name}" ]]; then
+  echo "Could not extract control node's name."
+  exit 1
+fi
+echo "Control node name: ${control_node_instance_name}"
+
+# Get the instance ID from the instance name
+control_node_instance_id="$(gcloud compute instances describe "${control_node_instance_name}" \
+  --zone="${control_node_zone}" \
+  --format="value(id)")"
+if [[ -z "${control_node_instance_id}" ]]; then
+  echo "Could not get control node's instance ID."
+  exit 1
+fi
+echo "Control node instance ID: ${control_node_instance_id}"
+
+# Stream logs from the startup script execution to stdout in the background
+gcloud beta logging tail \
+"resource.type=gce_instance AND \
+resource.labels.instance_id=${control_node_instance_id} \
+AND log_name=projects/${project}/logs/google_metadata_script_runner" \
+--format='value(timestamp, json_payload.message)' &
+
+tail_pid=$!
 
 sleep_seconds=60
 timeout_seconds=7200
@@ -73,7 +132,7 @@ while true; do
 
   result="$(gcloud logging read \
     "resource.type=global AND \
-    log_name=projects/gcp-oracle-benchmarks/logs/Ansible_logs AND \
+    log_name=projects/${project}/logs/Ansible_logs AND \
     jsonPayload.deployment_name=${deployment_name} AND \
     jsonPayload.event_type=ANSIBLE_RUNNER_SCRIPT_END" \
     --order=desc \
