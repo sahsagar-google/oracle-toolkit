@@ -75,7 +75,7 @@ control_node_resource_id="$(gcloud infra-manager resources list \
 --deployment="${deployment_name}" \
 --location="${location}" \
 --revision=r-0 \
---filter='terraformInfo.type=google_compute_instance' \
+--filter='terraformInfo.address=google_compute_instance.control_node' \
 --format='value(terraformInfo.id)')"
 if [[ -z "${control_node_resource_id}" ]]; then
   echo "Could not retrieve control node's resource ID."
@@ -83,7 +83,7 @@ if [[ -z "${control_node_resource_id}" ]]; then
 fi
 echo "Control node resource ID: ${control_node_resource_id}"
 
-# Get the instance ID from the instance name
+# Get the instance ID from the instance resource
 control_node_instance_id="$(gcloud compute instances describe "${control_node_resource_id}" --format="value(id)")"
 if [[ -z "${control_node_instance_id}" ]]; then
   echo "Could not get control node's instance ID."
@@ -93,9 +93,14 @@ echo "Control node instance ID: ${control_node_instance_id}"
 
 # Stream logs from the startup script execution to stdout in the background
 # https://cloud.google.com/logging/docs/reference/tools/gcloud-logging#install_live_tailing
+echo "Installing required gcloud beta components..."
 gcloud --quiet components install beta || exit 1
 export CLOUDSDK_PYTHON_SITEPACKAGES=1
-gcloud beta logging tail \
+echo "Streaming logs from the control node's startup script execution..."
+echo
+# Note: The 'gcloud beta logging tail' command may display 'SyntaxWarning: invalid escape sequence' warnings.
+# These warnings are harmless and can be safely ignored.
+PYTHONWARNINGS="ignore" gcloud beta logging tail \
 "resource.type=gce_instance AND \
 resource.labels.instance_id=${control_node_instance_id} \
 AND log_name=projects/${project_id}/logs/google_metadata_script_runner" \

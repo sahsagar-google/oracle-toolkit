@@ -36,7 +36,7 @@ swap_disk_size_gb = "5"
 zone1 = "us-central1-b"
 subnetwork1 = "projects/gcp-oracle-benchmarks/regions/us-central1/subnetworks/github-presubmit-tests-us-central1"
 oracle_home_disk = {
-  size_gb = 10
+  size_gb = 20
 }
 data_disk = {
   size_gb = 10
