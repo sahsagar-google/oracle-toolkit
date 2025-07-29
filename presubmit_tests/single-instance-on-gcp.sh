@@ -14,7 +14,7 @@
 # limitations under the License.
 
 
-apk add --no-cache zip jq curl || exit 1
+apk add --no-cache zip curl || exit 1
 
 gcs_bucket="gs://oracle-toolkit-presubmit-artifacts"
 # Append BUILD_ID to the file name to ensure each zip file gets a unique name.
@@ -92,6 +92,7 @@ fi
 echo "Control node instance ID: ${control_node_instance_id}"
 
 # Stream logs from the startup script execution to stdout in the background
+gcloud components install beta || exit 1
 gcloud beta logging tail \
 "resource.type=gce_instance AND \
 resource.labels.instance_id=${control_node_instance_id} \
@@ -117,16 +118,14 @@ while true; do
     exit 1
   fi
 
-  result="$(gcloud logging read \
+  state="$(gcloud logging read \
     "resource.type=global AND \
     log_name=projects/${project_id}/logs/Ansible_logs AND \
     jsonPayload.deployment_name=${deployment_name} AND \
     jsonPayload.event_type=ANSIBLE_RUNNER_SCRIPT_END" \
     --order=desc \
     --limit=1 \
-    --format=json)"
-
-  state="$(echo "${result}" | jq -r '.[0].jsonPayload.state // empty')"
+    --format='value(jsonPayload.state)')"
 
   if [[ "${state}" == "ansible_completed_success" ]]; then
     echo "Control node's startup script completed successfully."
