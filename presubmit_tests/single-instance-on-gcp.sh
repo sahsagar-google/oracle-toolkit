@@ -14,7 +14,7 @@
 # limitations under the License.
 
 
-apk add --no-cache zip curl || exit 1
+apk add --no-cache zip curl py3-grpcio || exit 1
 
 gcs_bucket="gs://oracle-toolkit-presubmit-artifacts"
 # Append BUILD_ID to the file name to ensure each zip file gets a unique name.
@@ -92,7 +92,9 @@ fi
 echo "Control node instance ID: ${control_node_instance_id}"
 
 # Stream logs from the startup script execution to stdout in the background
-gcloud components install beta || exit 1
+# https://cloud.google.com/logging/docs/reference/tools/gcloud-logging#install_live_tailing
+gcloud --quiet components install beta || exit 1
+export CLOUDSDK_PYTHON_SITEPACKAGES=1
 gcloud beta logging tail \
 "resource.type=gce_instance AND \
 resource.labels.instance_id=${control_node_instance_id} \
