@@ -82,20 +82,20 @@ locals {
 
   instances = local.is_multi_instance ? {
     "${var.instance_name}-1" = {
-      zone = var.zone1
+      zone       = var.zone1
       subnetwork = var.subnetwork1
-      role = "primary"
+      role       = "primary"
     }
     "${var.instance_name}-2" = {
-      zone = var.zone2
+      zone       = var.zone2
       subnetwork = var.subnetwork2
-      role = "standby"
+      role       = "standby"
     }
-  } : {
+    } : {
     "${var.instance_name}-1" = {
-      zone = var.zone1
+      zone       = var.zone1
       subnetwork = var.subnetwork1
-      role = "primary"
+      role       = "primary"
     }
   }
 }
@@ -121,22 +121,22 @@ resource "google_compute_instance_template" "default" {
     subnetwork = var.subnetwork1
   }
   disk {
-    boot = true
-    auto_delete = true
+    boot         = true
+    auto_delete  = true
     source_image = data.google_compute_image.os_image.self_link
-    disk_type = var.boot_disk_type
-    disk_size_gb  = var.boot_disk_size_gb
+    disk_type    = var.boot_disk_type
+    disk_size_gb = var.boot_disk_size_gb
   }
 
   dynamic "disk" {
     for_each = local.additional_disks
     content {
-      boot = false
-      auto_delete = disk.value.auto_delete
-      device_name = disk.value.device_name
+      boot         = false
+      auto_delete  = disk.value.auto_delete
+      device_name  = disk.value.device_name
       disk_size_gb = disk.value.disk_size_gb
-      disk_type = disk.value.disk_type
-      labels = disk.value.disk_labels
+      disk_type    = disk.value.disk_type
+      labels       = disk.value.disk_labels
     }
   }
 
@@ -156,9 +156,9 @@ resource "google_compute_instance_template" "default" {
 resource "google_compute_instance_from_template" "database_vm" {
   for_each = local.instances
 
-  name = each.key
-  zone = each.value.zone
-  project = var.project_id
+  name                     = each.key
+  zone                     = each.value.zone
+  project                  = var.project_id
   source_instance_template = google_compute_instance_template.default.self_link
 
   network_interface {
@@ -181,7 +181,7 @@ locals {
     for vm in google_compute_instance_from_template.database_vm : {
       name = vm.name
       zone = vm.zone
-      ip = vm.network_interface[0].network_ip
+      ip   = vm.network_interface[0].network_ip
       role = local.instances[vm.name].role
     }
   ]
@@ -207,8 +207,8 @@ locals {
     var.install_workload_agent ? "--install-workload-agent" : "",
     var.skip_database_config ? "--skip-database-config" : "",
     var.ora_pga_target_mb != "" ? "--ora-pga-target-mb ${var.ora_pga_target_mb}" : "",
-    var.ora_sga_target_mb != "" ? "--ora-sga-target-mb ${var.ora_pga_target_mb}": "",
-    var.data_guard_protection_mode != "" ? "--data-guard-protection-mode '${var.data_guard_protection_mode}'": ""
+    var.ora_sga_target_mb != "" ? "--ora-sga-target-mb ${var.ora_pga_target_mb}" : "",
+    var.data_guard_protection_mode != "" ? "--data-guard-protection-mode '${var.data_guard_protection_mode}'" : ""
   ]))
 }
 
@@ -217,7 +217,7 @@ resource "google_compute_instance" "control_node" {
   name         = "${var.control_node_name_prefix}-${random_id.suffix.hex}"
   machine_type = var.control_node_machine_type
   zone         = var.zone1
-  
+
   scheduling {
     max_run_duration {
       seconds = 604800
@@ -247,11 +247,11 @@ resource "google_compute_instance" "control_node" {
   }
 
   metadata_startup_script = templatefile("${path.module}/scripts/setup.sh.tpl", {
-    gcs_source = var.gcs_source
+    gcs_source             = var.gcs_source
     database_vm_nodes_json = jsonencode(local.database_vm_nodes)
-    common_flags = local.common_flags
-    deployment_name = var.deployment_name
-    delete_control_node = var.delete_control_node
+    common_flags           = local.common_flags
+    deployment_name        = var.deployment_name
+    delete_control_node    = var.delete_control_node
   })
 
   metadata = {

@@ -21,11 +21,11 @@ vm_service_account           = "your-vm-service-account@your-project-id.iam.gser
 control_node_service_account = "your-control-node-service-account@your-project-id.iam.gserviceaccount.com"
 
 # Primary node for the Single-instance deployment
-zone1 = "us-central1-b"
+zone1       = "us-central1-b"
 subnetwork1 = "projects/your-project/regions/us-central1/subnetworks/default"
 
 # Standby node for the Multi-instance Data Guard deployment
-zone2 = "us-central1-c"
+zone2       = "us-central1-c"
 subnetwork2 = "projects/your-project/regions/us-central1/subnetworks/default"
 
 # Instance settings
@@ -55,17 +55,17 @@ reco_disk = {
 # Parameters below are optional
 # A full list of parameters can be found here https://google.github.io/oracle-toolkit/user-guide.html#parameters
 # The example below will install Oracle 19c, using the Oracle software stored in a GCS bucket, and will configure the backup destination to be RECO diskgroup.
-ora_version            = "19"
-ora_release            = "latest"
-ora_edition            = "EE"
-ora_backup_dest        = "+RECO"
-ora_db_name            = "orcl"
-ora_db_container       = false
-ntp_pref               = "169.254.169.254"
-ora_listener_port      = "1521"
-ora_redo_log_size      = "100MB"
-skip_database_config   = false
-install_workload_agent = true
-oracle_metrics_secret  = ""
-db_password_secret     = ""
+ora_version                = "19"
+ora_release                = "latest"
+ora_edition                = "EE"
+ora_backup_dest            = "+RECO"
+ora_db_name                = "orcl"
+ora_db_container           = false
+ntp_pref                   = "169.254.169.254"
+ora_listener_port          = "1521"
+ora_redo_log_size          = "100MB"
+skip_database_config       = false
+install_workload_agent     = true
+oracle_metrics_secret      = ""
+db_password_secret         = ""
 data_guard_protection_mode = "Maximum Availability"
