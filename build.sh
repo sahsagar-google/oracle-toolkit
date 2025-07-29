@@ -2,28 +2,18 @@
 set -e
 
 # --- Script Variables ---
-PROJECT_ID="gcp-oracle-sandbox"
+PROJECT_ID="gcp-oracle-sandbox" # Your project ID
 PACKAGE_NAME="oracle-toolkit-infra-manager.zip"
 SIGNED_ARTIFACT_EXTENSION=".jar"
-ARTIFACT_BASE_GCS_BUCKET="gs://cloudoracledeploystaging/terraform/oracle-toolkit"
+
+# KOKORO_ARTIFACTS_DIR is an environment variable provided by Kokoro
+# Any files placed in this directory will be automatically uploaded to GCS
+# by the `post_build` configuration in the .kokoro/config file.
+ARTIFACT_UPLOAD_DIR="${KOKORO_ARTIFACTS_DIR}"
 
 # --- Script Execution ---
 echo "Starting Oracle Toolkit Terraform Blueprint generation..."
-echo "Running build with initial Kokoro service account: $(gcloud config get-value core/account)"
-
-# Temporarily switch to the elevated service account
-ELEVATED_SA_EMAIL="gcs-upload-sa@gcp-oracle-sandbox.iam.gserviceaccount.com"
-KOKORO_SA_EMAIL=$(gcloud config get-value core/account)
-
-echo "Attempting to switch to elevated service account: ${ELEVATED_SA_EMAIL}"
-
-# Get a temporary access token for the elevated service account via impersonation
-ELEVATED_SA_TOKEN=$(gcloud auth print-access-token --impersonate-service-account="${ELEVATED_SA_EMAIL}")
-
-# Activate the elevated service account using the obtained token
-gcloud auth activate-service-account "${ELEVATED_SA_EMAIL}" --access-token="${ELEVATED_SA_TOKEN}" --project="${PROJECT_ID}"
-
-echo "Successfully switched context to: $(gcloud config get-value core/account)"
+echo "Running build with Kokoro service account: $(gcloud config get-value core/account)"
 
 TEMP_DIR_FOR_PACKAGE=$(mktemp -d)
 echo "Using temporary directory for packaging: ${TEMP_DIR_FOR_PACKAGE}"
@@ -46,27 +36,17 @@ echo "Signing the artifact: ${SIGNED_ARTIFACT_NAME}..."
 # Example: /usr/local/bin/sign-artifact --input "/tmp/${PACKAGE_NAME}" --output "/tmp/${SIGNED_ARTIFACT_NAME}" --sbom "/tmp/sbom.json"
 cp "/tmp/${PACKAGE_NAME}" "/tmp/${SIGNED_ARTIFACT_NAME}" # Simulate creation of signed artifact if tools aren't run
 
-# Upload artifacts to GCS
-TIMESTAMP=$(date +%Y%m%d%H%M) # Current timestamp for versioned artifacts
+# --- Place the final signed artifact in KOKORO_ARTIFACTS_DIR ---
+# Kokoro's post_build will pick this up and upload it to GCS.
+echo "Moving signed artifact to KOKORO_ARTIFACTS_DIR for GCS upload..."
+# Ensure the directory exists
+mkdir -p "${ARTIFACT_UPLOAD_DIR}"
+mv "/tmp/${SIGNED_ARTIFACT_NAME}" "${ARTIFACT_UPLOAD_DIR}/${SIGNED_ARTIFACT_NAME}"
 
-DEV_GCS_PATH="${ARTIFACT_BASE_GCS_BUCKET}/dev/${KOKORO_BUILD_ID}/${SIGNED_ARTIFACT_NAME}"
-echo "Uploading to dev staging GCS: ${DEV_GCS_PATH}..."
-gcloud storage cp "/tmp/${SIGNED_ARTIFACT_NAME}" "${DEV_GCS_PATH}" --project="${PROJECT_ID}"
-
-PROD_GCS_PATH="${ARTIFACT_BASE_GCS_BUCKET}/prod/${KOKORO_BUILD_ID}/${SIGNED_ARTIFACT_NAME}"
-echo "Uploading to production GCS: ${PROD_GCS_PATH}..."
-gcloud storage cp "/tmp/${SIGNED_ARTIFACT_NAME}" "${PROD_GCS_PATH}" --project="${PROJECT_ID}"
-
-LATEST_GCS_PATH="${ARTIFACT_BASE_GCS_BUCKET}/prod/latest/${SIGNED_ARTIFACT_NAME}"
-echo "Updating 'latest' alias: ${LATEST_GCS_PATH}..."
-gcloud storage cp "/tmp/${SIGNED_ARTIFACT_NAME}" "${LATEST_GCS_PATH}" --project="${PROJECT_ID}"
+# Optional: If you also want to upload the SBOM, place it in ARTIFACT_UPLOAD_DIR as well
+# mv "/tmp/sbom.json" "${ARTIFACT_UPLOAD_DIR}/sbom.json"
 
 echo "Cleaning up temporary files..."
 rm -rf "${TEMP_DIR_FOR_PACKAGE}"
 
-echo "Switching back to original service account: ${KOKORO_SA_EMAIL}"
-gcloud auth revoke "${ELEVATED_SA_EMAIL}"
-gcloud auth activate-service-account "${KOKORO_SA_EMAIL}" --project="${PROJECT_ID}"
-
-echo "Switched back to: $(gcloud config get-value core/account)"
 echo "Oracle Toolkit Terraform Blueprint generation process completed."
