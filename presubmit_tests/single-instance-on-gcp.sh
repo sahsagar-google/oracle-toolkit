@@ -35,9 +35,6 @@ gcs_source="${gcs_bucket}/${toolkit_zip_file_name}"
 deployment_id="projects/${project_id}/locations/${location}/deployments/${deployment_name}"
 
 cleanup() {
-  if [[ -n "${tail_pid}" ]]; then
-    kill "${tail_pid}"
-  fi
   echo "Cleaning up: deleting ${gcs_source} GCS object and ${deployment_id} Infra Manager deployment..."
   if gcloud infra-manager deployments describe "${deployment_id}" >/dev/null 2>&1; then
     gcloud --quiet infra-manager deployments delete "${deployment_id}" 
@@ -81,7 +78,6 @@ if [[ -z "${control_node_resource_id}" ]]; then
   echo "Could not retrieve control node's resource ID."
   exit 1
 fi
-echo "Control node resource ID: ${control_node_resource_id}"
 
 # Get the instance ID from the instance resource
 control_node_instance_id="$(gcloud compute instances describe "${control_node_resource_id}" --format="value(id)")"
@@ -89,7 +85,17 @@ if [[ -z "${control_node_instance_id}" ]]; then
   echo "Could not get control node's instance ID."
   exit 1
 fi
-echo "Control node instance ID: ${control_node_instance_id}"
+
+read -r -d '' query <<EOF
+resource.type="gce_instance"
+log_name="projects/${project_id}/logs/google_metadata_script_runner"
+resource.labels.instance_id="${control_node_instance_id}"
+EOF
+encoded_query="$(python3 -c "import urllib.parse, sys; print(urllib.parse.quote(sys.stdin.read(), safe=''), end='')" <<< "$query")"
+duration="PT1H"
+console_link="https://console.cloud.google.com/logs/query;query=${encoded_query};duration=${duration}?project=${project_id}"
+echo "Link to the control node's startup log:"
+echo "${console_link}"
 
 # Stream logs from the startup script execution to stdout in the background
 # https://cloud.google.com/logging/docs/reference/tools/gcloud-logging#install_live_tailing
@@ -99,13 +105,16 @@ pip3 install grpcio --break-system-packages || exit 1
 export CLOUDSDK_PYTHON_SITEPACKAGES=1
 echo "Streaming logs from the control node's startup script execution..."
 echo
-unbuffer gcloud alpha logging tail \
+
+# The 'gcloud alpha logging tail' command may display 'SyntaxWarning: invalid escape sequence' warnings.
+# These warnings are harmless and can be safely ignored using PYTHONWARNINGS=ignore.
+# 'unbuffer' is used here to avoid delayed and missing logs caused by output buffering in non-interactive session"
+# gcloud logging tail sessions have a 1-hour maximum duration; to continue, the session must be restarted.
+PYTHONWARNINGS="ignore" unbuffer gcloud alpha logging tail \
 "resource.type=gce_instance AND \
 resource.labels.instance_id=${control_node_instance_id} \
 AND log_name=projects/${project_id}/logs/google_metadata_script_runner" \
 --format='value(timestamp, json_payload.message)' &
-
-tail_pid=$!
 
 sleep_seconds=60
 timeout_seconds=7200
