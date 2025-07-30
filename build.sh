@@ -46,6 +46,11 @@ mv "/tmp/${SIGNED_ARTIFACT_NAME}" "${ARTIFACT_UPLOAD_DIR}/${SIGNED_ARTIFACT_NAME
 # Optional: If you also want to upload the SBOM, place it in ARTIFACT_UPLOAD_DIR as well
 # mv "/tmp/sbom.json" "${ARTIFACT_UPLOAD_DIR}/sbom.json"
 
+# --- Echo contents of KOKORO_ARTIFACTS_DIR ---
+echo "--- Contents of KOKORO_ARTIFACTS_DIR ---"
+ls -lah "${ARTIFACT_UPLOAD_DIR}"
+echo "----------------------------------------"
+
 echo "Cleaning up temporary files..."
 rm -rf "${TEMP_DIR_FOR_PACKAGE}"
 
