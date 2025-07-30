@@ -14,7 +14,7 @@
 # limitations under the License.
 
 
-apk add --no-cache zip curl py3-pip || exit 1
+apk add --no-cache zip curl py3-pip expect || exit 1
 
 gcs_bucket="gs://oracle-toolkit-presubmit-artifacts"
 # Append BUILD_ID to the file name to ensure each zip file gets a unique name.
@@ -99,9 +99,7 @@ pip3 install grpcio --break-system-packages || exit 1
 export CLOUDSDK_PYTHON_SITEPACKAGES=1
 echo "Streaming logs from the control node's startup script execution..."
 echo
-# Note: The 'gcloud alpha logging tail' command may display 'SyntaxWarning: invalid escape sequence' warnings.
-# These warnings are harmless and can be safely ignored.
-PYTHONWARNINGS="ignore" gcloud alpha logging tail \
+unbuffer gcloud alpha logging tail \
 "resource.type=gce_instance AND \
 resource.labels.instance_id=${control_node_instance_id} \
 AND log_name=projects/${project_id}/logs/google_metadata_script_runner" \
@@ -116,6 +114,7 @@ timeout_minutes="$(((timeout_seconds % 3600) / 60))"
 start_time="$(date +%s)"
 
 echo "Waiting up to ${timeout_hours} hours and ${timeout_minutes} minutes for control node's startup script to complete..."
+echo
 
 while true; do
   current_time="$(date +%s)"
