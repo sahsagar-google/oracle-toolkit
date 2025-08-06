@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2020 Google LLC
+# Copyright 2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,33 +12,29 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-set -e
 
-# --- Script Variables ---
-ARTIFACT_NAME="oracle-toolkit-infra-manager.jar"
+ARTIFACT_NAME="oracle-toolkit-infra-manager.zip"
 ARTIFACT_DIR="unsigned-release"
+ARTIFACT_PATH="${ARTIFACT_DIR}/${ARTIFACT_NAME}"
 
-# --- Script Execution ---
-echo "Starting Oracle Toolkit Terraform Blueprint generation..."
+if [ ! -d "${ARTIFACT_DIR}" ]; then
+  mkdir -p "${ARTIFACT_DIR}"
+fi
+if [ ! -w "${ARTIFACT_DIR}" ]; then
+  echo "Error: Directory ${ARTIFACT_DIR} is not writable."
+  exit 1
+fi
+if [ -f "${ARTIFACT_PATH}" ]; then
+  echo "Removing existing package: ${ARTIFACT_PATH}"
+  rm "${ARTIFACT_PATH}"
+fi
 
-TEMP_DIR_FOR_PACKAGE=$(mktemp -d)
-echo "Using temporary directory for packaging: ${TEMP_DIR_FOR_PACKAGE}"
+echo "Starting Oracle Toolkit Terraform Blueprint generation."
 
-# Copy 'terraform' directory content to the root of the temporary package directory.
-echo "Preparing Terraform content for Oracle Toolkit package..."
-cp -R terraform/* "${TEMP_DIR_FOR_PACKAGE}/"
+echo "Creating the final ZIP package: ${ARTIFACT_PATH}."
+zip -r "${ARTIFACT_PATH}" . -x "${ARTIFACT_DIR}/*" -x "*.git*" -x "*.terraform*" -x "terraform.tfvars"
 
-# Zip the transformed Terraform content into a JAR package.
-echo "Creating the JAR package: ${ARTIFACT_NAME}..."
-zip -r "/tmp/${ARTIFACT_NAME}" "${TEMP_DIR_FOR_PACKAGE}/." -x "*.git*" -x "*.terraform*" -x "terraform.tfvars"
-
-# Place the artifact in the designated directory.
-echo "Moving artifact to ./${ARTIFACT_DIR}..."
-mkdir -p "${ARTIFACT_DIR}"
-mv "/tmp/${ARTIFACT_NAME}" "${ARTIFACT_DIR}/${ARTIFACT_NAME}"
-
-echo "Cleaning up temporary files..."
-rm -rf "${TEMP_DIR_FOR_PACKAGE}"
+echo "Adding terraform directory contents to the package root."
+zip -j "${ARTIFACT_PATH}" terraform/*
 
 echo "Oracle Toolkit Terraform Blueprint generation process completed."
-
