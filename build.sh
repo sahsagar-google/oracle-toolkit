@@ -12,10 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#!/bin/bash
 set -e
 
 # --- Script Variables ---
 ARTIFACT_NAME="oracle-toolkit-infra-manager.jar"
+ARTIFACT_DIR="unsigned-release"
 
 # --- Script Execution ---
 echo "Starting Oracle Toolkit Terraform Blueprint generation..."
@@ -31,13 +33,13 @@ cp -R terraform/* "${TEMP_DIR_FOR_PACKAGE}/"
 echo "Creating the JAR package: ${ARTIFACT_NAME}..."
 zip -r "/tmp/${ARTIFACT_NAME}" "${TEMP_DIR_FOR_PACKAGE}/." -x "*.git*" -x "*.terraform*" -x "terraform.tfvars"
 
-# --- Place the final artifact in KOKORO_ARTIFACTS_DIR ---
-# Kokoro will automatically upload any files from this directory to GCS.
-echo "Moving artifact to KOKORO_ARTIFACTS_DIR for GCS upload..."
-mkdir -p "${KOKORO_ARTIFACTS_DIR}"
-mv "/tmp/${ARTIFACT_NAME}" "${KOKORO_ARTIFACTS_DIR}/${ARTIFACT_NAME}"
+# Place the artifact in the designated directory.
+echo "Moving artifact to ./${ARTIFACT_DIR}..."
+mkdir -p "${ARTIFACT_DIR}"
+mv "/tmp/${ARTIFACT_NAME}" "${ARTIFACT_DIR}/${ARTIFACT_NAME}"
 
 echo "Cleaning up temporary files..."
 rm -rf "${TEMP_DIR_FOR_PACKAGE}"
 
 echo "Oracle Toolkit Terraform Blueprint generation process completed."
+
