@@ -19,6 +19,12 @@ ARTIFACT_PATH="${ARTIFACT_DIR}/${ARTIFACT_NAME}"
 
 echo "Starting Oracle Toolkit Terraform Blueprint generation."
 
+echo "Current working directory: $(pwd)"
+if [[ "$(pwd)" != *"/oracle-toolkit" ]]; then
+ echo "Error: Script is not running from the root of the cloned repository."
+ exit 1
+fi
+
 if [ ! -d "${ARTIFACT_DIR}" ]; then
   echo "Creating directory: ${ARTIFACT_DIR}"
   mkdir -p "${ARTIFACT_DIR}"
