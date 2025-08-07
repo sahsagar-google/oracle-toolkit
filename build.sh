@@ -17,24 +17,27 @@ ARTIFACT_NAME="oracle-toolkit-infra-manager.zip"
 ARTIFACT_DIR="unsigned-release"
 ARTIFACT_PATH="${ARTIFACT_DIR}/${ARTIFACT_NAME}"
 
+echo "Starting Oracle Toolkit Terraform Blueprint generation."
+
 if [ ! -d "${ARTIFACT_DIR}" ]; then
+  echo "Creating directory: ${ARTIFACT_DIR}"
   mkdir -p "${ARTIFACT_DIR}"
 fi
 if [ ! -w "${ARTIFACT_DIR}" ]; then
   echo "Error: Directory ${ARTIFACT_DIR} is not writable."
   exit 1
 fi
+
 if [ -f "${ARTIFACT_PATH}" ]; then
   echo "Removing existing package: ${ARTIFACT_PATH}"
   rm "${ARTIFACT_PATH}"
 fi
 
-echo "Starting Oracle Toolkit Terraform Blueprint generation."
-
-echo "Creating the final ZIP package: ${ARTIFACT_PATH}."
-zip -r "${ARTIFACT_PATH}" . -x "${ARTIFACT_DIR}/*" -x "*.git*" -x "*.terraform*" -x "terraform.tfvars"
+echo "Creating the initial ZIP package: ${ARTIFACT_PATH}."
+zip -r "${ARTIFACT_PATH}" . -x "${ARTIFACT_DIR}/*" -x "*.git*" -x "*.terraform*" -x "terraform/*"
 
 echo "Adding terraform directory contents to the package root."
-zip -j "${ARTIFACT_PATH}" terraform/*
+cd terraform
+zip -r --grow "../${ARTIFACT_PATH}" . -x "*.example" -x "terraform.tfvars"
 
 echo "Oracle Toolkit Terraform Blueprint generation process completed."
