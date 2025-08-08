@@ -81,7 +81,7 @@ ncharset: "{{ lookup('env','ORA_DB_NCHARSET') | default('AL16UTF16',true) }}"
 
 # ASM and storage related variables:
 asm_disk_management: "{{ lookup('env','ORA_DISK_MGMT') | lower | default('udev',true) }}"
-role_separation: "{{ lookup('env','ORA_ROLE_SEPARATION') | lower | default('true',true) }}"
+role_separation: "{{ lookup('env','ORA_ROLE_SEPARATION') | default('true') | lower | bool }}"
 data_destination: "{{ lookup('env','ORA_DATA_DESTINATION') | default('DATA',true) }}"
 reco_destination: "{{ lookup('env','ORA_RECO_DESTINATION') | default('RECO',true) }}"
 use_omf: true  # Used for file system storage (currently applicable only for Free Edition)
@@ -138,7 +138,7 @@ ora_pga_target_mb: "{{ lookup('env','ORA_PGA_TARGET_MB') | int | default('150',t
 ora_sga_target_mb: "{{ lookup('env','ORA_SGA_TARGET_MB') | int | default((ansible_memory_mb.real.total*memory_pct)//100,true) }}"
 oracle_user: oracle
 oracle_group: oinstall
-grid_user: "{% if role_separation | bool %}grid{% else %}{{ oracle_user }}{% endif %}"
+grid_user: "{% if role_separation %}grid{% else %}{{ oracle_user }}{% endif %}"
 grid_group: asmadmin
 oracle_root: "/u01/app"
 home_name: "{% if free_edition %}dbhomeFree{% else %}dbhome_1{% endif %}"
