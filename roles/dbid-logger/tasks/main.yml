@@ -17,6 +17,7 @@
   ansible.builtin.shell: |
     set -o pipefail
     sqlplus -s / as sysdba <<EOF
+    WHENEVER SQLERROR EXIT SQL.SQLCODE
     SET HEADING OFF
     SET FEEDBACK OFF
     SET LINESIZE 999
@@ -30,14 +31,13 @@
     ORACLE_SID: "{{ oracle_sid }}"
     PATH: "{{ oracle_home }}/bin:{{ ansible_env.PATH }}"
   register: dbid_query_result
-  changed_when: false
+  ignore_errors: true
 
-- name: Extract DBID and handle errors
+- name: Extract DBID from query result
   ansible.builtin.set_fact:
-    oracle_dbid: "{{ dbid_query_result.stdout | trim if 'ORA-' not in dbid_query_result.stderr else '' }}"
-    oracle_error_output: "{{ dbid_query_result.stderr | default('') }}"
+    oracle_dbid: "{{ dbid_query_result.stdout | trim if not dbid_query_result.failed else '' }}"
 
-- name: Output DBID or error
+- name: Output DBID
   ansible.builtin.debug:
-    msg: "{{ oracle_dbid if oracle_dbid else oracle_error_output | trim }}"
+    msg: "{{ oracle_dbid if oracle_dbid else dbid_query_result.stderr | trim }}"
     verbosity: 0
