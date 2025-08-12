@@ -30,7 +30,7 @@
 
 - name: Extract DBID from query result
   ansible.builtin.set_fact:
-    oracle_dbid: "{{ dbid_query_result.stdout_lines | select('match', '^\\d+$') | first | default('') | trim }}"
+    oracle_dbid: "{{ dbid_query_result.stdout_lines | map('trim') | select('match', '^\\d+$') | first | default('') }}"
 
 - name: Output DBID
   ansible.builtin.debug:
