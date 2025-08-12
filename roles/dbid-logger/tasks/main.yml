@@ -19,7 +19,10 @@
     sqlplus -s / as sysdba <<EOF
     SET HEADING OFF
     SET FEEDBACK OFF
-    SELECT TRIM(dbid) FROM v\$database;
+    SET LINESIZE 999
+    SET PAGESIZE 0
+    SET TRIMSPOOL ON
+    SELECT dbid FROM v\$database;
     EXIT;
     EOF
   environment:
@@ -28,14 +31,13 @@
     PATH: "{{ oracle_home }}/bin:{{ ansible_env.PATH }}"
   register: dbid_query_result
   changed_when: false
-  failed_when: "'ORA-' in dbid_query_result.stderr"
 
-- name: Extract DBID from query result
+- name: Extract DBID and handle errors
   ansible.builtin.set_fact:
-    oracle_dbid: "{{ dbid_query_result.stdout_lines | select('match', '^\\d+$') | first | default('') }}"
+    oracle_dbid: "{{ dbid_query_result.stdout | trim if 'ORA-' not in dbid_query_result.stderr else '' }}"
+    oracle_error_output: "{{ dbid_query_result.stderr | default('') }}"
 
-- name: Output DBID
+- name: Output DBID or error
   ansible.builtin.debug:
-    msg: "{{ oracle_dbid }}"
+    msg: "{{ oracle_dbid if oracle_dbid else oracle_error_output | trim }}"
     verbosity: 0
-  when: oracle_dbid is defined and oracle_dbid | length > 0
