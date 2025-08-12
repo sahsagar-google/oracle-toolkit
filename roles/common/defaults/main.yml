@@ -25,9 +25,11 @@ grid_base: "{{ oracle_root }}/grid"
 
 path_udev: asmdisks
 
-oracle_users:
-  - { name: "{{ oracle_user }}", comment: "", uid: 801, group: "{{ oracle_group }}" }
-  - { name: "{{ grid_user }}", comment: "", uid: 802, group: "{{ oracle_group }}" }
+rdbms_users:
+  - { name: "{{ oracle_user }}", comment: "", uid: 54321, group: "{{ oracle_group }}" }
+grid_users:
+  - { name: "{{ grid_user }}", comment: "", uid: 54331, group: "{{ oracle_group }}" }
+oracle_users: "{{ rdbms_users + grid_users if role_separation else rdbms_users }}"
 
 #
 # Groups for the oracle user
@@ -36,17 +38,17 @@ oracle_users:
 # extra_oracle_groups    : used in roles/ora-host/tasks/main.yml to be assigned to the user
 #
 oracle_groups:
-  - { group: oinstall ,       gid: 801 }
-  - { group: dba      ,       gid: 802 }
-  - { group: oper     ,       gid: 803 }
-  - { group: backupdba,       gid: 804 }
-  - { group: dgdba    ,       gid: 805 }
-  - { group: kmdba    ,       gid: 806 }
-  - { group: racdba   ,       gid: 810 }
+  - { group: oinstall ,       gid: 54321 }
+  - { group: dba      ,       gid: 54322 }
+  - { group: oper     ,       gid: 54323 }
+  - { group: backupdba,       gid: 54324 }
+  - { group: dgdba    ,       gid: 54325 }
+  - { group: kmdba    ,       gid: 54326 }
+  - { group: racdba   ,       gid: 54330 }
 
 extra_oracle_groups:
-  - { group: asmdba   ,       gid: 807 }
-  - { group: asmadmin ,       gid: 809 }
+  - { group: asmdba   ,       gid: 54327 }
+  - { group: asmadmin ,       gid: 54329 }
 
 #
 # Groups for the grid user
@@ -55,12 +57,12 @@ extra_oracle_groups:
 # extra_asm_groups    : used in roles/ora-host/tasks/main.yml to be assigned to the user
 #
 asm_groups:
-  - { group: asmdba   ,       gid: 807 }
-  - { group: asmoper  ,       gid: 808 }
-  - { group: asmadmin ,       gid: 809 }
+  - { group: asmdba   ,       gid: 54327 }
+  - { group: asmoper  ,       gid: 54328 }
+  - { group: asmadmin ,       gid: 54329 }
 
 extra_asm_groups:
-  - { group: dba      ,       gid: 802 }
+  - { group: dba      ,       gid: 54322 }
 
 asm_diskstring: "{% if asm_disk_management == 'asmlib' %}ORCL:*{% else %}/dev/{{ path_udev }}/*{% endif %}"
 
@@ -85,7 +87,7 @@ pass_param: "{{ pwgen_path }}/{{ pwgen_file }} 16"
 
 diskgroup_compatible_asm: "{{ oracle_ver }}"
 diskgroup_compatible_rdbms: "{# assign to variable c compatible parameter and set to default if not defined #}\
-                            {% set c = lookup('env','COMPATIBLE_RDBMS')|default('11.2.0.4.0',true) %} \
+                            {% set c = lookup('env','COMPATIBLE_RDBMS') | default('11.2.0.4.0',true) %} \
                             {# if 19.3... base then lower it to 19.0... to avoid issues with dbca #}\
                             {% if c == '19.3.0.0.0' %}\
                               19.0.0.0.0\

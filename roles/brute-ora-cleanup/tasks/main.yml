@@ -93,8 +93,7 @@
         daemon_reload: true
       register: systemd_stop
       with_items: "{{ free_edition_systemd_services.stdout_lines }}"
-      when:
-        - free_edition_systemd_services.changed
+      when: free_edition_systemd_services.changed
       notify:
         - Run systemctl daemon-reload
         - Reset failed systemd services
@@ -116,8 +115,7 @@
         lock_timeout: "{{ pkg_mgr_lock_timeout }}"
       register: dnf_remove
       with_items: "{{ free_edition_rpm_packages.stdout_lines }}"
-      when:
-        - free_edition_rpm_packages.changed
+      when: free_edition_rpm_packages.changed
 
     - name: Force remove broken packages (if dnf module uninstall fails)
       shell:
@@ -200,7 +198,7 @@
     - /grid/bin
     - /grid/jdk
     - "-u {{ oracle_user }}"
-    - "{% if role_separation | bool %}-u {{ grid_user }}{% else %}[]{% endif %}"
+    - "{% if role_separation %}-u {{ grid_user }}{% else %}[]{% endif %}"
   ignore_errors: true
   register: kill_procs
   changed_when: kill_procs.rc == 0
@@ -229,7 +227,7 @@
     - /grid/bin
     - /grid/jdk
     - "-u {{ oracle_user }}"
-    - "{% if role_separation | bool %}-u {{ grid_user }}{% else %}[]{% endif %}"
+    - "{% if role_separation %}-u {{ grid_user }}{% else %}[]{% endif %}"
   ignore_errors: true
   register: kill_procs
   changed_when: kill_procs.rc == 0
@@ -418,7 +416,7 @@
   when:
     - swap_blk_device is defined
     - swap_partition_id is defined
-    - swap_blk_device|length > 0
+    - swap_blk_device | length > 0
   ignore_errors: true
   tags: remove-swap
   block:
