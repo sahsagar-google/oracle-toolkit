@@ -17,7 +17,9 @@
   ansible.builtin.shell: |
     set -o pipefail
     sqlplus -s / as sysdba <<EOF
-    SELECT dbid FROM v\$database;
+    SET HEADING OFF
+    SET FEEDBACK OFF
+    SELECT TRIM(dbid) FROM v\$database;
     EXIT;
     EOF
   environment:
@@ -30,7 +32,7 @@
 
 - name: Extract DBID from query result
   ansible.builtin.set_fact:
-    oracle_dbid: "{{ dbid_query_result.stdout_lines | map('trim') | select('match', '^\\d+$') | first | default('') }}"
+    oracle_dbid: "{{ dbid_query_result.stdout_lines | select('match', '^\\d+$') | first | default('') }}"
 
 - name: Output DBID
   ansible.builtin.debug:
