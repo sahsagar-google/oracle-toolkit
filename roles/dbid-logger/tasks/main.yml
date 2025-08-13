@@ -35,7 +35,7 @@
 
 - name: Extract DBID from query result
   ansible.builtin.set_fact:
-    oracle_dbid: "{{ dbid_query_result.stdout | trim if not dbid_query_result.failed else '' }}"
+    oracle_dbid: "{{ dbid_query_result.stdout | trim }}"
 
 - name: Output DBID
   ansible.builtin.debug:
