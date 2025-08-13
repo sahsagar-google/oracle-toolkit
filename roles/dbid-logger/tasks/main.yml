@@ -39,5 +39,5 @@
 
 - name: Output DBID
   ansible.builtin.debug:
-    msg: "{{ oracle_dbid if oracle_dbid else dbid_query_result.stderr | trim }}"
+    msg: "{{ oracle_dbid | trim }}"
     verbosity: 0
