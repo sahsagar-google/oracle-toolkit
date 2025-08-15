@@ -31,6 +31,40 @@
         name: common
         tasks_from: populate-vars.yml
 
+  roles:
+    - common
+
+  tasks:
+    - name: Check if database is Oracle Restart/Clusterware configured
+      shell: |
+        set -o pipefail
+        if srvctl config database -d {{ db_name }} &>/dev/null; then
+          CLUSTERWARE_USER=$(ps -eo user,comm | awk '/(crsd|ocssd|evmd)\.bin/{print $1}' | sort -u)
+        else
+          CLUSTERWARE_USER=""
+        fi
+        echo "$CLUSTERWARE_USER"
+      environment:
+        ORACLE_HOME: "{{ oracle_home }}"
+        ORACLE_SID: "{{ oracle_sid }}"
+        PATH: "{{ oracle_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
+      register: clusterware_check
+      become: true
+      become_user: "{{ oracle_user }}"
+      changed_when: false
+
+    - name: Set variables based on the Restart/Clusterware findings
+      set_fact:
+        gi_install: "{{ (clusterware_check.stdout | length) > 0 }}"
+        grid_user: "{{ clusterware_check.stdout if (clusterware_check.stdout | length) > 0 else oracle_user }}"
+
+    - name: Values for variables gi_install and grid_user
+      debug:
+        msg:
+          - "gi_install: {{ gi_install }}"
+          - "grid_user: {{ grid_user }}"
+        verbosity: 1
+
 - name: Download patches
   hosts: dbasm
   pre_tasks:
