@@ -211,6 +211,9 @@
           - "file={{ password_file_name }}"
           - "force=y"
           - "password={{ sys_pass }}"
+          - "format=12"
+      ignore_errors: true
+      register: orapwd_result
       environment:
         ORACLE_HOME: "{{ oracle_home }}"
         ORACLE_SID: "{{ oracle_sid }}"
@@ -218,6 +221,15 @@
       become: true
       become_user: "{{ oracle_user }}"
       no_log: true
+
+    - name: Active-copy | Report orapwd command failure
+      fail:
+        msg: >
+          The 'orapwd' command failed.
+          Return code: {{ orapwd_result.rc }}
+          Standard error: {{ orapwd_result.stderr }}
+          Standard output: {{ orapwd_result.stdout }}
+      when: orapwd_result.rc != 0
 
     - name: Active-copy | Generate duplicate script
       template:
