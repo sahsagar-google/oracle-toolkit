@@ -166,6 +166,7 @@
   # Using the "shell" module instead of "unarchive" for unzip performance
   shell: unzip -o -q "{{ swlib_path }}/{{ item.patchfile }}" -d "{{ swlib_unzip_path }}"
   with_items: "{{ rdbms_patch_list }}"
+  when: rdbms_patch_list is defined and rdbms_patch_list | length > 0
   become: true
   become_user: "{{ oracle_user }}"
   tags: patch-rdbms,sw-unzip
@@ -230,6 +231,7 @@
     path: "{{ swlib_unzip_path }}/{{ item.patchnum }}"
     state: absent
   with_items: "{{ rdbms_patch_list }}"
+  when: rdbms_patch_list is defined and rdbms_patch_list | length > 0
   become: true
   become_user: root
   tags: patch-rdbms,sw-remove

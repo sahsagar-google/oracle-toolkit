@@ -62,9 +62,10 @@
   failed_when: item.md5sum != patch_repo_files.stdout
   changed_when: false
   ignore_errors: true
-  with_items:
-    - "{{ rdbms_patch_list }}"
-    - "{% if asm_disk_management != 'fs' %}{{ gi_patches }}{% else %}[]{% endif %}"
+  with_items: >-
+    {{ rdbms_patch_list | default([]) +
+       gi_patches | default([]) if asm_disk_management != 'fs' else
+       rdbms_patch_list | default([]) }}
   when:
     - item.base == oracle_ver
     - item.release == oracle_rel

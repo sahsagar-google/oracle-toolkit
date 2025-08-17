@@ -134,6 +134,7 @@
   args:
     executable: /bin/bash
   with_items: "{{ rdbms_patch_list }}"
+  when: rdbms_patch_list is defined and rdbms_patch_list | length > 0
   changed_when: "'Date    Time    Name' not in shell_result.stdout"
   delegate_to: 127.0.0.1
 
