@@ -42,14 +42,18 @@
 
 - name: Build list of unique RDBMS patches
   set_fact:
-    rdbms_patch_list: >-
-      {{ rdbms_patches
+    rdbms_patch_files: >-
+      {{ (rdbms_patches
           | selectattr('release', 'equalto', oracle_rel)
-          | selectattr('category', 'equalto', 'RU_Combo') if asm_disk_management != 'fs' else
+          | selectattr('category', 'equalto', 'RU_Combo'))
+          | unique(attribute='patchfile')
+          | list
+          if asm_disk_management != 'fs' else
             (rdbms_patches
               | selectattr('release', 'equalto', oracle_rel)
               | selectattr('category', 'in', ['DB_OJVM_RU','DB_RU']))
-          | list
+            | unique(attribute='patchfile')
+            | list
       }}
 
 - name: check-swlib | Validate patchsets
@@ -63,9 +67,9 @@
   changed_when: false
   ignore_errors: true
   with_items: >-
-    {{ rdbms_patch_list | default([]) +
+    {{ rdbms_patch_files | default([]) +
        gi_patches | default([]) if asm_disk_management != 'fs' else
-       rdbms_patch_list | default([]) }}
+       rdbms_patch_files | default([]) }}
   when:
     - item.base == oracle_ver
     - item.release == oracle_rel

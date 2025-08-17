@@ -48,15 +48,29 @@
     - item.release == oracle_rel and item.category == 'DB_RU'
   tags: rdbms-setup,rel-patch
 
-- name: rdbms-install | Unzip patches
+- name: rdbms-install | Build list of unique RDBMS patch files
+  set_fact:
+    rdbms_patch_files: >-
+      {{ (rdbms_patches
+          | selectattr('release', 'equalto', oracle_rel)
+          | selectattr('category', 'equalto', 'RU_Combo'))
+          | unique(attribute='patchfile')
+          | list
+          if gi_install else
+            (rdbms_patches
+              | selectattr('release', 'equalto', oracle_rel)
+              | selectattr('category', 'in', ['DB_OJVM_RU','DB_RU']))
+            | unique(attribute='patchfile')
+            | list
+      }}
+
+- name: rdbms-install | Unzip patch files
   # Using the "shell" module instead of "unarchive" for unzip performance
   shell: |
     unzip -o -q "{{ swlib_path }}/{{ item.patchfile }}" -d "{{ swlib_unzip_path }}"
     chown -R {{ oracle_user }}:{{ oracle_group }} "{{ swlib_unzip_path }}"
-  with_items: "{{ rdbms_patches }}"
-  when:
-    - item.release == oracle_rel
-    - (gi_install and item.category == 'RU_Combo') or (not gi_install and item.category in ['DB_OJVM_RU', 'DB_RU'])
+  with_items: "{{ rdbms_patch_files }}"
+  when: rdbms_patch_files is defined and rdbms_patch_files | length > 0
   become: true
   tags: rdbms-setup,sw-unzip
 

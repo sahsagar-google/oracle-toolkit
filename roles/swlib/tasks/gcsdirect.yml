@@ -99,15 +99,18 @@
 
 - name: gcsdirect | Build list of unique RDBMS patches
   set_fact:
-    rdbms_patch_list: >-
-      {{ rdbms_patches
+    rdbms_patch_files: >-
+      {{ (rdbms_patches
           | selectattr('release', 'equalto', oracle_rel)
-          | selectattr('category', 'equalto', 'RU_Combo') if gi_install else
+          | selectattr('category', 'equalto', 'RU_Combo'))
+          | unique(attribute='patchfile')
+          | list
+          if gi_install else
             (rdbms_patches
               | selectattr('release', 'equalto', oracle_rel)
               | selectattr('category', 'in', ['DB_OJVM_RU','DB_RU']))
-          | unique(attribute='patchfile')
-          | list
+            | unique(attribute='patchfile')
+            | list
       }}
 
 - name: gcsdirect | Copy RDBMS patches from GCS to target instance
@@ -120,8 +123,8 @@
   register: shell_result
   args:
     executable: /bin/bash
-  with_items: "{{ rdbms_patch_list }}"
-  when: rdbms_patch_list is defined and rdbms_patch_list | length > 0
+  with_items: "{{ rdbms_patch_files }}"
+  when: rdbms_patch_files is defined and rdbms_patch_files | length > 0
   changed_when: "'Date    Time    Name' not in shell_result.stdout"
 
 - name: gcsdirect | Copy RPM software from GCS to target instance
