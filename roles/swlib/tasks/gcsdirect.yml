@@ -14,7 +14,7 @@
 
 ---
 # files with alt_name are stored as name for simplicity
-- name: gcsdirect | Copy RDBMS and GI software from GCS to target instance
+- name: gcsdirect | Copy GI software from GCS to target instance
   shell: |
     set -o pipefail
     {% for f in item.files %}
@@ -32,13 +32,12 @@
   args:
     executable: /bin/bash
   with_items:
-    - "{{ rdbms_software }}"
     - "{{ gi_software }}"
     - "{{ gi_interim_patches }}"
   when:
+    - gi_install
     - item.version == oracle_ver
     - patch_only is not defined
-    - not free_edition
   changed_when: "'Date    Time    Name' not in shell_result.stdout"
 
 - name: gcsdirect | Copy GI patches from GCS to target instance
@@ -52,7 +51,9 @@
   args:
     executable: /bin/bash
   with_items: "{{ gi_patches }}"
-  when: item.release == oracle_rel
+  when:
+    - gi_install
+    - item.release == oracle_rel
   changed_when: "'Date    Time    Name' not in shell_result.stdout"
 
 # overwrite OPatch zipfile on database host from gcs every time that may be cached currently in {{ swlib_path }}
@@ -71,6 +72,44 @@
     - oracle_rel != "base"
   changed_when: "'Date    Time    Name' not in shell_result.stdout"
 
+# files with alt_name are stored as name for simplicity
+- name: gcsdirect | Copy RDBMS software from GCS to target instance
+  shell: |
+    set -o pipefail
+    {% for f in item.files %}
+    if gcloud storage ls gs://{{ swlib_mount_src }}/{{ f.name }} >/dev/null 2>&1; then
+      f_name="{{ f.name }}"
+    else
+      f_name="{{ f.alt_name | default('x') }}"
+    fi
+    if ! unzip -l "{{ swlib_path }}/{{ f.name }}"
+      then
+        gcloud storage cp gs://{{ swlib_mount_src }}/${f_name} "{{ swlib_path }}/{{ f.name }}"
+    fi
+    {% endfor %}
+  register: shell_result
+  args:
+    executable: /bin/bash
+  with_items: "{{ rdbms_software }}"
+  when:
+    - item.version == oracle_ver
+    - patch_only is not defined
+    - not free_edition
+  changed_when: "'Date    Time    Name' not in shell_result.stdout"
+
+- name: gcsdirect | Build list of unique RDBMS patches
+  set_fact:
+    rdbms_patch_list: >-
+      {{ rdbms_patches
+          | selectattr('release', 'equalto', oracle_rel)
+          | selectattr('category', 'equalto', 'RU_Combo') if gi_install else
+            (rdbms_patches
+              | selectattr('release', 'equalto', oracle_rel)
+              | selectattr('category', 'in', ['DB_OJVM_RU','DB_RU']))
+          | unique(attribute='patchfile')
+          | list
+      }}
+
 - name: gcsdirect | Copy RDBMS patches from GCS to target instance
   shell: |
     set -o pipefail
@@ -81,8 +120,7 @@
   register: shell_result
   args:
     executable: /bin/bash
-  with_items: "{{ rdbms_patches }}"
-  when: item.release == oracle_rel
+  with_items: "{{ rdbms_patch_list }}"
   changed_when: "'Date    Time    Name' not in shell_result.stdout"
 
 - name: gcsdirect | Copy RPM software from GCS to target instance

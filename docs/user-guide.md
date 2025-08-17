@@ -65,10 +65,11 @@ published: True
 
 ## Command quick reference for single instance deployments
 
-Sample commands for a simple quick-start and basic oracle-toolkit usage for an Oracle
-"single instance" database. Refer to the remainder of this document for
-additional details and comprehensive explanations of the toolkit, scripting,
-options, and usage scenarios. All commands run from the "control node".
+Sample commands for a simple quick-start and basic oracle-toolkit usage for an
+Oracle "single instance" database with Grid Infrastructure (and ASM). Refer to
+the remainder of this document for additional details and comprehensive
+explanations of the toolkit, scripting, options, and usage scenarios. All
+commands run from the "control node".
 
 > **NOTE:** If deploying a single-instance database on GCE, refer to the
 > [Quickstart for Using the Oracle Toolkit for Google Cloud on Compute Engine VMs](compute-vm-quickstart.md)
@@ -258,7 +259,7 @@ of a number of Oracle Database software releases can be installed. In addition,
 the configuration of the software stack includes:
 
 - The Oracle Grid Infrastructure (GI) and Automatic Storage Manager (ASM),
-  at the same major release as the database software.
+  at the same major release as the database software. (Optional)
 - The configuration of Oracle resources, like the database, listener, and
   ASM resources, via
   "[Oracle Restart](https://docs.oracle.com/en/database/oracle/oracle-database/19/admin/configuring-automatic-restart-of-an-oracle-database.html)"
@@ -1208,12 +1209,12 @@ Found p6880880_122010_Linux-x86-64.zip : OPatch Utility
 
 ## Prerequisite configuration
 
-Create JSON formatted configurations for the data mount devices and the ASM disk group.
-They can be stored in files or passed via CLI parameters.
+Create JSON formatted configurations for the data mount devices and optionally
+the ASM disk group. They can be stored in files or passed via CLI parameters.
 
-The [host provisinoing tool](host-provisioning.md) can configure newly-provisioned
+The [host provisioning tool](host-provisioning.md) can configure newly-provisioned
 BMS hosts to run the toolkit installer, including authentication, Internet access,
-and local mountpoints.
+and local mount points.
 
 ### Data mount configuration
 
@@ -1258,6 +1259,14 @@ The following example shows a properly formatted JSON data mount configuration f
 
 ### ASM disk group configuration
 
+Installing Grid Infrastructure and using ASM is the default, but is not
+mandatory. Whether GI is installed and ASM used is based on the value of the
+`--ora-disk-mgmt` command line option or the `ORA_DISK_MGMT` environment
+variable.
+
+Specify `ASMLIB` to use the Oracle ASMLib library or `ASMUDEV` to use ASM
+with the Linux Udev device manager. `ASMUDEV` is the default.
+
 In the ASM disk group configuration, specify the disk group names, the disk
 names, and the associated block devices (the actual devices, not partitions) in a
 valid JSON format.
@@ -1293,6 +1302,66 @@ The following example shows a properly formatted JSON ASM disk group configurati
     ]
   }
 ]
+```
+
+### Installation using Linux file systems (without Grid Infrastructure and ASM)
+
+Installing and creating databases that use XFS Linux file systems for database
+storage is also possible. To use Linux file systems, include the
+`--ora-disk-mgmt FS` command line option or the `ORA_DISK_MGMT=FS` environment
+variable.
+
+When disk management is set to `FS`, the Grid Infrastrure software is not
+installed.
+
+If required, add additional block devices to be formatted and used to the data
+mounts JSON. For example:
+
+```json
+[
+  {
+    "purpose": "software",
+    "blk_device": "/dev/disk/by-id/google-oracle-disk-1",
+    "name": "u01",
+    "fstype": "xfs",
+    "mount_point": "/u01",
+    "mount_opts": "nofail"
+  },
+  {
+    "purpose": "data",
+    "blk_device": "/dev/disk/by-id/google-oracle-data-1",
+    "name": "u02",
+    "fstype": "xfs",
+    "mount_point": "/u02",
+    "mount_opts": "nofail"
+  },
+  {
+    "purpose": "reco",
+    "blk_device": "/dev/disk/by-id/google-oracle-reco-1",
+    "name": "u03",
+    "fstype": "xfs",
+    "mount_point": "/u03",
+    "mount_opts": "nofail"
+  }
+]
+```
+
+Other installation script parameters such as `--ora-data-destination`,
+`--ora-reco-destination`, or `--backup-dest` can then reference these Linux
+mount points.
+
+Example installation command using Linux file systems for all storage:
+
+```bash
+./install-oracle.sh \
+  --instance-ip-addr ${INSTANCE_IP_ADDR} \
+  --ora-version 19 \
+  --ora-swlib-bucket gs://[cloud-storage-bucket-name] \
+  --ora-disk-mgmt FS \
+  --ora-data-mounts data_mounts_config.json \
+  --ora-data-destination "/u02/app/oracle/oradata" \
+  --ora-reco-destination "/u03/app/oracle/fast_recovery_area" \
+  --backup-dest "/u04/app/oracle/backups"
 ```
 
 ### Specifying LVM logical volumes
@@ -1723,7 +1792,8 @@ ORA_DISK_MGMT
 --ora-disk-mgmt
 </pre></p></td>
 <td>asmlib<br>
-udev</td>
+asmudev<br>
+fs</td>
 <td>ASMlib option is applicable to Oracle Linux as RHEL implementation requires
 Red Hat support. See MOS Doc ID: 1089399.1</td>
 </tr>
@@ -2418,7 +2488,7 @@ ORA_DB_DOMAIN=world
 ORA_DB_NAME=PROD1
 ORA_DB_NCHARSET=AL16UTF16
 ORA_DB_TYPE=MULTIPURPOSE
-ORA_DISK_MGMT=UDEV
+ORA_DISK_MGMT=ASMUDEV
 ORA_EDITION=EE
 ORA_LISTENER_NAME=LISTENER
 ORA_LISTENER_PORT=1521
@@ -2511,7 +2581,7 @@ ORA_DB_DOMAIN=world
 ORA_DB_NAME=ORCL
 ORA_DB_NCHARSET=AL16UTF16
 ORA_DB_TYPE=MULTIPURPOSE
-ORA_DISK_MGMT=UDEV
+ORA_DISK_MGMT=ASMUDEV
 ORA_EDITION=SE2
 ORA_LISTENER_NAME=LISTENER
 ORA_LISTENER_PORT=1521
@@ -2707,7 +2777,7 @@ User-provided values are ignored.</td>
 ORA_DISK_MGMT
 --ora-disk-mgmt
 </pre></p></td>
-<td>UDEV (default)</td>
+<td>ASMUDEV (default)</td>
 <td>ASMlib is incompatible with free edition.<br>
 <br>
 User-provided values are ignored.</td>
@@ -2853,7 +2923,7 @@ ORA_DB_DOMAIN=
 ORA_DB_NAME=FREE
 ORA_DB_NCHARSET=AL16UTF16
 ORA_DB_TYPE=MULTIPURPOSE
-ORA_DISK_MGMT=UDEV
+ORA_DISK_MGMT=ASMUDEV
 ORA_EDITION=FREE
 ORA_LISTENER_NAME=LISTENER
 ORA_LISTENER_PORT=1521
