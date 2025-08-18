@@ -97,28 +97,32 @@
     - not free_edition
   changed_when: "'Date    Time    Name' not in shell_result.stdout"
 
+- name: gcsdirect | Build list of unique RDBMS patches for GI installations
+  set_fact:
+    rdbms_patch_files: >-
+      {{ (rdbms_patches
+          | selectattr('release', 'equalto', oracle_rel)
+          | selectattr('category', 'equalto', 'RU_Combo')
+          | map(attribute='patchfile')
+          | list) | unique }}
+  when: gi_install
+
 - name: gcsdirect | Build list of unique RDBMS patches
   set_fact:
     rdbms_patch_files: >-
       {{ (rdbms_patches
           | selectattr('release', 'equalto', oracle_rel)
-          | selectattr('category', 'equalto', 'RU_Combo'))
-          | unique(attribute='patchfile')
-          | list
-          if gi_install else
-            (rdbms_patches
-              | selectattr('release', 'equalto', oracle_rel)
-              | selectattr('category', 'in', ['DB_OJVM_RU','DB_RU']))
-            | unique(attribute='patchfile')
-            | list
-      }}
+          | selectattr('category', 'in', ['DB_OJVM_RU','DB_RU'])
+          | map(attribute='patchfile')
+          | list) | unique }}
+  when: not gi_install
 
 - name: gcsdirect | Copy RDBMS patches from GCS to target instance
   shell: |
     set -o pipefail
-    if ! unzip -l "{{ swlib_path }}/{{ item.patchfile }}"
+    if ! unzip -l "{{ swlib_path }}/{{ item }}"
       then
-        gcloud storage cp gs://{{ swlib_mount_src }}/{{ item.patchfile }} "{{ swlib_path }}/{{ item.patchfile }}"
+        gcloud storage cp gs://{{ swlib_mount_src }}/{{ item }} "{{ swlib_path }}/{{ item }}"
     fi
   register: shell_result
   args:

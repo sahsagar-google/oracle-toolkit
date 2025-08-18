@@ -16,7 +16,7 @@
 - name: check-swlib | Validate base software release
   shell: |
     set -o pipefail
-    if gcloud storage objects describe gs://"{{ swlib_mount_src }}"/"{{ item.1.name }}"; then
+    if gcloud storage objects describe gs://"{{ swlib_mount_src }}"/"{{ item.1.name }}" >/dev/null 2>&1; then
       f_name="{{ item.1.name }}"
       expected_md5="{{ item.1.md5sum }}"
     else
@@ -40,21 +40,30 @@
   when: item.0.version == oracle_ver
   register: base_repo_files
 
-- name: Build list of unique RDBMS patches
+- name: check-swlib | Build list of unique RDBMS patches for GI installations
   set_fact:
-    rdbms_patch_files: >-
+    unique_patch_files: >-
       {{ (rdbms_patches
           | selectattr('release', 'equalto', oracle_rel)
-          | selectattr('category', 'equalto', 'RU_Combo'))
-          | unique(attribute='patchfile')
-          | list
-          if asm_disk_management != 'fs' else
-            (rdbms_patches
-              | selectattr('release', 'equalto', oracle_rel)
-              | selectattr('category', 'in', ['DB_OJVM_RU','DB_RU']))
-            | unique(attribute='patchfile')
-            | list
-      }}
+          | selectattr('category', 'equalto', 'RU_Combo')
+          | map(attribute='patchfile') | list) | unique }}
+  when: gi_install
+
+- name: check-swlib | Build list of unique RDBMS patches
+  set_fact:
+    unique_patch_files: >-
+      {{ (rdbms_patches
+          | selectattr('release', 'equalto', oracle_rel)
+          | selectattr('category', 'in', ['DB_OJVM_RU','DB_RU'])
+          | map(attribute='patchfile') | list) | unique }}
+  when: not gi_install
+
+- name: check-swlib | Capture full details for required patches
+  set_fact:
+    rdbms_patch_files: >-
+      {{ rdbms_patches
+          | selectattr('patchfile', 'in', unique_patch_files)
+          | list }}
 
 - name: check-swlib | Validate patchsets
   shell: |
