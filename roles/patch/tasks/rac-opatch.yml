@@ -200,7 +200,7 @@
   with_items: "{{ rdbms_patches }}"
   when: item.release == oracle_rel
   become: true
-  tags: rac-opatch,sw_unzip
+  tags: rac-opatch,sw-unzip
 
 - name: rac-opatch | Run RDBMS opatch analyze
   command: "{{ oracle_home }}/OPatch/opatch prereq CheckConflictAgainstOHWithDetail -ph ./"
