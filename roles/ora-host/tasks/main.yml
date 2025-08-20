@@ -290,7 +290,7 @@
     state: present
     label: gpt
   when:
-    - asm_disk_management == "asmlib"
+    - asm_disk_management != "fs"
     - "'mapper' not in item.1.blk_device"
   run_once: true
   with_subelements:
@@ -301,7 +301,7 @@
 - include_role:
     name: common
     tasks_from: populate-asm-disks.yml
-  when: asm_disk_management == "asmlib"
+  when: asm_disk_management != "fs"
 
 - name: (debug) asm disk configuration
   debug:
@@ -310,7 +310,7 @@
       - asm_def_file {{ asm_definition_file }}
       - asm_disk_input {{ asm_disk_input }}
     verbosity: 0
-  when: asm_disk_management == "asmlib"
+  when: asm_disk_management != "fs"
   tags: asm-disks
 
 ######## Udev rules for non-multipath disks ########

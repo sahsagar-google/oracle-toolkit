@@ -51,7 +51,6 @@
   when:
     - cluster_name is not defined
     - not free_edition
-    - asm_disk_management != "fs"
 
 - name: Free Edition cleanup steps
   become: true
