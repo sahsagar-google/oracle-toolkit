@@ -14,7 +14,7 @@
 
 ---
 # files with alt_name are stored as name for simplicity
-- name: gcstransfer | Transfer RDBMS and GI software from GCS to target instance
+- name: gcstransfer | Transfer GI software from GCS to target instance
   shell: |
     set -o pipefail
     {% for f in item.files %}
@@ -34,13 +34,12 @@
   args:
     executable: /bin/bash
   with_items:
-    - "{{ rdbms_software }}"
     - "{{ gi_software }}"
     - "{{ gi_interim_patches }}"
   when:
+    - gi_install
     - item.version == oracle_ver
     - patch_only is not defined
-    - not free_edition
   changed_when: "'Date    Time    Name' not in shell_result.stdout"
   delegate_to: 127.0.0.1
 
@@ -57,7 +56,9 @@
   args:
     executable: /bin/bash
   with_items: "{{ gi_patches }}"
-  when: item.release == oracle_rel
+  when:
+    - gi_install
+    - item.release == oracle_rel
   changed_when: "'Date    Time    Name' not in shell_result.stdout"
   delegate_to: 127.0.0.1
 
@@ -79,20 +80,68 @@
   changed_when: "'Date    Time    Name' not in shell_result.stdout"
   delegate_to: 127.0.0.1
 
+# files with alt_name are stored as name for simplicity
+- name: gcstransfer | Transfer RDBMS software from GCS to target instance
+  shell: |
+    set -o pipefail
+    {% for f in item.files %}
+    if gsutil ls gs://{{ swlib_mount_src }}/{{ f.name }} >/dev/null 2>&1; then
+      f_name="{{ f.name }}"
+    else
+      f_name="{{ f.alt_name | default('x') }}"
+    fi
+    if ! ssh -i {{ ansible_ssh_private_key_file }} {{ ansible_ssh_extra_args }} {{ ansible_ssh_user }}@{{ ansible_ssh_host }} \
+      "unzip -l {{ swlib_path }}/{{ f.name }}"
+      then
+        gsutil cat gs://"{{ swlib_mount_src }}"/"${f_name}" | ssh -i {{ ansible_ssh_private_key_file }} {{ ansible_ssh_extra_args }} \
+          {{ ansible_ssh_user }}@{{ ansible_ssh_host }} "cat > {{ swlib_path }}/{{ f.name }}"
+    fi
+    {% endfor %}
+  register: shell_result
+  args:
+    executable: /bin/bash
+  with_items: "{{ rdbms_software }}"
+  when:
+    - item.version == oracle_ver
+    - patch_only is not defined
+    - not free_edition
+  changed_when: "'Date    Time    Name' not in shell_result.stdout"
+  delegate_to: 127.0.0.1
+
+- name: gcstransfer | Build list of unique RDBMS patches for GI installations
+  set_fact:
+    rdbms_patch_files: >-
+      {{ (rdbms_patches
+          | selectattr('release', 'equalto', oracle_rel)
+          | selectattr('category', 'equalto', 'RU_Combo')
+          | map(attribute='patchfile')
+          | list) | unique }}
+  when: gi_install
+
+- name: gcstransfer | Build list of unique RDBMS patches
+  set_fact:
+    rdbms_patch_files: >-
+      {{ (rdbms_patches
+          | selectattr('release', 'equalto', oracle_rel)
+          | selectattr('category', 'in', ['DB_OJVM_RU','DB_RU'])
+          | map(attribute='patchfile')
+          | list) | unique }}
+  when: not gi_install
+
 - name: gcstransfer | Transfer RDBMS patches from GCS to target instance
   shell: |
     set -o pipefail
     if ! ssh -i {{ ansible_ssh_private_key_file }} {{ ansible_ssh_extra_args }} {{ ansible_ssh_user }}@{{ ansible_ssh_host }} \
-      "unzip -l {{ swlib_path }}/{{ item.patchfile }}"
+      "unzip -l {{ swlib_path }}/{{ item }}"
       then
-        gcloud storage cat gs://{{ swlib_mount_src }}/{{ item.patchfile }} | ssh -i {{ ansible_ssh_private_key_file }} {{ ansible_ssh_extra_args }} \
-          {{ ansible_ssh_user }}@{{ ansible_ssh_host }} "cat > {{ swlib_path }}/{{ item.patchfile }}"
+        gcloud storage cat gs://{{ swlib_mount_src }}/{{ item }} | ssh -i {{ ansible_ssh_private_key_file }} {{ ansible_ssh_extra_args }} \
+          {{ ansible_ssh_user }}@{{ ansible_ssh_host }} "cat > {{ swlib_path }}/{{ item }}"
     fi
   register: shell_result
   args:
     executable: /bin/bash
-  with_items: "{{ rdbms_patches }}"
-  when: item.release == oracle_rel
+  with_items: "{{ rdbms_patch_files }}"
+  when: rdbms_patch_files is defined and rdbms_patch_files | length > 0
   changed_when: "'Date    Time    Name' not in shell_result.stdout"
   delegate_to: 127.0.0.1
 
