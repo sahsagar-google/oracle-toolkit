@@ -363,6 +363,13 @@ applicable licenses governing such software. The toolkit doesn't contain any
 Oracle software. You are responsible for procuring the Oracle software that you
 need and for complying with the applicable licenses.
 
+If you are deploying the Oracle Database Free edition, downloading and staging
+the software is optional. Doing so may be useful in cases where the database VM
+has no direct internet access. Alternatively, the required Free edition RPMs
+can be downloaded directly from oracle.com, based on the values set in the
+Ansible `rdbms_software` variable. For more information, see the
+[Free Edition Version Details](#free-edition-version-details) section.
+
 ### Downloading the Oracle installation software
 
 Oracle software is divided into two general categories: **base software** that
@@ -2658,7 +2665,7 @@ Similar to with the other editions, creation of an initial database and implemen
 
 ### Free Edition Version Details
 
-> NOTE: Oracle has released serveral versions of Free edition, often **without chaning the RPM file name**. More recently though, they have been incorporating the version number in the file name.
+> NOTE: Beginning with the April 2025 release (23.8), Oracle started using unique filenames for the Free edition, a change from their previous practice of reusing the same RPM filename for new versions.
 
 The toolkit can install _any_ free edition version. Which version is actually installed depends on the the actual RPM file in the software library, and possibly the command line switches.
 
@@ -2675,7 +2682,7 @@ Specific supported versions of Oracle Database 23 Free currently includes:
 |   23c   |   23.3.0.23.09   | `oracle-database-free-23c-1.0-1.el8.x86_64.rpm`   | `oracle-database-preinstall-23c-1.0-1.el8.x86_64.rpm`  |
 |   23c   |    23.2.0.0.0    | `oracle-database-free-23c-1.0-1.el8.x86_64.rpm`   | `oracle-database-preinstall-23c-1.0-1.el8.x86_64.rpm`  |
 
-The toolkit can install Oracle Database 23 Free based on software staged in your software library, or by downloading the required Oracle RPM files from the Oracle web site.
+By default, the toolkit fetches Free edition software directly from oracle.com. It can also be configured to fetch from your own software library, such as when the database VM has no direct Internet access.
 
 To leverage files in your software library, simply include just the file names in the Ansible `rdbms_software` variable in the [roles/common/defaults/main.yml](../roles/common/defaults/main.yml). For example:
 
