@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-instance_name="github-presubmit-dg-${BUILD_ID}"
-deployment_name="presubmit-dg-${BUILD_ID}"
-tfvars_file="./presubmit_tests/data-guard.tfvars"
+instance_name="github-presubmit-free-${BUILD_ID}"
+deployment_name="presubmit-free-${BUILD_ID}"
+tfvars_file="./presubmit_tests/free-edition.tfvars"
 location="us-central1"
 setup_vars()
 
