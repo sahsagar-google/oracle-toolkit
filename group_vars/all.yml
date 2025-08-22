@@ -15,7 +15,7 @@
 ---
 # Defined boolean if installing Free Edition
 free_edition: "{{ oracle_edition == 'FREE' }}"
-gi_install: "{{ not free_edition and not asm_disk_management == 'fs' }}"
+gi_install: "{{ not free_edition and not ora_disk_management == 'fs' }}"
 
 # Installation related variables:
 swlib_path: "{{ lookup('env','ORA_SWLIB_PATH') | lower | default(swlib_path_default,true) }}"
@@ -81,7 +81,7 @@ charset: "{{ lookup('env','ORA_DB_CHARSET') | default('AL32UTF8',true) }}"
 ncharset: "{{ lookup('env','ORA_DB_NCHARSET') | default('AL16UTF16',true) }}"
 
 # ASM and storage related variables:
-asm_disk_management: "{{ lookup('env','ORA_DISK_MGMT') | lower | default('udev',true) }}"
+ora_disk_management: "{{ lookup('env','ORA_DISK_MGMT') | lower | default('udev',true) }}"
 role_separation: "{{ lookup('env','ORA_ROLE_SEPARATION') | default('true', true) | lower | bool }}"
 data_destination: "{{ lookup('env','ORA_DATA_DESTINATION') | default('DATA',true) }}"
 reco_destination: "{{ lookup('env','ORA_RECO_DESTINATION') | default('RECO',true) }}"
