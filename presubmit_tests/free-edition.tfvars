@@ -14,7 +14,7 @@
 
 # See variables.tf for a full list, and descriptions.
 
-# Placeholder values in the form "@value@" will be replaced with actual values by the single-instance-on-gcp.sh script.
+# Placeholder values in the form "@value@" will be replaced with actual values by the calling script.
 gcs_source = "@gcs_source@"
 deployment_name = "@deployment_name@"
 instance_name = "@instance_name@"
@@ -49,3 +49,4 @@ ora_release = ""
 ora_edition = "FREE"
 ora_backup_dest = "/u01"
 ora_db_name = "orcl"
+

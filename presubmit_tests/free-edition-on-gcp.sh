@@ -13,13 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+source presubmit_tests/infra-manager-lib.sh
+
 instance_name="github-presubmit-free-${BUILD_ID}"
 deployment_name="presubmit-free-${BUILD_ID}"
 tfvars_file="./presubmit_tests/free-edition.tfvars"
 location="us-central1"
-setup_vars()
 
+setup_vars
 trap cleanup SIGINT SIGTERM EXIT
-
-apply_deployment()
-watch_logs()
+apply_deployment
+watch_logs

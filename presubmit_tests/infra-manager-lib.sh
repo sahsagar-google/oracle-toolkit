@@ -17,11 +17,11 @@
 
 # Performs initial variable setup.
 setup_vars() {
-  if [[ -n "$BUILD_ID" ]]; then
+  if [[ -z "$BUILD_ID" ]]; then
     echo "\$BUILD_ID is not set; are you running from prow?"
     exit 1
   fi
-  apk add --no-cache zip curl py3-pip expect || exit 1
+  #apk add --no-cache zip curl py3-pip expect || exit 1
   gcs_bucket="gs://oracle-toolkit-presubmit-artifacts"
   # Append BUILD_ID to the file name to ensure each zip file gets a unique name.
   # This prevents one test from deleting the file while it's still in use by another concurrently running test.
@@ -44,7 +44,7 @@ cleanup() {
   fi
   echo "Cleaning up: deleting ${gcs_source} GCS object and ${deployment_id} Infra Manager deployment..."
   if gcloud infra-manager deployments describe "${deployment_id}" >/dev/null 2>&1; then
-    gcloud --quiet infra-manager deployments delete "${deployment_id}" 
+    gcloud --quiet infra-manager deployments delete "${deployment_id}"
   fi
   if gcloud storage objects describe "${gcs_source}" >/dev/null 2>&1; then
     gcloud --quiet storage rm "${gcs_source}"
@@ -55,7 +55,7 @@ cleanup() {
 apply_deployment() {
   echo "Zipping CWD into /tmp/${toolkit_zip_file_name} and uploading to ${gcs_bucket}/..."
   zip -r /tmp/"${toolkit_zip_file_name}" . -x ".git*" -x ".terraform*" -x "terraform*" -x OWNERS > /dev/null
-  if ! gcloud --quiet storage cp /tmp/"${toolkit_zip_file_name}" "${gcs_bucket}/"; then 
+  if ! gcloud --quiet storage cp /tmp/"${toolkit_zip_file_name}" "${gcs_bucket}/"; then
     echo "ERROR: Failed to upload /tmp/"${toolkit_zip_file_name}" to "${gcs_bucket}/". Make sure the service account has write permissions on the bucket."
     exit 1
   fi
@@ -91,10 +91,10 @@ setup_logging() {
   }
 
   read -r -d '' query <<EOF
-  resource.type="gce_instance"
-  log_name="projects/${project_id}/logs/google_metadata_script_runner"
-  resource.labels.instance_id="${control_node_instance_id}"
-  EOF
+resource.type="gce_instance"
+log_name="projects/${project_id}/logs/google_metadata_script_runner"
+resource.labels.instance_id="${control_node_instance_id}"
+EOF
   encoded_query="$(python3 -c "import urllib.parse, sys; print(urllib.parse.quote(sys.stdin.read(), safe=''), end='')" <<< "$query")"
   duration="PT1H"
   console_link="https://console.cloud.google.com/logs/query;query=${encoded_query};duration=${duration}?project=${project_id}"
@@ -124,7 +124,7 @@ setup_logging() {
       --format='value(timestamp.date(format="%Y-%m-%d %H:%M:%S"), json_payload.message.sub("^startup-script: ", ""))'
       echo "$(date '+%Y-%m-%d %H:%M:%S')     Tail session ended. Restarting..."
     done
-  EOF
+EOF
 
   tail_pgid_leader=$!
 }
