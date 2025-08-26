@@ -17,10 +17,10 @@
   set_fact:
     ssh_cmd: "ssh -i {{ ansible_ssh_private_key_file }} {{ ansible_ssh_extra_args }} {{ ansible_ssh_user }}@{{ ansible_ssh_host }}"
 
-- name: gcstransfer | Transfer OPatch (always)
+- name: gcstransfer | Transfer OPatch
   shell: |
     set -o pipefail
-    gcloud storage cat gs://{{ swlib_mount_src }}/{{ item }} | {{ ssh_cmd }} "cat > {{ swlib_path }}/{{ item }}"
+    gcloud storage cat "gs://{{ swlib_mount_src }}/{{ item }}" | {{ ssh_cmd }} "cat > \"{{ swlib_path }}/{{ item }}\""
   register: shell_result
   args:
     executable: /bin/bash
@@ -31,13 +31,13 @@
 - name: gcstransfer | Transfer base software files using file_name or alt_name
   shell: |
     set -o pipefail
-    if gcloud storage ls gs://{{ swlib_mount_src }}/{{ item.file_name }} >/dev/null 2>&1; then
+    if gcloud storage ls "gs://{{ swlib_mount_src }}/{{ item.file_name }}" >/dev/null 2>&1; then
       f_name="{{ item.file_name }}"
     else
       f_name="{{ item.alt_name | default('x') }}"
     fi
-    if ! {{ ssh_cmd }} unzip -l "{{ swlib_path }}/${f_name}"; then
-      gcloud storage cat gs://"{{ swlib_mount_src }}"/"${f_name}" | {{ ssh_cmd }} "cat > {{ swlib_path }}/{{ item.file_name }}"
+    if ! {{ ssh_cmd }} "unzip -l \"{{ swlib_path }}/${f_name}\""; then
+      gcloud storage cat "gs://{{ swlib_mount_src }}/${f_name}" | {{ ssh_cmd }} "cat > \"{{ swlib_path }}/{{ item.file_name }}\""
     fi
   register: shell_result
   args:
@@ -49,8 +49,8 @@
 - name: gcstransfer | Transfer patch files
   shell: |
     set -o pipefail
-    if ! {{ ssh_cmd }} unzip -l "{{ swlib_path }}/{{ item }}"; then
-      gcloud storage cat gs://{{ swlib_mount_src }}/{{ item }} | {{ ssh_cmd }} "cat > {{ swlib_path }}/{{ item }}"
+    if ! {{ ssh_cmd }} "unzip -l \"{{ swlib_path }}/{{ item }}\""; then
+      gcloud storage cat "gs://{{ swlib_mount_src }}/{{ item }}" | {{ ssh_cmd }} "cat > \"{{ swlib_path }}/{{ item }}\""
     fi
   register: shell_result
   args:
@@ -59,20 +59,15 @@
   changed_when: "'Date    Time    Name' not in shell_result.stdout"
   delegate_to: localhost
 
-################################################################################
-
 - name: gcstransfer | Download or transfer RPM software from GCS to target instance
   shell: |
     set -o pipefail
     {% for f in item.files %}
-    if ! ssh -i {{ ansible_ssh_private_key_file }} {{ ansible_ssh_extra_args }} {{ ansible_ssh_user }}@{{ ansible_ssh_host }} \
-      "rpm -qp {{ swlib_path }}/{{ f.name | basename }}"; then
+    if ! {{ ssh_cmd }} "rpm -qp \"{{ swlib_path }}/{{ f.name | basename }}\""; then
       if [[ "{{ f.name }}" == https://*oracle.com/* || "{{ f.name }}" == http://*oracle.com/* ]]; then
-        ssh -i {{ ansible_ssh_private_key_file }} {{ ansible_ssh_extra_args }} {{ ansible_ssh_user }}@{{ ansible_ssh_host }} \
-          curl --location --silent --connect-timeout 20 --fail -o "{{ swlib_path }}/{{ f.name | basename }}" "{{ f.name }}" && echo "File downloaded"
+        {{ ssh_cmd }} "curl --location --silent --connect-timeout 20 --fail -o \"{{ swlib_path }}/{{ f.name | basename }}\" \"{{ f.name }}\" && echo \"File downloaded\""
       else
-        gcloud storage cat gs://"{{ swlib_mount_src }}"/"{{ f.name }}" | ssh -i {{ ansible_ssh_private_key_file }} {{ ansible_ssh_extra_args }} \
-          {{ ansible_ssh_user }}@{{ ansible_ssh_host }} "cat > {{ swlib_path }}/{{ f.name }}" && echo "File copied"
+        gcloud storage cat "gs://{{ swlib_mount_src }}/{{ f.name }}" | {{ ssh_cmd }} "cat > \"{{ swlib_path }}/{{ f.name }}\" && echo \"File copied\""
       fi
     fi
     {% endfor %}

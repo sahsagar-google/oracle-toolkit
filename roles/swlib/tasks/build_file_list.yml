@@ -100,5 +100,5 @@
       opatch_file_list: "{{ opatch_file_list }}"
       base_sw_file_list: "{{ base_sw_file_list }}"
       patch_file_list: "{{ patch_file_list }}"
-    verbosity: 0
+    verbosity: 1
   when: not free_edition
