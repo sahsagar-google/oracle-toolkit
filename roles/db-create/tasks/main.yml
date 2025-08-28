@@ -160,7 +160,8 @@
 - name: Save PDBs state
   shell: |
     set -o pipefail
-    sqlplus / as sysdba << EOF
+    sqlplus / as sysdba <<EOF
+    whenever sqlerror exit sql.sqlcode
     alter pluggable database all save state;
     EOF
   environment:
