@@ -37,4 +37,5 @@ else
   sed -i '/^\#\{0,\} \{0,\}storageType \{0,\}=/I             s~\#\{0,\} \{0,\}storageType \{0,\}=.*~storageType=FS~I'                                               "${response_file}"
   sed -i '/^\#\{0,\} \{0,\}datafileDestination \{0,\}=/I     s~\#\{0,\} \{0,\}datafileDestination \{0,\}=.*~datafileDestination='{{ data_destination }}'~I'         "${response_file}"
   sed -i '/^\#\{0,\} \{0,\}recoveryAreaDestination \{0,\}=/I s~\#\{0,\} \{0,\}recoveryAreaDestination \{0,\}=.*~recoveryAreaDestination='{{ reco_destination }}'~I' "${response_file}"
+  sed -i '/^\#\{0,\} \{0,\}initParams \{0,\}=/I              s~$~,db_create_file_dest='{{ data_destination }}'~'                                                    "${response_file}"
 fi
