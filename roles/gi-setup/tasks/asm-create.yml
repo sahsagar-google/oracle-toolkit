@@ -39,7 +39,7 @@
     ${ORACLE_HOME}/bin/srvctl add asm -d '{{ asm_diskstring }}'
     ${ORACLE_HOME}/bin/srvctl start asm
     sqlplus -s / as sysasm <<EOF
-    whenever sqlerror exit sql.sqlcode
+    whenever sqlerror exit failure
     create spfile from pfile;
     EOF
     ${ORACLE_HOME}/bin/srvctl stop asm
@@ -64,7 +64,7 @@
   shell: |
     set -o pipefail
     sqlplus -s / as sysasm <<EOF
-    whenever sqlerror exit sql.sqlcode
+    whenever sqlerror exit failure
     CREATE DISKGROUP {{ item.diskgroup }} EXTERNAL REDUNDANCY
     {% for i in item.disks %}  DISK 'ORCL:{{ i.name }}'
     {% endfor %}
@@ -90,7 +90,7 @@
   shell: |
     set -o pipefail
     sqlplus -s / as sysasm <<EOF
-    whenever sqlerror exit sql.sqlcode
+    whenever sqlerror exit failure
     CREATE DISKGROUP {{ item.diskgroup }} EXTERNAL REDUNDANCY
     {% for i in item.disks %}  DISK '/dev/{{ path_udev }}/{{ i.name }}'
     {% endfor %}

@@ -17,7 +17,7 @@
   shell: |
     set -o pipefail
     sqlplus -s / as sysasm <<EOF
-    whenever sqlerror exit sql.sqlcode
+    whenever sqlerror exit failure
     select name from v\$asm_diskgroup;
     EOF
   environment:
@@ -36,7 +36,7 @@
   shell: |
     set -o pipefail
     sqlplus -s / as sysasm <<EOF
-    whenever sqlerror exit sql.sqlcode
+    whenever sqlerror exit failure
     CREATE DISKGROUP {{ item.diskgroup }} EXTERNAL REDUNDANCY
     {% for i in item.disks %}  DISK 'ORCL:{{ i.name }}'
     {% endfor %}
@@ -64,7 +64,7 @@
   shell: |
     set -o pipefail
     sqlplus -s / as sysasm <<EOF
-    whenever sqlerror exit sql.sqlcode
+    whenever sqlerror exit failure
     CREATE DISKGROUP {{ item.diskgroup }} EXTERNAL REDUNDANCY
     {% for i in item.disks %}  DISK '/dev/{{ path_udev }}/{{ i.name }}'
     {% endfor %}

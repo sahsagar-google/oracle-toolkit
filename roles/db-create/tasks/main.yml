@@ -161,7 +161,7 @@
   shell: |
     set -o pipefail
     sqlplus / as sysdba <<EOF
-    whenever sqlerror exit sql.sqlcode
+    whenever sqlerror exit failure
     alter pluggable database all save state;
     EOF
   environment:

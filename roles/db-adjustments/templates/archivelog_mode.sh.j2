@@ -9,7 +9,7 @@ else
 fi
 
 sqlplus -s -L / as sysdba <<EOF
-whenever sqlerror exit sql.sqlcode
+whenever sqlerror exit failure
 startup mount
 alter database archivelog;
 alter database open;

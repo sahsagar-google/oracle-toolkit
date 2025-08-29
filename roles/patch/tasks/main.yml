@@ -106,7 +106,7 @@
       shell: |
         set -o pipefail
         sqlplus -s / as sysdba <<EOF
-        whenever sqlerror exit sql.sqlcode
+        whenever sqlerror exit failure
         set heading off
         select database_role from v\$database;
         EOF
@@ -206,7 +206,7 @@
   shell: |
     set -o pipefail
     sqlplus -s / as sysdba <<EOF
-    whenever sqlerror exit sql.sqlcode
+    whenever sqlerror exit failure
     shutdown immediate;
     EOF
   environment:
@@ -265,7 +265,7 @@
   shell: |
     set -o pipefail
     sqlplus -s / as sysdba <<EOF
-    whenever sqlerror exit sql.sqlcode
+    whenever sqlerror exit failure
     startup;
     EOF
   environment:

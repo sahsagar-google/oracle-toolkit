@@ -32,7 +32,7 @@
   shell: |
     set -o pipefail
     sqlplus -s / as sysdba <<EOF
-    whenever sqlerror exit sql.sqlcode
+    whenever sqlerror exit failure
     startup {{ startup_upgrade }};
     EOF
   environment:
@@ -54,7 +54,7 @@
   shell: |
     set -o pipefail
     sqlplus -s / as sysdba <<EOF
-    whenever sqlerror exit sql.sqlcode
+    whenever sqlerror exit failure
     alter pluggable database all open {{ startup_upgrade }};
     EOF
   environment:
@@ -99,7 +99,7 @@
   shell: |
     set -o pipefail
     sqlplus -s / as sysdba <<EOF
-    whenever sqlerror exit sql.sqlcode
+    whenever sqlerror exit failure
     @catbundle.sql psu apply
     EOF
   args:
@@ -126,7 +126,7 @@
   shell: |
     set -o pipefail
     sqlplus -s / as sysdba <<EOF
-    whenever sqlerror exit sql.sqlcode
+    whenever sqlerror exit failure
     @?/rdbms/admin/utlrp;
     EOF
   environment:
@@ -141,7 +141,7 @@
   shell: |
     set -o pipefail
     sqlplus -s / as sysdba <<EOF
-    whenever sqlerror exit sql.sqlcode
+    whenever sqlerror exit failure
     set pages 0 lines 200
     col action_time for a28
     col action for a10
@@ -168,7 +168,7 @@
   shell: |
     set -o pipefail
     sqlplus -s / as sysdba <<EOF
-    whenever sqlerror exit sql.sqlcode
+    whenever sqlerror exit failure
     shutdown immediate
     EOF
   environment:

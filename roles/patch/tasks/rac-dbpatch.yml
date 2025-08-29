@@ -22,7 +22,7 @@
   shell: |
     set -o pipefail
     sqlplus -s / as sysdba <<EOF
-    whenever sqlerror exit sql.sqlcode
+    whenever sqlerror exit failure
     alter system set cluster_database=false scope=spfile;
     EOF
   environment:
@@ -50,7 +50,7 @@
   shell: |
     set -o pipefail
     sqlplus -s / as sysdba <<EOF
-    whenever sqlerror exit sql.sqlcode
+    whenever sqlerror exit failure
     startup {{ startup_upgrade }};
     EOF
   environment:
@@ -66,7 +66,7 @@
   shell: |
     set -o pipefail
     sqlplus -s / as sysdba <<EOF
-    whenever sqlerror exit sql.sqlcode
+    whenever sqlerror exit failure
     begin
       for c in (select 1 from v\$system_parameter2 where name = 'enable_pluggable_database' and value = 'TRUE')
     loop
@@ -111,7 +111,7 @@
   shell: |
     set -o pipefail
     sqlplus -s / as sysdba <<EOF
-    whenever sqlerror exit sql.sqlcode
+    whenever sqlerror exit failure
     @catbundle.sql psu apply
     EOF
   args:
@@ -138,7 +138,7 @@
   shell: |
     set -o pipefail
     sqlplus -s / as sysdba <<EOF
-    whenever sqlerror exit sql.sqlcode
+    whenever sqlerror exit failure
     @?/rdbms/admin/utlrp;
     EOF
   environment:
@@ -153,7 +153,7 @@
   shell: |
     set -o pipefail
     sqlplus -s / as sysdba <<EOF
-    whenever sqlerror exit sql.sqlcode
+    whenever sqlerror exit failure
     set pages 0 lines 200
     col action_time for a28
     col action for a10
@@ -181,7 +181,7 @@
   shell: |
     set -o pipefail
     sqlplus -s / as sysdba <<EOF
-    whenever sqlerror exit sql.sqlcode
+    whenever sqlerror exit failure
     alter system set cluster_database=true scope=spfile;
     EOF
   environment:
@@ -209,7 +209,7 @@
   shell: |
     set -o pipefail
     sqlplus -s / as sysdba <<EOF
-    whenever sqlerror exit sql.sqlcode
+    whenever sqlerror exit failure
     begin
       for c in (select 1 from v\$system_parameter2 where name = 'enable_pluggable_database' and value = 'TRUE')
     loop
@@ -254,7 +254,7 @@
   shell: |
     set -o pipefail
     sqlplus -s / as sysdba <<EOF
-    whenever sqlerror exit sql.sqlcode
+    whenever sqlerror exit failure
     @?/rdbms/admin/utlrp;
     EOF
   environment:
@@ -269,7 +269,7 @@
   shell: |
     set -o pipefail
     sqlplus -s / as sysdba <<EOF
-    whenever sqlerror exit sql.sqlcode
+    whenever sqlerror exit failure
     begin
       for c in (select 1 from v\$system_parameter2 where name = 'enable_pluggable_database' and value = 'TRUE')
     loop
