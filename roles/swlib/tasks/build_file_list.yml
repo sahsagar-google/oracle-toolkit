@@ -40,22 +40,26 @@
     - gi_install
     - patch_only is not defined
 
+- name: build_file_list | Build list of RDBMS base software by edition
+  set_fact:
+    rdbms_edition_sw: "{{ (rdbms_software | selectattr('edition', 'equalto', oracle_edition))
+                        + (rdbms_software | selectattr('edition', 'search', '\\b' + oracle_edition + '\\b'))
+                       }}"
+
 - name: build_file_list | Build list of RDBMS base software
   set_fact:
     rdbms_base_files: >-
-      {{ rdbms_software
+      {{ rdbms_edition_sw
          | selectattr('version', 'equalto', oracle_ver)
          | map(attribute='files')
          | flatten
-      }}
-  when:
-    - not free_edition
-    - patch_only is not defined
+         | unique
+       }}
+  when: patch_only is not defined
 
 - name: build_file_list | Build list of all base software (with alternative names)
   set_fact:
     base_sw_file_list: "{{ (gi_base_files + rdbms_base_files) | json_query('[*].{file_name:name,alt_name:alt_name}') }}"
-  when: not free_edition
 
 - name: build_file_list | Build list of GI patches
   set_fact:
@@ -101,4 +105,3 @@
       base_sw_file_list: "{{ base_sw_file_list }}"
       patch_file_list: "{{ patch_file_list }}"
     verbosity: 1
-  when: not free_edition
