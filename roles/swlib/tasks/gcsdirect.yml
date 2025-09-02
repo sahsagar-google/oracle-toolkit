@@ -38,6 +38,7 @@
   args:
     executable: /bin/bash
   with_items: "{{ base_sw_file_list | unique }}"
+  when: not free_edition
   changed_when: "'Date    Time    Name' not in shell_result.stdout"
 
 - name: gcsdirect | Copy patch files
@@ -56,20 +57,16 @@
 - name: gcsdirect | Download or copy RPM software from GCS to target instance
   shell: |
     set -o pipefail
-    {% for f in item.files %}
-    if ! rpm -qp "{{ swlib_path }}/{{ f.name | basename }}"; then
-      if [[ "{{ f.name }}" == https://*oracle.com/* || "{{ f.name }}" == http://*oracle.com/* ]]; then
-        curl --location --silent --connect-timeout 20 --fail -o "{{ swlib_path }}/{{ f.name | basename }}" "{{ f.name }}" && echo "File downloaded"
+    if ! rpm -qp "{{ swlib_path }}/{{ item.file_name | basename }}"; then
+      if [[ "{{ item.file_name }}" == https://*oracle.com/* || "{{ item.file_name }}" == http://*oracle.com/* ]]; then
+        curl --location --silent --connect-timeout 20 --fail -o "{{ swlib_path }}/{{ item.file_name | basename }}" "{{ item.file_name }}" && echo "File downloaded"
       else
-        gcloud storage cp "gs://{{ swlib_mount_src }}/{{ f.name }}" "{{ swlib_path }}/{{ f.name }}" && echo "File copied"
+        gcloud storage cp "gs://{{ swlib_mount_src }}/{{ item.file_name }}" "{{ swlib_path }}/{{ item.file_name }}" && echo "File copied"
       fi
     fi
-    {% endfor %}
   register: shell_result
   args:
     executable: /bin/bash
-  with_items: "{{ rdbms_software }}"
-  when:
-    - item.version == oracle_ver
-    - free_edition
+  with_items: "{{ base_sw_file_list }}"
+  when: free_edition
   changed_when: '"File downloaded" in shell_result.stdout or "File copied" in shell_result.stdout'
