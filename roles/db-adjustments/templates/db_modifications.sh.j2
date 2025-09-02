@@ -1,13 +1,41 @@
 source oraenv <<< {{ oracle_sid }}
 
-sqlplus -s -L / as sysdba << EOF
+sqlplus -s -L / as sysdba <<EOF
+whenever sqlerror exit failure
 set pages 32767 lines 180 trims on tab off
+set serverout on
 column name format a32
 column display_value format a64
 
-alter database force logging;
 alter database add supplemental log data;
-alter database flashback on;
+
+DECLARE
+   v_force_logging_status VARCHAR2(3);
+BEGIN
+   SELECT force_logging INTO v_force_logging_status FROM v\$database;
+   IF v_force_logging_status = 'NO' THEN
+      EXECUTE IMMEDIATE 'alter database force logging';
+   END IF;
+END;
+/
+
+DECLARE
+   v_flashback_on_status VARCHAR2(20);
+   v_recovery_process_count NUMBER;
+BEGIN
+   SELECT flashback_on INTO v_flashback_on_status FROM v\$database;
+   SELECT count(*) INTO v_recovery_process_count FROM v\$managed_standby WHERE process LIKE 'MRP%';
+   IF v_flashback_on_status = 'NO' THEN
+      IF v_recovery_process_count = 0 THEN
+         EXECUTE IMMEDIATE 'alter database flashback on';
+      ELSIF v_recovery_process_count > 0 THEN
+         EXECUTE IMMEDIATE 'alter database recover managed standby database cancel';
+         EXECUTE IMMEDIATE 'alter database flashback on';
+         EXECUTE IMMEDIATE 'alter database recover managed standby database disconnect from session';
+      END IF;
+   END IF;
+END;
+/
 
 select name, db_unique_name, force_logging, supplemental_log_data_min, flashback_on from v\$database;
 select name, display_value from v\$system_parameter2 where name like '%flashback%';
