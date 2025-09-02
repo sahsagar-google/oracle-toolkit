@@ -72,11 +72,7 @@ apply_deployment() {
 }
 
 # Configures and launches log streaming.
-<<<<<<< HEAD
 watch_logs() {
-=======
-setup_logging() {
->>>>>>> b3429ae24a8b59f00b6a2b252c68ffc5fc18bee9
   # Extract the id of the control node resource
   # The format is: projects/<project>/zones/<zone>/instances/control-node-<random-suffix>
   control_node_resource_id="$(gcloud infra-manager resources list \
@@ -132,14 +128,7 @@ EOF
 EOF
 
   tail_pgid_leader=$!
-<<<<<<< HEAD
 
-=======
-}
-
-# Polls logs in a loop, to handle gcloud logging tail's session limit.
-watch_logs() {
->>>>>>> b3429ae24a8b59f00b6a2b252c68ffc5fc18bee9
   sleep_seconds=60
   timeout_seconds=7200
   timeout_hours="$((timeout_seconds / 3600))"
