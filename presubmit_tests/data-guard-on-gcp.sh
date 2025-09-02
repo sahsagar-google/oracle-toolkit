@@ -20,6 +20,5 @@ deployment_name="presubmit-dg-${BUILD_ID}"
 tfvars_file="./presubmit_tests/data-guard.tfvars"
 location="us-central1"
 setup_vars
-trap cleanup SIGINT SIGTERM EXIT
 apply_deployment
 watch_logs

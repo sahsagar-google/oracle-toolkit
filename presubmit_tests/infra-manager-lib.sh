@@ -15,6 +15,21 @@
 
 # infra-manager-lib.sh: Common library for Infra Manager based presubmit tests
 
+# Cleans up temporary processes and cloud objects, typically as an exit handler.
+cleanup() {
+  if [[ -n "$tail_pgid_leader" ]]; then
+    echo "Killing tail process group with $tail_pgid_leader PGID"
+    kill -TERM -"$tail_pgid_leader"
+  fi
+  echo "Cleaning up: deleting ${gcs_source} GCS object and ${deployment_id} Infra Manager deployment..."
+  if gcloud infra-manager deployments describe "${deployment_id}" >/dev/null 2>&1; then
+    gcloud --quiet infra-manager deployments delete "${deployment_id}"
+  fi
+  if gcloud storage objects describe "${gcs_source}" >/dev/null 2>&1; then
+    gcloud --quiet storage rm "${gcs_source}"
+  fi
+}
+
 # Performs initial variable setup.
 setup_vars() {
   if [[ -z "$BUILD_ID" ]]; then
@@ -34,21 +49,7 @@ setup_vars() {
   }
   gcs_source="${gcs_bucket}/${toolkit_zip_file_name}"
   deployment_id="projects/${project_id}/locations/${location}/deployments/${deployment_name}"
-}
-
-# Cleans up temporary processes and cloud objects, typically as an exit handler.
-cleanup() {
-  if [[ -n "$tail_pgid_leader" ]]; then
-    echo "Killing tail process group with $tail_pgid_leader PGID"
-    kill -TERM -"$tail_pgid_leader"
-  fi
-  echo "Cleaning up: deleting ${gcs_source} GCS object and ${deployment_id} Infra Manager deployment..."
-  if gcloud infra-manager deployments describe "${deployment_id}" >/dev/null 2>&1; then
-    gcloud --quiet infra-manager deployments delete "${deployment_id}"
-  fi
-  if gcloud storage objects describe "${gcs_source}" >/dev/null 2>&1; then
-    gcloud --quiet storage rm "${gcs_source}"
-  fi
+  trap cleanup SIGINT SIGTERM EXIT
 }
 
 # Creates an infra manager zip file and launches infra manager.
@@ -71,7 +72,7 @@ apply_deployment() {
 }
 
 # Configures and launches log streaming.
-setup_logging() {
+watch_logs() {
   # Extract the id of the control node resource
   # The format is: projects/<project>/zones/<zone>/instances/control-node-<random-suffix>
   control_node_resource_id="$(gcloud infra-manager resources list \
@@ -127,10 +128,7 @@ EOF
 EOF
 
   tail_pgid_leader=$!
-}
 
-# Polls logs in a loop, to handle gcloud logging tail's session limit.
-watch_logs() {
   sleep_seconds=60
   timeout_seconds=7200
   timeout_hours="$((timeout_seconds / 3600))"
