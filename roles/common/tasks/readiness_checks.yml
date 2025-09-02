@@ -68,3 +68,15 @@
   failed_when: become_check.rc != 0 or become_check.stdout != become_user_check
   changed_when: false
   tags: readiness_checks
+
+- name: readiness_check | Verify that specified disk groups are valid
+  assert:
+    that: item in (asm_disks | map(attribute='diskgroup') | list)
+    quiet: true
+    fail_msg: "The destination '{{ item }}' is not a valid disk group from the 'asm_disks' list."
+  when:
+    - parameter_checks | default(false) | bool
+    - gi_install
+    - asm_disks is defined
+  with_items: "{{ [ data_destination | default(''), reco_destination | default('') ] | reject('equalto', '') | list }}"
+  tags: readiness_checks
