@@ -15,21 +15,6 @@
 
 # infra-manager-lib.sh: Common library for Infra Manager based presubmit tests
 
-# Cleans up temporary processes and cloud objects, typically as an exit handler.
-cleanup() {
-  if [[ -n "$tail_pgid_leader" ]]; then
-    echo "Killing tail process group with $tail_pgid_leader PGID"
-    kill -TERM -"$tail_pgid_leader"
-  fi
-  echo "Cleaning up: deleting ${gcs_source} GCS object and ${deployment_id} Infra Manager deployment..."
-  if gcloud infra-manager deployments describe "${deployment_id}" >/dev/null 2>&1; then
-    gcloud --quiet infra-manager deployments delete "${deployment_id}"
-  fi
-  if gcloud storage objects describe "${gcs_source}" >/dev/null 2>&1; then
-    gcloud --quiet storage rm "${gcs_source}"
-  fi
-}
-
 # Performs initial variable setup.
 setup_vars() {
   if [[ -z "$BUILD_ID" ]]; then
@@ -52,6 +37,21 @@ setup_vars() {
   trap cleanup SIGINT SIGTERM EXIT
 }
 
+# Cleans up temporary processes and cloud objects, typically as an exit handler.
+cleanup() {
+  if [[ -n "$tail_pgid_leader" ]]; then
+    echo "Killing tail process group with $tail_pgid_leader PGID"
+    kill -TERM -"$tail_pgid_leader"
+  fi
+  echo "Cleaning up: deleting ${gcs_source} GCS object and ${deployment_id} Infra Manager deployment..."
+  if gcloud infra-manager deployments describe "${deployment_id}" >/dev/null 2>&1; then
+    gcloud --quiet infra-manager deployments delete "${deployment_id}"
+  fi
+  if gcloud storage objects describe "${gcs_source}" >/dev/null 2>&1; then
+    gcloud --quiet storage rm "${gcs_source}"
+  fi
+}
+
 # Creates an infra manager zip file and launches infra manager.
 apply_deployment() {
   echo "Zipping CWD into /tmp/${toolkit_zip_file_name} and uploading to ${gcs_bucket}/..."
@@ -72,7 +72,11 @@ apply_deployment() {
 }
 
 # Configures and launches log streaming.
+<<<<<<< HEAD
 watch_logs() {
+=======
+setup_logging() {
+>>>>>>> b3429ae24a8b59f00b6a2b252c68ffc5fc18bee9
   # Extract the id of the control node resource
   # The format is: projects/<project>/zones/<zone>/instances/control-node-<random-suffix>
   control_node_resource_id="$(gcloud infra-manager resources list \
@@ -128,7 +132,14 @@ EOF
 EOF
 
   tail_pgid_leader=$!
+<<<<<<< HEAD
 
+=======
+}
+
+# Polls logs in a loop, to handle gcloud logging tail's session limit.
+watch_logs() {
+>>>>>>> b3429ae24a8b59f00b6a2b252c68ffc5fc18bee9
   sleep_seconds=60
   timeout_seconds=7200
   timeout_hours="$((timeout_seconds / 3600))"
