@@ -52,4 +52,5 @@ ora_release = "latest"
 ora_edition = "EE"
 ora_backup_dest = "+RECO"
 ora_db_name = "orcl"
+ora_db_container = false
 

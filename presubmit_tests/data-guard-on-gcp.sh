@@ -13,7 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-source presubmit_tests/infra-manager-lib.sh
+source presubmit_tests/infra-manager-lib.sh || {
+  echo "Error: cannot source common library" >&2
+  exit 1
+}
 
 instance_name="github-presubmit-dg-${BUILD_ID}"
 deployment_name="presubmit-dg-${BUILD_ID}"

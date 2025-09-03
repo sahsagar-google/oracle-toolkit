@@ -73,7 +73,11 @@ apply_deployment() {
   gcloud infra-manager deployments apply "${deployment_id}" \
     --service-account="projects/${project_id}/serviceAccounts/infra-manager-deployer@${project_id}.iam.gserviceaccount.com" \
     --local-source="./terraform" \
-    --inputs-file="${templated_tfvars}" || exit 1
+    --inputs-file="${templated_tfvars}" || {
+    echo "Error applying deployment ${deployment_id}" >&2
+    gcloud infra-manager deployments describe "${deployment_id}"
+    exit 1
+  }
 }
 
 # Configures and launches log streaming.

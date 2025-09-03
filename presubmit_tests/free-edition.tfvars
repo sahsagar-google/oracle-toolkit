@@ -49,5 +49,5 @@ ora_release = ""
 ora_edition = "FREE"
 ora_backup_dest = "/u01"
 ora_db_name = "orcl"
-ora_db_container = True
+ora_db_container = true
 
