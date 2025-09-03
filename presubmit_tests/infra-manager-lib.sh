@@ -21,7 +21,7 @@ setup_vars() {
     echo "\$BUILD_ID is not set; are you running from prow?"
     exit 1
   fi
-  #apk add --no-cache zip curl py3-pip expect || exit 1
+  apk add --no-cache zip curl py3-pip expect || exit 1
   gcs_bucket="gs://oracle-toolkit-presubmit-artifacts"
   # Append BUILD_ID to the file name to ensure each zip file gets a unique name.
   # This prevents one test from deleting the file while it's still in use by another concurrently running test.
@@ -29,7 +29,7 @@ setup_vars() {
   # https://docs.prow.k8s.io/docs/jobs/#job-environment-variables
   toolkit_zip_file_name="oracle-toolkit-${BUILD_ID}.zip"
   project_id="$(curl -fsS -H "Metadata-Flavor: Google" "http://metadata.google.internal/computeMetadata/v1/project/project-id")" || {
-    echo "Error: Failed to retrieve project ID"
+    echo "Error: Failed to retrieve project ID" >&2
     exit 1
   }
   gcs_source="${gcs_bucket}/${toolkit_zip_file_name}"
@@ -39,6 +39,7 @@ setup_vars() {
 
 # Cleans up temporary processes and cloud objects, typically as an exit handler.
 cleanup() {
+  rm -f "${templated_tfvars}"
   if [[ -n "$tail_pgid_leader" ]]; then
     echo "Killing tail process group with $tail_pgid_leader PGID"
     kill -TERM -"$tail_pgid_leader"
@@ -57,18 +58,22 @@ apply_deployment() {
   echo "Zipping CWD into /tmp/${toolkit_zip_file_name} and uploading to ${gcs_bucket}/..."
   zip -r /tmp/"${toolkit_zip_file_name}" . -x ".git*" -x ".terraform*" -x "terraform*" -x OWNERS > /dev/null
   if ! gcloud --quiet storage cp /tmp/"${toolkit_zip_file_name}" "${gcs_bucket}/"; then
-    echo "ERROR: Failed to upload /tmp/"${toolkit_zip_file_name}" to "${gcs_bucket}/". Make sure the service account has write permissions on the bucket."
+    echo "ERROR: Failed to upload /tmp/${toolkit_zip_file_name} to ${gcs_bucket}/. Make sure the service account has write permissions on the bucket."
     exit 1
   fi
 
-  sed -i "s|@deployment_name@|$deployment_name|g" "${tfvars_file}"
-  sed -i "s|@gcs_source@|$gcs_source|g" "${tfvars_file}"
-  sed -i "s|@instance_name@|$instance_name|g" "${tfvars_file}"
+  templated_tfvars="$(mktemp tfvars.XXXXXX)"
+  sed -e "s|@deployment_name@|$deployment_name|g;
+          s|@gcs_source@|$gcs_source|g;
+          s|@instance_name@|$instance_name|g" "${tfvars_file}" > "${templated_tfvars}" || {
+    echo "Error: cannot apply template from ${tfvars_file} to ${templated_tfvars}" >&2
+    exit 1
+  }
   echo "Applying Infra Manager deployment: ${deployment_id}"
   gcloud infra-manager deployments apply "${deployment_id}" \
     --service-account="projects/${project_id}/serviceAccounts/infra-manager-deployer@${project_id}.iam.gserviceaccount.com" \
     --local-source="./terraform" \
-    --inputs-file="${tfvars_file}" || exit 1
+    --inputs-file="${templated_tfvars}" || exit 1
 }
 
 # Configures and launches log streaming.
@@ -81,13 +86,13 @@ watch_logs() {
   --revision=r-0 \
   --filter='terraformInfo.address=google_compute_instance.control_node' \
   --format='value(terraformInfo.id)')" || {
-    echo "Error: Failed to retrieve control node's resource ID."
+    echo "Error: Failed to retrieve control node's resource ID." >&2
     exit 1
   }
 
   # Get the instance ID from the instance resource
   control_node_instance_id="$(gcloud compute instances describe "${control_node_resource_id}" --format="value(id)")" || {
-    echo "Error: Failed to get control node's instance ID."
+    echo "Error: Failed to get control node's instance ID." >&2
     exit 1
   }
 
