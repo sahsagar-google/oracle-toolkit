@@ -228,6 +228,22 @@
       become_user: "{{ oracle_user }}"
       when: oracle_ver_base | float <= 18.0
 
+    - name: DG | Remove "_DGMGRL" from StaticConnectIdentifier parameter due to bug (MOS Doc ID 1582927.1)
+      shell: |
+        set -o pipefail
+        STATIC_ID_P=$({{ oracle_home }}/bin/dgmgrl -silent / "show database '{{ db_name | lower }}'      StaticConnectIdentifier" | awk -F"'" '/StaticConnectIdentifier/{print $2}')
+        STATIC_ID_S=$({{ oracle_home }}/bin/dgmgrl -silent / "show database '{{ standby_name | lower }}' StaticConnectIdentifier" | awk -F"'" '/StaticConnectIdentifier/{print $2}')
+        {{ oracle_home }}/bin/dgmgrl / <<EOF
+        edit database {{ db_name | lower }}      set property staticConnectidentifier='${STATIC_ID_P//_DGMGRL/}';
+        edit database {{ standby_name | lower }} set property staticConnectidentifier='${STATIC_ID_S//_DGMGRL/}';
+        EOF
+      environment:
+        ORACLE_HOME: "{{ oracle_home }}"
+        ORACLE_SID: "{{ oracle_sid }}"
+        PATH: "{{ oracle_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
+      become: true
+      become_user: "{{ oracle_user }}"
+
     - name: DG | Restart standby if required
       shell: |
         set -o pipefail
