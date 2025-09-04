@@ -65,7 +65,7 @@
       lineinfile:
         path: "{{ oracle_home }}/network/admin/tnsnames.ora"
         regexp: "^LISTENER_{{ db_name }}"
-        line: "LISTENER_{{ db_name }} = (ADDRESS = (PROTOCOL = TCP)(HOST = {{ ansible_fqdn }})(PORT = {{ listener_port }}))"
+        line: "LISTENER_{{ db_name }} = (ADDRESS = (PROTOCOL = IPC)(HOST = {{ ansible_hostname }})(KEY = LISTENER))"
         create: true
         owner: "{{ oracle_user }}"
         group: "{{ oracle_group }}"
