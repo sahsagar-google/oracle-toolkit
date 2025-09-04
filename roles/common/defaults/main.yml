@@ -220,9 +220,6 @@ rdbms_software:
     edition:
       - EE
       - SE2
-    os_version:
-      - 8
-      - 7
     files:
       - { name: "V1011496-01.zip", sha256sum: "C05D5C32A72B9BF84AB6BABB49AEE99CBB403930406AABE3CF2F94F1D35E0916", md5sum: "iskVqACADd8Wo4JQbTlT2w==",
           alt_name: "LINUX.X64_213000_db_home.zip", alt_sha256sum: "C05D5C32A72B9BF84AB6BABB49AEE99CBB403930406AABE3CF2F94F1D35E0916", alt_md5sum: "iskVqACADd8Wo4JQbTlT2w==" }
@@ -231,9 +228,6 @@ rdbms_software:
     edition:
       - EE
       - SE2
-    os_version:
-      - 8
-      - 7
     files:
       - { name: "V982063-01.zip", sha256sum: "BA8329C757133DA313ED3B6D7F86C5AC42CD9970A28BF2E6233F3235233AA8D8", md5sum: "GFi9DSgcYPTdq9h7HCFKTw==",
           alt_name: "LINUX.X64_193000_db_home.zip", alt_sha256sum: "BA8329C757133DA313ED3B6D7F86C5AC42CD9970A28BF2E6233F3235233AA8D8", alt_md5sum: "GFi9DSgcYPTdq9h7HCFKTw==" }
@@ -242,9 +236,6 @@ rdbms_software:
     edition:
       - EE
       - SE2
-    os_version:
-      - 8
-      - 7
     files:
       - { name: "V978967-01.zip", sha256sum: "C96A4FD768787AF98272008833FE10B172691CF84E42816B138C12D4DE63AB96", md5sum: "mafEoIiopQLCYedBqDOa6A==" }
   - name: 12201_base
@@ -252,9 +243,6 @@ rdbms_software:
     edition:
       - EE
       - SE2
-    os_version:
-      - 8
-      - 7
     files:
       - { name: "V839960-01.zip", sha256sum: "96ED97D21F15C1AC0CCE3749DA6C3DAC7059BB60672D76B008103FC754D22DDE", md5sum: "GEHyzncJz5CdtMBk2AqueQ==" }
   - name: 12102_base
@@ -262,7 +250,6 @@ rdbms_software:
     edition:
       - EE
       - SE2
-    os_version: 7
     files:
       - { name: "{% if oracle_edition == 'SE2' %}V77388-01_1of2.zip{% else %}V46095-01_1of2.zip{% endif %}",
           sha256sum: "{% if oracle_edition == 'SE2' %}73873369753230F5A0921F95ACEADB591388CB06ED72A7F3AEA7BCBCEA2403BC{% else %}31FDC2AF41687B4E547A3A18F796424D8C1AF36406D2160F65B0AF6A9CD47355{% endif %}",
@@ -275,7 +262,6 @@ rdbms_software:
     edition:
       - EE
       - SE
-    os_version: 7
     files:
       - { name: "p13390677_112040_Linux-x86-64_1of7.zip", sha256sum: "0B399A6593804C04B4BD65F61E73575341A49F8A273ACABA0DCDA2DFEC4979E0", md5sum: "Fhb2F4mJGlbq/UDeefWPKA==" }
       - { name: "p13390677_112040_Linux-x86-64_2of7.zip", sha256sum: "73E04957EE0BF6F3B3E6CFCF659BDF647800FE52A377FB8521BA7E3105CCC8DD", md5sum: "Z7oeaKT1gbMFiFEUdoRD0w==" }

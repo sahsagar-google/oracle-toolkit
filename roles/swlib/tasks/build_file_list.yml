@@ -40,10 +40,19 @@
     - gi_install
     - patch_only is not defined
 
-- name: build_file_list | Build list of RDBMS base software by OS major version
+- name: build_file_list | Build list of RDBMS base software by valid OS major version
   set_fact:
-    rdbms_version_sw: "{{ (rdbms_software | selectattr('os_version', 'equalto', ansible_distribution_major_version ) | list)
-                        + (rdbms_software | selectattr('os_version', 'search', '\\b' + ansible_distribution_major_version  + '\\b') | list)
+    rdbms_version_sw: "{{ (rdbms_software | selectattr('os_version', 'undefined') | list)
+                        +
+                        (rdbms_software
+                        | selectattr('os_version', 'defined')
+                        | selectattr('os_version', 'equalto', ansible_distribution_major_version)
+                        | list)
+                        +
+                        (rdbms_software
+                        | selectattr('os_version', 'defined')
+                        | selectattr('os_version', 'search', '\\b' + ansible_distribution_major_version + '\\b')
+                        | list)
                        }}"
 
 - name: build_file_list | Refine list of RDBMS base software by edition
