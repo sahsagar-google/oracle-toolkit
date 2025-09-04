@@ -893,6 +893,7 @@ if [ "${ORA_EDITION}" = "FREE" ]; then
   ORA_DB_NAME=FREE
   ORA_DISK_MGMT=FS
   ORA_ROLE_SEPARATION=FALSE
+  ORA_DB_CONTAINER=TRUE
   if [[ ! "${ORA_VERSION}" =~ ^23\. ]]; then
     ORA_VERSION="23.0.0.0.0"
   fi
