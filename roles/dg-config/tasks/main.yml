@@ -228,14 +228,25 @@
       become_user: "{{ oracle_user }}"
       when: oracle_ver_base | float <= 18.0
 
-    - name: DG | Remove "_DGMGRL" from StaticConnectIdentifier parameter due to bug (MOS Doc ID 1582927.1)
+    - name: DG | Gather minimal facts (hostname) for the standby
+      setup:
+        gather_subset: 'min'
+      register: standby_facts
+
+    - name: DG | Gather minimal facts (hostname) for the primary
+      setup:
+        gather_subset: 'min'
+      delegate_to: primary1
+      register: primary_facts
+
+    - name: DG | Manually set the StaticConnectIdentifier parameter (MOS Doc ID 1582927.1)
       shell: |
         set -o pipefail
-        STATIC_ID_P=$({{ oracle_home }}/bin/dgmgrl -silent / "show database '{{ db_name | lower }}'      StaticConnectIdentifier" | awk -F"'" '/StaticConnectIdentifier/{print $2}')
-        STATIC_ID_S=$({{ oracle_home }}/bin/dgmgrl -silent / "show database '{{ standby_name | lower }}' StaticConnectIdentifier" | awk -F"'" '/StaticConnectIdentifier/{print $2}')
+        STATIC_ID_P="(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST={{ primary_facts.ansible_facts.ansible_hostname }})(PORT={{ listener_port | default(1521, true) }}))(CONNECT_DATA=(SERVICE_NAME={{ db_name }})))"
+        STATIC_ID_S="(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST={{ standby_facts.ansible_facts.ansible_hostname }})(PORT={{ listener_port | default(1521, true) }}))(CONNECT_DATA=(SERVICE_NAME={{ standby_name }})))"
         {{ oracle_home }}/bin/dgmgrl / <<EOF
-        edit database {{ db_name | lower }}      set property staticConnectidentifier='${STATIC_ID_P//_DGMGRL/}';
-        edit database {{ standby_name | lower }} set property staticConnectidentifier='${STATIC_ID_S//_DGMGRL/}';
+        edit database {{ db_name | lower }}      set property staticConnectidentifier='${STATIC_ID_P}';
+        edit database {{ standby_name | lower }} set property staticConnectidentifier='${STATIC_ID_S}';
         EOF
       environment:
         ORACLE_HOME: "{{ oracle_home }}"
