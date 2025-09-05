@@ -69,8 +69,8 @@
     - name: Active-copy | Manually add tnsnames.ora entry for automatic service registration (with GI)
       lineinfile:
         path: "{{ oracle_home }}/network/admin/tnsnames.ora"
-        regexp: "^LISTENER_{{ db_name }}"
-        line: "LISTENER_{{ db_name }} = (ADDRESS = (PROTOCOL = IPC)(HOST = {{ ansible_hostname }})(KEY = LISTENER))"
+        regexp: "^LISTENER_{{ oracle_sid | upper }}"
+        line: "LISTENER_{{ oracle_sid | upper }} = (ADDRESS = (PROTOCOL = IPC)(HOST = {{ ansible_hostname }})(KEY = LISTENER))"
         create: true
         owner: "{{ oracle_user }}"
         group: "{{ oracle_group }}"
@@ -82,8 +82,8 @@
     - name: Active-copy | Manually add tnsnames.ora entry for automatic service registration (no GI)
       lineinfile:
         path: "{{ oracle_home }}/network/admin/tnsnames.ora"
-        regexp: "^LISTENER_{{ db_name }}"
-        line: "LISTENER_{{ db_name }} = (ADDRESS = (PROTOCOL = TCP)(HOST = {{ ansible_hostname }})(PORT = {{ listener_port }}))"
+        regexp: "^LISTENER_{{ oracle_sid | upper }}"
+        line: "LISTENER_{{ oracle_sid | upper }} = (ADDRESS = (PROTOCOL = TCP)(HOST = {{ ansible_hostname }})(PORT = {{ listener_port }}))"
         create: true
         owner: "{{ oracle_user }}"
         group: "{{ oracle_group }}"
