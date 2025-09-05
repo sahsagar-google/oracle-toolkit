@@ -15,7 +15,12 @@
 ---
 - name: Active-copy | Check if the standby database is already running
   shell: |
-    srvctl status database -d {{ standby_name }} || true
+    set -o pipefail
+    if srvctl config db -d {{ standby_name }} >/dev/null 2>&1; then
+      srvctl status database -d {{ standby_name }} || true
+    else
+      ps -ef | grep [o]ra_pmon_{{ oracle_sid }} > /dev/null && echo "{{ oracle_sid }} is running" || true
+    fi
   environment:
     ORACLE_HOME: "{{ oracle_home }}"
     ORACLE_SID: "{{ oracle_sid }}"
@@ -61,7 +66,7 @@
       become_user: "{{ grid_user }}"
       when: primary_listener_update is defined and primary_listener_update.changed
 
-    - name: Active-copy | Manually add tnsnames.ora entry for automatic service registration
+    - name: Active-copy | Manually add tnsnames.ora entry for automatic service registration (with GI)
       lineinfile:
         path: "{{ oracle_home }}/network/admin/tnsnames.ora"
         regexp: "^LISTENER_{{ db_name }}"
@@ -70,6 +75,20 @@
         owner: "{{ oracle_user }}"
         group: "{{ oracle_group }}"
         mode: u=rw,g=r,o=
+      when: gi_install
+      become: true
+      become_user: "{{ oracle_user }}"
+
+    - name: Active-copy | Manually add tnsnames.ora entry for automatic service registration (no GI)
+      lineinfile:
+        path: "{{ oracle_home }}/network/admin/tnsnames.ora"
+        regexp: "^LISTENER_{{ db_name }}"
+        line: "LISTENER_{{ db_name }} = (ADDRESS = (PROTOCOL = TCP)(HOST = {{ ansible_hostname }})(PORT = {{ listener_port }}))"
+        create: true
+        owner: "{{ oracle_user }}"
+        group: "{{ oracle_group }}"
+        mode: u=rw,g=r,o=
+      when: not gi_install
       become: true
       become_user: "{{ oracle_user }}"
 
@@ -134,7 +153,7 @@
     - name: Active-copy | Get the primary database password file information
       shell: |
         set -o pipefail
-        (srvctl config db -d {{ db_name }} || true) | grep "^Password file"
+        (srvctl config db -d {{ db_name }} || true) | grep "^Password file" || true
       environment:
         ORACLE_HOME: "{{ oracle_home }}"
         ORACLE_SID: "{{ oracle_sid }}"
@@ -215,6 +234,7 @@
           - "file={{ password_file_name }}"
           - "force=y"
           - "password={{ sys_pass }}"
+          - "format=12"
       environment:
         ORACLE_HOME: "{{ oracle_home }}"
         ORACLE_SID: "{{ oracle_sid }}"
@@ -313,12 +333,15 @@
         ORACLE_HOME: "{{ oracle_home }}"
         ORACLE_SID: "{{ oracle_sid }}"
         PATH: "{{ oracle_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
+      when: gi_install
       become: true
       become_user: "{{ oracle_user }}"
 
     - name: Active-copy | Run tasks from the database adjustments role
       include_role:
         name: db-adjustments
+      vars:
+        standby_setup: true
 
     - name: Active-copy | Move spfile into ASM and restart
       shell: |
@@ -335,6 +358,7 @@
         ORACLE_HOME: "{{ oracle_home }}"
         ORACLE_SID: "{{ oracle_sid }}"
         PATH: "{{ oracle_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
+      when: gi_install
       become: true
       become_user: "{{ oracle_user }}"
 
@@ -356,6 +380,26 @@
     ORACLE_HOME: "{{ oracle_home }}"
     ORACLE_SID: "{{ oracle_sid }}"
     PATH: "{{ oracle_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
+  when: gi_install
+  become: true
+  become_user: "{{ oracle_user }}"
+  changed_when: false
+  register: standby_state
+  tags: active-duplicate
+
+- name: Active-copy | Capture standby database state
+  shell: |
+    set -o pipefail
+    {{ oracle_home }}/bin/sqlplus -s -L / as sysdba <<EOF
+    whenever sqlerror exit failure
+    SET lines 120 tab OFF trims ON
+    SELECT db_unique_name, database_role, open_mode, switchover_status FROM v\$database;
+    EOF
+  environment:
+    ORACLE_HOME: "{{ oracle_home }}"
+    ORACLE_SID: "{{ oracle_sid }}"
+    PATH: "{{ oracle_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
+  when: not gi_install
   become: true
   become_user: "{{ oracle_user }}"
   changed_when: false

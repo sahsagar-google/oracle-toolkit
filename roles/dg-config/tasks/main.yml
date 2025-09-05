@@ -142,7 +142,7 @@
 
         - name: DG | Fetch password file from primary
           fetch:
-            src: "{{ oracle_base }}/dbs/orapwORCL"
+            src: "{{ oracle_base }}/dbs/orapw{{ oracle_sid }}"
             dest: "{{ temp_file.path }}"
             flat: true
           delegate_to: primary1
@@ -150,7 +150,7 @@
         - name: DG | Copy password file to standby
           copy:
             src: "{{ temp_file.path }}"
-            dest: "{{ oracle_base }}/dbs/orapwORCL"
+            dest: "{{ oracle_base }}/dbs/orapw{{ oracle_sid }}"
             owner: "{{ oracle_user }}"
             group: "{{ oracle_group }}"
             mode: "u=wr,go="

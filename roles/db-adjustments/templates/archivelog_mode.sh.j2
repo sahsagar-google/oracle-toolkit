@@ -10,6 +10,7 @@ fi
 
 sqlplus -s -L / as sysdba <<EOF
 whenever sqlerror exit failure
+
 startup mount
 alter database archivelog;
 alter database open;
@@ -18,18 +19,12 @@ archive log list
 set pages 32767 lines 180 trims on tab off
 column name format a32
 column display_value format a64
-column status format a32
-column filename format a64
 
-alter database enable block change tracking;
-select status, filename from v\$block_change_tracking;
+select name, display_value
+  from v\$system_parameter2
+ where (name like 'log_archive%' and isdefault != 'TRUE') or name like 'db_recovery%'
+ order by 1,2;
 
-select name, display_value from (
-select name, display_value from v\$system_parameter2 where name like 'log_archive%' and isdefault != 'TRUE'
-union
-select name, display_value from v\$system_parameter2 where name like 'db_recovery%'
-)
-order by 1,2;
 EOF
 
 {% if groups['dbasm'] | length > 1 %}
