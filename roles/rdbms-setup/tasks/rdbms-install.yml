@@ -22,7 +22,7 @@
 - name: rdbms-install | Installer confirmations
   debug:
     msg:
-      - "Installing from file(osw.files)          : {{ osw.files }}"
+      - "Installing from file(osw.name)           : {{ osw | map(attribute='name') | list }}"
       - "Unzipping into dir(install_unzip_path)   : {{ install_unzip_path }}"
       - "installer dir(runinstaller_loc)          : {{ runinstaller_loc }}"
       - "Src (swlib_path)                         : {{ swlib_path }}"
@@ -83,7 +83,7 @@
   become_user: "{{ oracle_user }}"
   # Using the "shell" module instead of "unarchive" for unzip performance
   shell: unzip -o -q "{{ swlib_path }}/{{ item.name }}" -d "{{ install_unzip_path }}"
-  with_items: "{{ osw.files }}"
+  with_items: "{{ osw }}"
   tags: rdbms-setup,sw-unzip
 
 - name: rdbms-install | Create RDBMS response file script

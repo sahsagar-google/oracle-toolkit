@@ -40,10 +40,25 @@
     - gi_install
     - patch_only is not defined
 
-- name: build_file_list | Build list of RDBMS base software by edition
+- name: build_file_list | Build list of RDBMS base software by valid OS major version
   set_fact:
-    rdbms_edition_sw: "{{ (rdbms_software | selectattr('edition', 'equalto', oracle_edition) | list)
-                        + (rdbms_software | selectattr('edition', 'search', '\\b' + oracle_edition + '\\b') | list)
+    rdbms_version_sw: "{{ (rdbms_software | selectattr('os_version', 'undefined') | list)
+                        +
+                        (rdbms_software
+                        | selectattr('os_version', 'defined')
+                        | selectattr('os_version', 'equalto', ansible_distribution_major_version)
+                        | list)
+                        +
+                        (rdbms_software
+                        | selectattr('os_version', 'defined')
+                        | selectattr('os_version', 'search', '\\b' + ansible_distribution_major_version + '\\b')
+                        | list)
+                       }}"
+
+- name: build_file_list | Refine list of RDBMS base software by edition
+  set_fact:
+    rdbms_edition_sw: "{{ (rdbms_version_sw | selectattr('edition', 'equalto', oracle_edition) | list)
+                        + (rdbms_version_sw | selectattr('edition', 'search', '\\b' + oracle_edition + '\\b') | list)
                        }}"
 
 - name: build_file_list | Build list of RDBMS base software
@@ -98,7 +113,7 @@
     - not gi_install
     - not free_edition
 
-- name: build_file_list | Display files lists
+- name: build_file_list | Display file lists
   debug:
     msg:
       opatch_file_list: "{{ opatch_file_list }}"
