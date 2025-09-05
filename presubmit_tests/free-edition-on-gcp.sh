@@ -18,10 +18,11 @@ source presubmit_tests/infra-manager-lib.sh || {
   exit 1
 }
 
-instance_name="github-presubmit-dg-${BUILD_ID}"
-deployment_name="presubmit-dg-${BUILD_ID}"
-tfvars_file="./presubmit_tests/data-guard.tfvars"
+instance_name="github-presubmit-free-${BUILD_ID}"
+deployment_name="presubmit-free-${BUILD_ID}"
+tfvars_file="./presubmit_tests/free-edition.tfvars"
 location="us-central1"
+
 setup_vars
 apply_deployment
 watch_logs

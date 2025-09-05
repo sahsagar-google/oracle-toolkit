@@ -14,7 +14,7 @@
 
 # See variables.tf for a full list, and descriptions.
 
-# Placeholder values in the form "@value@" will be replaced with actual values by the single-instance-on-gcp.sh script.
+# Placeholder values in the form "@value@" will be replaced with actual values by the calling script.
 gcs_source = "@gcs_source@"
 deployment_name = "@deployment_name@"
 instance_name = "@instance_name@"
@@ -27,17 +27,15 @@ control_node_service_account = "control-node-sa@gcp-oracle-benchmarks.iam.gservi
 install_workload_agent = true
 oracle_metrics_secret = "projects/gcp-oracle-benchmarks/secrets/workload-agent-user-password/versions/latest"
 db_password_secret = "projects/gcp-oracle-benchmarks/secrets/sys-user-password/versions/latest"
-control_node_name_prefix="github-presubmit-dg-control-node"
+control_node_name_prefix="github-presubmit-free-control-node"
 source_image_family = "oracle-linux-8"
 source_image_project = "oracle-linux-cloud"
 machine_type = "n4-standard-2"
 boot_disk_type = "hyperdisk-balanced"
-boot_disk_size_gb = "20"
+boot_disk_size_gb = "30"
 swap_disk_size_gb = "8"
 zone1 = "us-central1-b"
-zone2 = "us-central1-c"
 subnetwork1 = "projects/gcp-oracle-benchmarks/regions/us-central1/subnetworks/github-presubmit-tests-us-central1"
-subnetwork2 = "projects/gcp-oracle-benchmarks/regions/us-central1/subnetworks/github-presubmit-tests-us-central1"
 oracle_home_disk = {
   size_gb = 50
 }
@@ -45,12 +43,12 @@ data_disk = {
   size_gb = 20
 }
 reco_disk = {
-  size_gb = 10
+  size_gb = 20
 }
-ora_version = "19"
-ora_release = "latest"
-ora_edition = "EE"
-ora_backup_dest = "+RECO"
+ora_version = "23"
+ora_release = ""
+ora_edition = "FREE"
+ora_backup_dest = "/u01"
 ora_db_name = "orcl"
-ora_db_container = false
+ora_db_container = true
 
