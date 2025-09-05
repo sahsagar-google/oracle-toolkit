@@ -18,7 +18,11 @@
 # Performs initial variable setup.
 setup_vars() {
   if [[ -z "$BUILD_ID" ]]; then
-    echo "\$BUILD_ID is not set; are you running from prow?"
+    echo "\$BUILD_ID is not set; are you running from prow?" >&2
+    exit 1
+  fi
+  if [[ -z "$deployment_name" ]]; then
+    echo "\$deployment_name is missing." >&2
     exit 1
   fi
   apk add --no-cache zip curl py3-pip expect || exit 1
