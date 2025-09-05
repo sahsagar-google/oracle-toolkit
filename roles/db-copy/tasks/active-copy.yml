@@ -38,7 +38,42 @@
         owner: "{{ oracle_user }}"
         group: "{{ oracle_group }}"
 
-    - name: Active-copy | Add static listener entry
+    - name: Active-copy | Add static listener entry to primary
+      lineinfile:
+        path: "{{ grid_home }}/network/admin/listener.ora"
+        regexp: "^SID_LIST_{{ listener_name }}"
+        line: "SID_LIST_{{ listener_name }}=(SID_LIST=(SID_DESC=(GLOBAL_DBNAME={{ db_name }}{% if db_domain | default('', true) | length > 0 %}.{{ db_domain }}{% endif %})(ORACLE_HOME={{ oracle_home }})(SID_NAME={{ oracle_sid }})))"
+        owner: "{{ grid_user }}"
+        group: "{{ oracle_group }}"
+      delegate_to: primary1
+      register: primary_listener_update
+      become: true
+      become_user: "{{ grid_user }}"
+
+    - name: Active-copy | Reload primary listener
+      shell: |
+        {{ grid_home }}/bin/lsnrctl reload {{ listener_name }}
+      environment:
+        ORACLE_HOME: "{{ grid_home }}"
+        PATH: "{{ grid_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
+      delegate_to: primary1
+      become: true
+      become_user: "{{ grid_user }}"
+      when: primary_listener_update is defined and primary_listener_update.changed
+
+    - name: Active-copy | Manually add tnsnames.ora entry for automatic service registration
+      lineinfile:
+        path: "{{ oracle_home }}/network/admin/tnsnames.ora"
+        regexp: "^LISTENER_{{ db_name }}"
+        line: "LISTENER_{{ db_name }} = (ADDRESS = (PROTOCOL = IPC)(HOST = {{ ansible_hostname }})(KEY = LISTENER))"
+        create: true
+        owner: "{{ oracle_user }}"
+        group: "{{ oracle_group }}"
+        mode: u=rw,g=r,o=
+      become: true
+      become_user: "{{ oracle_user }}"
+
+    - name: Active-copy | Add static listener entry to standby
       lineinfile:
         path: "{{ grid_home }}/network/admin/listener.ora"
         regexp: "^SID_LIST_{{ listener_name }}"
@@ -49,7 +84,7 @@
       become: true
       become_user: "{{ grid_user }}"
 
-    - name: Active-copy | Reload listener
+    - name: Active-copy | Reload standby listener
       shell: |
         {{ grid_home }}/bin/lsnrctl reload {{ listener_name }}
       environment:
