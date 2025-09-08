@@ -18,8 +18,6 @@
     url: "{{ swlib_mount_src }}/{{ item }}"
     dest: "{{ swlib_path }}"
     force: yes
-    url_username: "{{ lookup('env', 'URL_USERNAME') }}"
-    url_password: "{{ lookup('env', 'URL_PASSWORD') }}"
     headers: "{{ lookup('env', 'URL_HEADERS') }}"
     status_code:
       - 200
@@ -30,8 +28,6 @@
   uri:
     url: "{{ swlib_mount_src }}/{{ item.file_name }}"
     dest: "{{ swlib_path }}/{{ item.file_name }}"
-    url_username: "{{ lookup('env', 'URL_USERNAME') }}"
-    url_password: "{{ lookup('env', 'URL_PASSWORD') }}"
     headers: "{{ lookup('env', 'URL_HEADERS') }}"
     status_code:
       - 200
@@ -44,8 +40,6 @@
   uri:
     url: "{{ swlib_mount_src }}/{{ item.alt_name }}"
     dest: "{{ swlib_path }}/{{ item.file_name }}"
-    url_username: "{{ lookup('env', 'URL_USERNAME') }}"
-    url_password: "{{ lookup('env', 'URL_PASSWORD') }}"
     headers: "{{ lookup('env', 'URL_HEADERS') }}"
     status_code:
       - 200
@@ -59,8 +53,6 @@
   uri:
     url: "{{ swlib_mount_src }}/{{ item }}"
     dest: "{{ swlib_path }}/{{ item }}"
-    url_username: "{{ lookup('env', 'URL_USERNAME') }}"
-    url_password: "{{ lookup('env', 'URL_PASSWORD') }}"
     headers: "{{ lookup('env', 'URL_HEADERS') }}"
     status_code:
       - 200
