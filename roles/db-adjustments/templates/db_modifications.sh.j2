@@ -2,12 +2,26 @@ source oraenv <<< {{ oracle_sid }}
 
 sqlplus -s -L / as sysdba <<EOF
 whenever sqlerror exit failure
+
 set pages 32767 lines 180 trims on tab off
 set serverout on
+
 column name format a32
 column display_value format a64
+column status format a32
+column filename format a64
 
 alter database add supplemental log data;
+
+DECLARE
+   v_bct_status VARCHAR2(10);
+BEGIN
+   SELECT status INTO v_bct_status FROM v\$block_change_tracking;
+   IF v_bct_status = 'DISABLED' THEN
+      EXECUTE IMMEDIATE 'alter database enable block change tracking';
+   END IF;
+END;
+/
 
 DECLARE
    v_force_logging_status VARCHAR2(3);
@@ -37,6 +51,8 @@ BEGIN
 END;
 /
 
+select status, filename from v\$block_change_tracking;
 select name, db_unique_name, force_logging, supplemental_log_data_min, flashback_on from v\$database;
 select name, display_value from v\$system_parameter2 where name like '%flashback%';
+
 EOF

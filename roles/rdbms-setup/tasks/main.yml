@@ -41,26 +41,28 @@
   with_items: "{{ oracle_dirs + grid_dirs }}"
   tags: rdbms-setup,os-dirs
 
-- include_tasks: rdbms-install.yml
-  with_items: "{{ rdbms_software }}"
-  loop_control:
-    loop_var: osw
+- name: Determine required installation files
+  include_role:
+    name: swlib
+    tasks_from: build_file_list.yml
+  when: rdbms_base_files is not defined or rdbms_base_files | length == 0
+
+- name: Perform normal installation of RDBMS software
+  include_tasks: rdbms-install.yml
   when:
     - existing_dbhome.stdout == "0"
-    - osw.version == oracle_ver
-    - oracle_edition in osw.edition
     - not free_edition
+  vars:
+    osw: "{{ rdbms_base_files }}"
   tags: rdbms-setup
 
-- include_tasks: rdbms-rpm-install.yml
-  with_items: "{{ rdbms_software }}"
-  loop_control:
-    loop_var: osw
+- name: Perform RPM based installation
+  include_tasks: rdbms-rpm-install.yml
   when:
     - existing_dbhome.stdout == "0"
-    - osw.version == oracle_ver
-    - oracle_edition in osw.edition
     - free_edition
+  vars:
+    osw: "{{ rdbms_base_files }}"
   tags: rdbms-setup
 
 - name: Create sqlnet.ora file

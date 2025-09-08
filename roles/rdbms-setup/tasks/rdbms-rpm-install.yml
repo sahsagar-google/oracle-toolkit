@@ -19,6 +19,6 @@
     state: present
     lock_timeout: "{{ pkg_mgr_lock_timeout }}"
     disable_gpg_check: true
-  with_items: "{{ osw.files }}"
+  with_items: "{{ osw }}"
   register: rpm_install
   tags: rdbms-setup

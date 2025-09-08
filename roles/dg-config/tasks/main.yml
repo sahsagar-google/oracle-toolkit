@@ -142,7 +142,7 @@
 
         - name: DG | Fetch password file from primary
           fetch:
-            src: "{{ oracle_base }}/dbs/orapwORCL"
+            src: "{{ oracle_base }}/dbs/orapw{{ oracle_sid }}"
             dest: "{{ temp_file.path }}"
             flat: true
           delegate_to: primary1
@@ -150,7 +150,7 @@
         - name: DG | Copy password file to standby
           copy:
             src: "{{ temp_file.path }}"
-            dest: "{{ oracle_base }}/dbs/orapwORCL"
+            dest: "{{ oracle_base }}/dbs/orapw{{ oracle_sid }}"
             owner: "{{ oracle_user }}"
             group: "{{ oracle_group }}"
             mode: "u=wr,go="
@@ -227,6 +227,33 @@
       become: true
       become_user: "{{ oracle_user }}"
       when: oracle_ver_base | float <= 18.0
+
+    - name: DG | Gather minimal facts (hostname) for the standby
+      setup:
+        gather_subset: 'min'
+      register: standby_facts
+
+    - name: DG | Gather minimal facts (hostname) for the primary
+      setup:
+        gather_subset: 'min'
+      delegate_to: primary1
+      register: primary_facts
+
+    - name: DG | Manually set the StaticConnectIdentifier parameter (MOS Doc ID 1582927.1)
+      shell: |
+        set -o pipefail
+        STATIC_ID_P="(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST={{ primary_facts.ansible_facts.ansible_hostname }})(PORT={{ listener_port | default(1521, true) }}))(CONNECT_DATA=(SERVICE_NAME={{ db_name }})))"
+        STATIC_ID_S="(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST={{ standby_facts.ansible_facts.ansible_hostname }})(PORT={{ listener_port | default(1521, true) }}))(CONNECT_DATA=(SERVICE_NAME={{ standby_name }})))"
+        {{ oracle_home }}/bin/dgmgrl / <<EOF
+        edit database {{ db_name | lower }}      set property staticConnectidentifier='${STATIC_ID_P}';
+        edit database {{ standby_name | lower }} set property staticConnectidentifier='${STATIC_ID_S}';
+        EOF
+      environment:
+        ORACLE_HOME: "{{ oracle_home }}"
+        ORACLE_SID: "{{ oracle_sid }}"
+        PATH: "{{ oracle_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
+      become: true
+      become_user: "{{ oracle_user }}"
 
     - name: DG | Restart standby if required
       shell: |

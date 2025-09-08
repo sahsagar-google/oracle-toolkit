@@ -13,4 +13,4 @@
 # limitations under the License.
 
 ---
-workload_agent_username: "wlmagent"
+workload_agent_username: "{{ 'c##wlmagent' if container_db else 'wlmagent' }}"

@@ -1,4 +1,5 @@
-# Copyright 2020 Google LLC
+#!/bin/bash
+# Copyright 2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,5 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
----
-db_script_files: "{{ (['archivelog_mode.sh'] if not standby_setup | default(False) else []) + ['db_modifications.sh'] }}"
+source presubmit_tests/infra-manager-lib.sh || {
+  echo "Error: cannot source common library" >&2
+  exit 1
+}
+
+instance_name="github-presubmit-free-${BUILD_ID}"
+deployment_name="presubmit-free-${BUILD_ID}"
+tfvars_file="./presubmit_tests/free-edition.tfvars"
+location="us-central1"
+
+setup_vars
+apply_deployment
+watch_logs
