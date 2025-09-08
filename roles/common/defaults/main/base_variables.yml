@@ -1,0 +1,171 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+# Variables used by more than one role
+pkg_mgr_lock_timeout: 180
+
+oracle_ver_dir: "{% if free_edition %}{% if oracle_ver[:4] == '23.2' or oracle_ver[:4] == '23.3' %}23c{% else %}{{ oracle_ver[:2] }}ai{% endif %}{% else %}{{ oracle_ver[:6] }}{% endif %}"
+oracle_inventory: "{{ oracle_root }}/oraInventory"
+oracle_base: "{% if free_edition %}/opt/oracle{% else %}{{ oracle_root }}/oracle{% endif %}"
+oracle_home: "{{ oracle_base }}/product/{{ oracle_ver_dir }}/{{ home_name }}"
+grid_home: "{% if role_separation %}{{ oracle_root }}/{{ oracle_ver_dir }}/grid{% else %}{{ oracle_home }}{% endif %}"
+grid_base: "{{ oracle_root }}/grid"
+
+path_udev: asmdisks
+
+rdbms_users:
+  - name: "{{ oracle_user }}"
+    comment: ""
+    uid: 54321
+    group: "{{ oracle_group }}"
+
+grid_users:
+  - name: "{{ grid_user }}"
+    comment: ""
+    uid: 54331
+    group: "{{ oracle_group }}"
+
+oracle_users: "{{ rdbms_users + grid_users if role_separation else rdbms_users }}"
+
+#
+# Groups for the oracle user
+# oracle_groups          : used in roles/ora-host/tasks/main.yml and roles/brute-ora-cleanup/tasks/main.yml
+#                          to create and drop the groups
+# extra_oracle_groups    : used in roles/ora-host/tasks/main.yml to be assigned to the user
+#
+oracle_groups:
+  - group: oinstall
+    gid: 54321
+  - group: dba
+    gid: 54322
+  - group: oper
+    gid: 54323
+  - group: backupdba
+    gid: 54324
+  - group: dgdba
+    gid: 54325
+  - group: kmdba
+    gid: 54326
+  - group: racdba
+    gid: 54330
+
+extra_oracle_groups:
+  - group: asmdba
+    gid: 54327
+  - group: asmadmin
+    gid: 54329
+
+#
+# Groups for the grid user
+# asm_groups          : used in roles/ora-host/tasks/main.yml and roles/brute-ora-cleanup/tasks/main.yml
+#                       to create and drop the groups
+# extra_asm_groups    : used in roles/ora-host/tasks/main.yml to be assigned to the user
+#
+asm_groups:
+  - group: asmdba
+    gid: 54327
+  - group: asmoper
+    gid: 54328
+  - group: asmadmin
+    gid: 54329
+
+extra_asm_groups:
+  - group: dba
+    gid: 54322
+
+asm_diskstring: "{% if ora_disk_management == 'asmlib' %}ORCL:*{% else %}/dev/{{ path_udev }}/*{% endif %}"
+
+oracle_dirs:
+  - name: "{{ swlib_unzip_path }}"
+    owner: "{{ oracle_user }}"
+    group: "{{ oracle_group }}"
+    mode: "ug=rwx,o=rx"
+  - name: "{{ oracle_base }}"
+    owner: "{{ oracle_user }}"
+    group: "{{ oracle_group }}"
+    mode: "ug=rwx,o=rx"
+  - name: "{{ oracle_inventory }}"
+    owner: "{{ grid_user }}"
+    group: "{{ oracle_group }}"
+    mode: "ug=rwx,o=rx"
+  - name: "{{ oracle_home }}"
+    owner: "{{ oracle_user }}"
+    group: "{{ oracle_group }}"
+    mode: "ug=rwx,o=rx"
+  - name: "/home/{{ oracle_user }}/.ansible/tmp"
+    owner: "{{ oracle_user }}"
+    group: "{{ oracle_group }}"
+    mode: "ug=rwx,o=rx"
+
+grid_dirs:
+  - name: "{{ grid_home }}"
+    owner: "{{ grid_user }}"
+    group: "{{ oracle_group }}"
+    mode: "ug=rwx,o=rx"
+  - name: "/home/{{ grid_user }}/.ansible/tmp"
+    owner: "{{ grid_user }}"
+    group: "{{ oracle_group }}"
+    mode: "ug=rwx,o=rx"
+
+fs_dirs:
+  - name: "{{ data_destination }}"
+    owner: "{{ oracle_user }}"
+    group: "{{ oracle_group }}"
+    mode: "u=rwx,g=rx,o="
+  - name: "{{ reco_destination }}"
+    owner: "{{ oracle_user }}"
+    group: "{{ oracle_group }}"
+    mode: "u=rwx,g=rx,o="
+
+pwgen_file: pwgen.sh
+pwgen_path: /usr/local/bin
+pass_param: "{{ pwgen_path }}/{{ pwgen_file }} 16"
+
+diskgroup_compatible_asm: "{{ oracle_ver }}"
+diskgroup_compatible_rdbms: "{# assign to variable c compatible parameter and set to default if not defined #}\
+                            {% set c = lookup('env','COMPATIBLE_RDBMS') | default('11.2.0.4.0',true) %} \
+                            {# if 19.3... base then lower it to 19.0... to avoid issues with dbca #}\
+                            {% if c == '19.3.0.0.0' %}\
+                              19.0.0.0.0\
+                            {% else %}\
+                              {{ c }}\
+                            {% endif %}"
+
+run_cluvfy: false
+
+# Systemd service name used with Free Edition
+free_edition_name: "{% if free_edition %}{% if oracle_ver[:4] == '23.2' or oracle_ver[:4] == '23.3' %}23c{% else %}{{ oracle_ver[:2] }}ai{% endif %}{% endif %}"
+systemd_service_name: "{% if free_edition %}oracle-free-{{ free_edition_name }}.service{% endif %}"
+
+# ignorance of prerequisites depending on version
+prereq_option: "{% if oracle_ver_base in ('11.2', '12.1') %}-ignorePrereq{% else %}-ignorePrereqFailure{% endif %}"
+
+# section for DR
+
+# db_unique_name identifies uniqueness of a database in Data Guard configuration.
+# For the standby database, this is represented by the Ansible "standby_name"
+# variable. This variable can be customized as desired. For example, using the
+# suffix "_s" or something location specific (i.e. "_sydney").
+standby_name: "{{ db_name }}_s"
+
+# section size to use during RMAN duplicate
+section_size: 32G
+
+# variable which defines usage of compressed backupsets for duplication
+backupset_compression: true
+
+# defaults for readiness check booleans
+control_node_checks: false
+managed_host_checks: false

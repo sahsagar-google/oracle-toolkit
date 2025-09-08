@@ -1,0 +1,37 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+# 21c x86-64 uses 12.2.0.1 opatch as per the docs
+opatch_patches:
+  - { category: "OPatch", release: "11.2.0.4.0", patchnum: "6880880", patchfile: "p6880880_112000_Linux-x86-64.zip", md5sum: "" }
+  - { category: "OPatch", release: "12.1.0.2.0", patchnum: "6880880", patchfile: "p6880880_121010_Linux-x86-64.zip", md5sum: "" }
+  - { category: "OPatch", release: "12.2.0.1.0", patchnum: "6880880", patchfile: "p6880880_122010_Linux-x86-64.zip", md5sum: "" }
+  - { category: "OPatch", release: "18.0.0.0.0", patchnum: "6880880", patchfile: "p6880880_180000_Linux-x86-64.zip", md5sum: "" }
+  - { category: "OPatch", release: "19.3.0.0.0", patchnum: "6880880", patchfile: "p6880880_190000_Linux-x86-64.zip", md5sum: "" }
+  - { category: "OPatch", release: "21.3.0.0.0", patchnum: "6880880", patchfile: "p6880880_210000_Linux-x86-64.zip", md5sum: "" }
+
+gi_interim_patches:
+  - category: "HAS_interim_patch"
+    version: 12.2.0.1.0
+    patchnum: "25078431"
+    patchutil: "gridsetup"
+    files:
+      - { name: "p25078431_122010_Linux-x86-64.zip", sha256sum: "FA056EBD0FE0AD134F2B5C53F0DDF6F6A5DC73C7AE40DAEF18D0629850149525", md5sum: "hK1WOGC1g/3QUryg3MM5OQ==" }
+  - category: "HAS_interim_patch"
+    version: 11.2.0.4.0
+    patchnum: "18370031"
+    patchutil: "opatch"
+    files:
+      - { name: "p18370031_112040_Linux-x86-64.zip", sha256sum: "D8506DF94D0E646084F1708BEA9948E996B26CF0C33289ACAB0F614518329F98", md5sum: "KggeYUXU5NK/U1BwndOv+g==" }
