@@ -1,6 +1,7 @@
 #!/bin/bash
 
 response_file="{{ swlib_unzip_path }}/dbca_{{ db_name }}.rsp"
+template_file="{{ oracle_home }}/assistants/dbca/templates/General_Purpose.dbc"
 
 cp "{{ oracle_home }}/assistants/dbca/dbca.rsp" "${response_file}"
 
@@ -14,7 +15,7 @@ sed -i '/^\#\{0,\} \{0,\}emConfiguration \{0,\}=/I           s~\#\{0,\} \{0,\}em
 sed -i '/^\#\{0,\} \{0,\}characterSet \{0,\}=/I              s~\#\{0,\} \{0,\}characterSet \{0,\}=.*~characterSet='{{ charset }}'~I'                                "${response_file}"
 sed -i '/^\#\{0,\} \{0,\}nationalCharacterSet \{0,\}=/I      s~\#\{0,\} \{0,\}nationalCharacterSet \{0,\}=.*~nationalCharacterSet='{{ ncharset }}'~I'               "${response_file}"
 sed -i '/^\#\{0,\} \{0,\}databaseType \{0,\}=/I              s~\#\{0,\} \{0,\}databaseType \{0,\}=.*~databaseType='{{ db_type }}'~I'                                "${response_file}"
-sed -i '/^\#\{0,\} \{0,\}automaticMemoryManagement \{0,\}=/I s~\#\{0,\} \{0,\}automaticMemoryManagement \{0,\}=.*~automaticMemoryManagement=false~I'                "${response_file}"
+sed -i '/^\#\{0,\} \{0,\}automaticMemoryManagement \{0,\}=/I s~\#\{0,\} \{0,\}automaticMemoryManagement \{0,\}=.*~automaticMemoryManagement=FALSE~I'                "${response_file}"
 
 sed -i '/^\#\{0,\} \{0,\}sysPassword \{0,\}=/I               s~\#\{0,\} \{0,\}sysPassword \{0,\}=.*~#sysPassword=~I'                                                "${response_file}"
 sed -i '/^\#\{0,\} \{0,\}systemPassword \{0,\}=/I            s~\#\{0,\} \{0,\}systemPassword \{0,\}=.*~#systemPassword=~I'                                          "${response_file}"
@@ -27,6 +28,10 @@ if [[ "{{ free_edition }}" == "True" ]]; then
 else
   sed -i '/^\#\{0,\} \{0,\}templateName \{0,\}=/I            s~\#\{0,\} \{0,\}templateName \{0,\}=.*~templateName=General_Purpose.dbc~I'                            "${response_file}"
   sed -i '/^\#\{0,\} \{0,\}initParams \{0,\}=/I              s~\#\{0,\} \{0,\}initParams \{0,\}=.*~initParams=pga_aggregate_target='{{ pga_target }}',sga_target='{{ sga_target }}',streams_pool_size=64M,use_large_pages=ONLY,db_domain='{{ db_domain }}',diagnostic_dest='{{ oracle_base }}'~I' "${response_file}"
+
+  # custom dbca templates do not work for container databases due to bugs, hence editing existing one
+  sed -i 's|<customSGA>.*</customSGA>|<customSGA>true</customSGA>|Ig' ${template_file}
+  sed -i '/memory_target/Id'                                          ${template_file}
 fi
 
 if [[ "{{ gi_install }}" == "True" ]]; then
