@@ -1,0 +1,43 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+gi_software:
+  - name: 21c_gi
+    version: 21.3.0.0.0
+    files:
+      - { name: "V1011504-01.zip", sha256sum: "070D4471BC067B1290BDCEE6B1C1FFF2F21329D2839301E334BCB2A3D12353A3", md5sum: "s/vbdiGtgsvU9AlD7/3Rvg==",
+          alt_name: "LINUX.X64_213000_grid_home.zip", alt_sha256sum: "070D4471BC067B1290BDCEE6B1C1FFF2F21329D2839301E334BCB2A3D12353A3", alt_md5sum: "s/vbdiGtgsvU9AlD7/3Rvg==" }
+  - name: 19c_gi
+    version: 19.3.0.0.0
+    files:
+      - { name: "V982068-01.zip", sha256sum: "D668002664D9399CF61EB03C0D1E3687121FC890B1DDD50B35DCBE13C5307D2E", md5sum: "t8TGb4AfktFPqg15HM2nIQ==",
+          alt_name: "LINUX.X64_193000_grid_home.zip", alt_sha256sum: "D668002664D9399CF61EB03C0D1E3687121FC890B1DDD50B35DCBE13C5307D2E", alt_md5sum: "t8TGb4AfktFPqg15HM2nIQ==" }
+  - name: 18c_gi
+    version: 18.0.0.0.0
+    files:
+      - { name: "V978971-01.zip", sha256sum: "122C1A780FE0C399818064021E3D797ED4C6B3BB68CEB2E102430FA370054CD1", md5sum: "zULRN/0qLutOkR6AKcyCqQ==" }
+  - name: 12201_gi
+    version: 12.2.0.1.0
+    files:
+      - { name: "V840012-01.zip", sha256sum: "E8BF36092F7600411A63AAA79CD4F816FB96BB3CFFA66746832416DD2FF11B15", md5sum: "rBsVYzTMXo+OW9f82+v/gg==" }
+  - name: 12102_gi
+    version: 12.1.0.2.0
+    files:
+      - { name: "V46096-01_1of2.zip", sha256sum: "09B4B51A60D6913B82E3353EEF179969AD0968FF8ACFB37CA891F04DF67B93F0", md5sum: "15PCul25AIt5B3v/jSeiGQ==" }
+      - { name: "V46096-01_2of2.zip", sha256sum: "C59B8ADA602048AF62AD8F3621F476BE225A782A8CE7BC55B2825E58157AC070", md5sum: "Dhipq7gEJ7rxj4WGWx7NXQ==" }
+  - name: 11204_gi
+    version: 11.2.0.4.0
+    files:
+      - { name: "p13390677_112040_Linux-x86-64_3of7.zip", sha256sum: "09C08AD3E1EE03DB1707F01C6221C7E3E75EC295316D0046CC5D82A65C7B928C", md5sum: "BM7zeZHbGPgZD31KGbJpEg==" }
