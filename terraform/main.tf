@@ -113,7 +113,7 @@ locals {
     }
   ]
 
-  # Metadata map, not used by this module path, but kept for parity
+  # Metadata map, Startup scripts, Ansible, and tests expect these keys and semantics, so we define them here to keep one uniform contract across FS/ASM
   disk_metadata = {
     "ora-disk-mgmt"            = upper(var.ora_disk_mgmt) # "FS" or "ASM"
     "ora-data-dest"            = local.data_dest          # "/u02" or "+DATA"
@@ -253,7 +253,7 @@ locals {
     "--swap-blk-device /dev/disk/by-id/google-swap",
     var.ora_swlib_bucket != "" ? "--ora-swlib-bucket ${var.ora_swlib_bucket}" : "",
     var.ora_version != "" ? "--ora-version ${var.ora_version}" : "",
-    var.ora_backup_dest != "" ? "--backup-dest ${var.ora_backup_dest}" : "",
+    "--backup-dest /u03/backup",
     var.ora_db_name != "" ? "--ora-db-name ${var.ora_db_name}" : "",
     var.ora_db_container != "" ? "--ora-db-container ${var.ora_db_container}" : "",
     var.ntp_pref != "" ? "--ntp-pref ${var.ntp_pref}" : "",
@@ -306,13 +306,26 @@ resource "google_compute_instance" "control_node" {
   }
 
   lifecycle {
+    # Backup destination must be empty or an absolute FS path
     precondition {
       condition = (
-        (local.is_fs && (var.ora_backup_dest == "" || can(regex("^/.*$", var.ora_backup_dest))))
-        ||
-        (!local.is_fs && (var.ora_backup_dest == "" || can(regex("^\\+.*$", var.ora_backup_dest)) || can(regex("^/.*$", var.ora_backup_dest))))
+        var.ora_backup_dest == "" ||
+        can(regex("^/.*$", var.ora_backup_dest))
       )
-      error_message = "FS mode: ora_backup_dest must be empty or an absolute path like '/u03/backup'. ASM mode: ora_backup_dest must be empty or an ASM diskgroup like '+RECO' (or a path)."
+      error_message = "ora_backup_dest must be empty or an absolute filesystem path like '/u03/backup'."
+    }
+
+    # FREE edition may only use FS (no ASM)
+    # FREE edition may only use FS (no ASM)
+    precondition {
+      condition     = !(upper(var.ora_edition) == "FREE" && !local.is_fs)
+      error_message = "ora_edition=FREE requires ora_disk_mgmt=FS. ASM is not supported for FREE edition."
+    }
+
+    # FREE edition also requires a Container Database (CDB)
+    precondition {
+      condition     = !(upper(var.ora_edition) == "FREE" && var.ora_db_container != true)
+      error_message = "ora_edition=FREE requires ora_db_container=true (CDB mode)."
     }
   }
 

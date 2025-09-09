@@ -66,28 +66,19 @@ variable "ntp_pref" {
 
 variable "ora_backup_dest" {
   type        = string
-  description = "Backup destination. In FS mode, must be an absolute path like '/u03/backup'. In ASM mode, '+RECO' is allowed."
-  default     = "" # empty => we'll fall back to /u03 in FS
+  description = "Backup destination directory (fixed by this module)."
+  default     = "/u03/backup"
   validation {
-    condition = (
-      var.ora_backup_dest == "" ||
-      can(regex("^/.*$", var.ora_backup_dest)) || # filesystem path
-      can(regex("^\\+.*$", var.ora_backup_dest))  # ASM disk group like +RECO
-    )
-    error_message = "Use an absolute path like '/u03/backup' or an ASM disk group like '+RECO', or leave it empty."
+    condition     = var.ora_backup_dest == "/u03/backup"
+    error_message = "This module enforces ora_backup_dest='/u03/backup'."
   }
 }
 
 variable "ora_db_container" {
-  type        = string
-  default     = "false"
-  description = "Defines whether the database is a container database (true/false)."
-  validation {
-    condition     = var.ora_db_container == "" || contains(["true", "false"], lower(var.ora_db_container))
-    error_message = "Invalid value for ora_db_container. Must be 'true' or 'false'."
-  }
+  type        = bool
+  default     = false
+  description = "Whether the database is a container database (CDB)."
 }
-
 variable "ora_db_name" {
   type        = string
   default     = ""
@@ -352,11 +343,14 @@ variable "data_guard_protection_mode" {
 }
 
 variable "ora_disk_mgmt" {
-  description = "Oracle disk management mode. Enter 'FS' for XFS filesystems or 'ASM' for Oracle ASM."
+  description = "Oracle disk management mode. Enter 'FS' for XFS filesystems or 'ASM' for Oracle ASM. Note: FREE edition requires FS (enforced via a precondition in main.tf)."
   type        = string
   nullable    = false
+
+  # This block may only validate the variable itself.
   validation {
     condition     = can(regex("^(?i)(FS|ASM)$", var.ora_disk_mgmt))
     error_message = "Enter FS (XFS) or ASM."
   }
 }
+
