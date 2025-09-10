@@ -30,8 +30,8 @@ else
   sed -i '/^\#\{0,\} \{0,\}initParams \{0,\}=/I              s~\#\{0,\} \{0,\}initParams \{0,\}=.*~initParams=pga_aggregate_target='{{ pga_target }}',sga_target='{{ sga_target }}',streams_pool_size=64M,use_large_pages=ONLY,db_domain='{{ db_domain }}',diagnostic_dest='{{ oracle_base }}'~I' "${response_file}"
 
   # custom dbca templates do not work for container databases due to bugs, hence editing existing one
-  sed -i 's|<customSGA>.*</customSGA>|<customSGA>true</customSGA>|Ig' ${template_file}
-  sed -i '/memory_target/Id'                                          ${template_file}
+  sed -i 's|<customSGA>.*</customSGA>|<customSGA>true</customSGA>|Ig' "${template_file}"
+  sed -i '/memory_target/Id'                                          "${template_file}"
 fi
 
 if [[ "{{ gi_install }}" == "True" ]]; then
