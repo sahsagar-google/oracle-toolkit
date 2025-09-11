@@ -92,7 +92,7 @@ oracle_dirs:
     owner: "{{ oracle_user }}"
     group: "{{ oracle_group }}"
     mode: "ug=rwx,o=rx"
-  - name: "{{ oracle_base }}/fast_recovery_area/{{ db_name }}"
+  - name: "{{ oracle_base }}{% if oracle_ver_base == '11.2' %}/fast_recovery_area/{{ db_name }}{% endif %}"
     owner: "{{ oracle_user }}"
     group: "{{ oracle_group }}"
     mode: "ug=rwx,o=rx"
