@@ -41,15 +41,23 @@ swap_disk_size_gb    = "50"
 # Feel free to adjust the disk sizes and types to match your requirements.
 # You can add more disks to the list below to create additional disks for ASM or filesystem.
 # fs_disks will be mounted as /u01, /u02, /u03, etc and formatted as XFS
+# Disk type options "pd-balanced", "pd-ssd", "pd-standard", "hyperdisk-extreme"
+boot_disk_type    = "hyperdisk-balanced"
+swap_disk_type    = "hyperdisk-balanced"
 
 oracle_home_disk = {
   size_gb = 50
+  type    = "hyperdisk-balanced"
 }
+
 data_disk = {
   size_gb = 50
+  type    = "hyperdisk-balanced"
 }
+
 reco_disk = {
   size_gb = 50
+  type    = "hyperdisk-balanced"
 }
 
 # Parameters below are optional
