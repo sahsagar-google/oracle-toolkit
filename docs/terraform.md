@@ -187,14 +187,13 @@ Review the execution plan:
 Filesystem FS(XFS)
 
 ```bash
-terraform plan -var-file="terraform.tfvars" -var 'ora_disk_mgmt=FS'
+terraform plan -var-file="terraform.tfvars.xfs" 
 ```
 
 ASM (DATA/RECO disk groups)
 
 ```bash
-terraform plan -var-file="terraform.tfvars" -var 'ora_disk_mgmt=ASM'
-```
+terraform plan -var-file="terraform.tfvars.asm"
 
 Deploy the infrastructure:
 
@@ -203,13 +202,13 @@ Deploy the infrastructure:
 Filesystem FS(XFS) — formats and mounts /u02 and /u03:
 
 ```bash
-terraform apply -var-file="terraform.tfvars" -var 'ora_disk_mgmt=FS' -auto-approve
+terraform apply -var-file="terraform.tfvars.xfs" -auto-approve
 ```
 
 ASM (DATA/RECO disk groups):
 
 ```bash
-terraform apply -var-file="terraform.tfvars" -var 'ora_disk_mgmt=ASM' -auto-approve
+terraform apply -var-file="terraform.tfvars.asm" -auto-approve
 ```
 
 This process will perform the following steps:
@@ -252,13 +251,13 @@ ok: [VM_PUBLIC_IP]
 Filesystem FS(XFS)
 
 ```bash
-terraform destroy -var-file="terraform.tfvars" -var 'ora_disk_mgmt=FS' -auto-approve
+terraform destroy -var-file="terraform.tfvars.xfs" -auto-approve
 ```
 
 ASM
 
 ```bash
-terraform destroy -var-file="terraform.tfvars" -var 'ora_disk_mgmt=ASM' -auto-approve
+terraform destroy -var-file="terraform.tfvars.asm" -auto-approve
 ```
 
 ## Ansible Cloud Logging callback plugin

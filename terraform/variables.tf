@@ -66,19 +66,24 @@ variable "ntp_pref" {
 
 variable "ora_backup_dest" {
   type        = string
-  description = "Backup destination directory (fixed by this module)."
-  default     = "/u03/backup"
+  description = "Backup destination for Oracle database. Example: '+RECO' or '/backup/path'. Leave empty if not needed."
+
   validation {
-    condition     = var.ora_backup_dest == "/u03/backup"
-    error_message = "This module enforces ora_backup_dest='/u03/backup'."
+    condition     = var.ora_backup_dest == "" || can(regex("^\\+?[A-Za-z0-9/_-]+$", var.ora_backup_dest))
+    error_message = "Invalid backup destination. It must be a valid ASM disk group (e.g., '+RECO') or a valid file path."
   }
 }
 
 variable "ora_db_container" {
-  type        = bool
-  default     = false
-  description = "Whether the database is a container database (CDB)."
+  type        = string
+  default     = "false"
+  description = "Defines whether the database is a container database (true/false)."
+  validation {
+    condition     = var.ora_db_container == "" || contains(["true", "false"], lower(var.ora_db_container))
+    error_message = "Invalid value for ora_db_container. Must be 'true' or 'false'."
+  }
 }
+
 variable "ora_db_name" {
   type        = string
   default     = ""
@@ -141,7 +146,7 @@ variable "ora_version" {
 variable "ora_release" {
   type        = string
   default     = "latest"
-  description = "Oracle release update version (patch level)."
+  description = "Oracle release update version (patchlevel)."
   validation {
     condition     = var.ora_release == "" || var.ora_release == "latest" || can(regex("^\\d+(\\.\\d+)*$", var.ora_release))
     error_message = "Invalid Oracle release version. It should be in the format '19.10', '21.3.0.0', etc."
@@ -343,14 +348,11 @@ variable "data_guard_protection_mode" {
 }
 
 variable "ora_disk_mgmt" {
-  description = "Oracle disk management mode. Enter 'FS' for XFS filesystems or 'ASM' for Oracle ASM. Note: FREE edition requires FS (enforced via a precondition in main.tf)."
+  description = "Oracle disk management mode. Enter 'FS' for XFS filesystems or 'ASM' for Oracle ASM."
   type        = string
   nullable    = false
-
-  # This block may only validate the variable itself.
   validation {
     condition     = can(regex("^(?i)(FS|ASM)$", var.ora_disk_mgmt))
     error_message = "Enter FS (XFS) or ASM."
   }
 }
-
