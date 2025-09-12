@@ -350,9 +350,11 @@ variable "data_guard_protection_mode" {
 variable "ora_disk_mgmt" {
   description = "Oracle disk management mode. Enter 'FS' for XFS filesystems or 'ASM' for Oracle ASM."
   type        = string
+  default     = "FS"
   nullable    = false
   validation {
-    condition     = can(regex("^(?i)(FS|ASM)$", var.ora_disk_mgmt))
+    condition     = can(regex("^(?i)(FS|ASMUDEV|ASMLIB)$", var.ora_disk_mgmt))
     error_message = "Enter FS (XFS) or ASM."
   }
 }
+

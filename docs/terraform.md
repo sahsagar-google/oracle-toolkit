@@ -182,33 +182,14 @@ terraform init
 
 Review the execution plan:
 
-- Generate a plan (choose your storage mode)
-
-Filesystem FS(XFS)
-
 ```bash
-terraform plan -var-file="terraform.tfvars.xfs" 
+terraform plan
 ```
-
-ASM (DATA/RECO disk groups)
-
-```bash
-terraform plan -var-file="terraform.tfvars.asm"
 
 Deploy the infrastructure:
 
-- During apply, you’ll choose the storage mode (choose your storage mode)
-
-Filesystem FS(XFS) — formats and mounts /u02 and /u03:
-
 ```bash
-terraform apply -var-file="terraform.tfvars.xfs" -auto-approve
-```
-
-ASM (DATA/RECO disk groups):
-
-```bash
-terraform apply -var-file="terraform.tfvars.asm" -auto-approve
+terraform apply
 ```
 
 This process will perform the following steps:
@@ -248,16 +229,8 @@ ok: [VM_PUBLIC_IP]
 
    To destroy all the resources created by Terraform:
 
-Filesystem FS(XFS)
-
 ```bash
-terraform destroy -var-file="terraform.tfvars.xfs" -auto-approve
-```
-
-ASM
-
-```bash
-terraform destroy -var-file="terraform.tfvars.asm" -auto-approve
+terraform destroy
 ```
 
 ## Ansible Cloud Logging callback plugin

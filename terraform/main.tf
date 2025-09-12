@@ -81,8 +81,8 @@ locals {
   )
 
   # ---- DBCA destinations
-  reco_fs_dest = var.ora_backup_dest != "" ? var.ora_backup_dest : "/u03"
-  data_dest    = local.is_fs ? "/u02" : "+DATA"
+  reco_fs_dest = var.ora_backup_dest != "" ? var.ora_backup_dest : "/u03/fast_recovery_area"
+  data_dest    = local.is_fs ? "/u02/oradata" : "+DATA"
   reco_dest    = local.is_fs ? local.reco_fs_dest : "+RECO"
 
   # Takes the list of filesystem disks and converts them into a list of objects with the required fields by ansible
@@ -113,8 +113,8 @@ locals {
   # Metadata
   disk_metadata = {
     "ora-disk-mgmt"            = upper(var.ora_disk_mgmt) # "FS" or "ASM"
-    "ora-data-dest"            = local.data_dest          # "/u02" or "+DATA"
-    "ora-reco-dest"            = local.reco_dest          # "/u03" or "+RECO"
+    "ora-data-dest"            = local.data_dest          # "/u02/oradata" or "+DATA"
+    "ora-reco-dest"            = local.reco_dest          # "/u03/fast_recovery_area" or "+RECO"
     "ora-data-mounts-json"     = local.is_fs ? jsonencode(local.data_mounts_config) : ""
     "ora-asm-disk-config-json" = local.is_fs ? "" : jsonencode(local.asm_disk_config)
   }
@@ -124,25 +124,26 @@ locals {
 
   project_id = var.project_id
 
-  is_multi_instance = (
-    var.zone1 != "" && var.zone2 != "" && var.subnetwork1 != "" && var.subnetwork2 != ""
-  )
+  subnetwork1_opt = var.subnetwork1 != "" ? var.subnetwork1 : null
+  subnetwork2_opt = var.subnetwork2 != "" ? var.subnetwork2 : null
+
+  is_multi_instance = (var.zone1 != "" && var.zone2 != "")
 
   instances = local.is_multi_instance ? {
     "${var.instance_name}-1" = {
       zone       = var.zone1
-      subnetwork = var.subnetwork1
+      subnetwork = local.subnetwork1_opt
       role       = "primary"
     }
     "${var.instance_name}-2" = {
       zone       = var.zone2
-      subnetwork = var.subnetwork2
+      subnetwork = local.subnetwork2_opt
       role       = "standby"
     }
     } : {
     "${var.instance_name}-1" = {
       zone       = var.zone1
-      subnetwork = var.subnetwork1
+      subnetwork = local.subnetwork1_opt
       role       = "primary"
     }
   }
@@ -165,9 +166,10 @@ resource "google_compute_instance_template" "default" {
   machine_type = var.machine_type
 
   network_interface {
-    # gets overridden during instance creation
-    subnetwork = var.subnetwork1
-  }
+  
+  subnetwork = local.subnetwork1_opt
+  network    = local.subnetwork1_opt == null ? "projects/${var.project_id}/global/networks/default" : null
+}
   disk {
     boot         = true
     auto_delete  = true
@@ -210,7 +212,9 @@ resource "google_compute_instance_from_template" "database_vm" {
   source_instance_template = google_compute_instance_template.default.self_link
 
   network_interface {
-    subnetwork = each.value.subnetwork
+  # Provide one of: subnetwork (preferred) OR default network
+  subnetwork = each.value.subnetwork
+  network    = each.value.subnetwork == null ? "projects/${var.project_id}/global/networks/default" : null
 
     dynamic "access_config" {
       for_each = var.assign_public_ip ? [1] : []
@@ -284,8 +288,9 @@ resource "google_compute_instance" "control_node" {
   }
 
   network_interface {
-    subnetwork         = var.subnetwork1
-    subnetwork_project = local.project_id
+  subnetwork         = local.subnetwork1_opt
+  network            = local.subnetwork1_opt == null ? "projects/${var.project_id}/global/networks/default" : null
+  subnetwork_project = local.subnetwork1_opt != null ? local.project_id : null
 
     dynamic "access_config" {
       for_each = var.assign_public_ip ? [1] : []
@@ -334,3 +339,4 @@ output "database_vm_names" {
   description = "Names of the created database VMs from instance templates"
   value       = [for vm in google_compute_instance_from_template.database_vm : vm.name]
 }
+
