@@ -15,7 +15,7 @@
 locals {
   # ---- Mode helper
   is_fs              = upper(var.ora_disk_mgmt) == "FS"
-  ora_disk_mgmt_flag = local.is_fs ? "FS" : ""
+  ora_disk_mgmt_flag = upper(var.ora_disk_mgmt)
 
   # ---- Base disk definitions (do not change device_name values)
   _u01 = {
@@ -26,7 +26,7 @@ locals {
     disk_labels  = { purpose = "software" }
   }
 
-  # DATA / RECO in ASM mode (with disk groups)
+  # DATA / RECO in ASMUDEV and ASMLIB mode (with disk groups)
   _data_asm = {
     auto_delete  = true
     device_name  = "data"
@@ -81,9 +81,8 @@ locals {
   )
 
   # ---- DBCA destinations
-  reco_fs_dest = var.ora_backup_dest != "" ? var.ora_backup_dest : "/u03/fast_recovery_area"
-  data_dest    = local.is_fs ? "/u02/oradata" : "+DATA"
-  reco_dest    = local.is_fs ? local.reco_fs_dest : "+RECO"
+  data_dest    = local.is_fs ? "/u02/oradata" : "DATA"
+  reco_dest = local.is_fs ? "/u03/fast_recovery_area" : "RECO"
 
   # Takes the list of filesystem disks and converts them into a list of objects with the required fields by ansible
   data_mounts_config = [
@@ -112,10 +111,10 @@ locals {
 
   # Metadata
   disk_metadata = {
-    "ora-disk-mgmt"            = upper(var.ora_disk_mgmt) # "FS" or "ASM"
+    "ora-disk-mgmt"            = upper(var.ora_disk_mgmt) # "FS" or "ASMUDEV" or "ASMLIB"
     "ora-data-dest"            = local.data_dest          # "/u02/oradata" or "+DATA"
     "ora-reco-dest"            = local.reco_dest          # "/u03/fast_recovery_area" or "+RECO"
-    "ora-data-mounts-json"     = local.is_fs ? jsonencode(local.data_mounts_config) : ""
+    "ora-data-mounts-json"     = jsonencode(local.data_mounts_config)
     "ora-asm-disk-config-json" = local.is_fs ? "" : jsonencode(local.asm_disk_config)
   }
 
@@ -304,14 +303,14 @@ resource "google_compute_instance" "control_node" {
   }
 
   lifecycle {
-    # FS/ASM-specific guard for backup dest
+    # FS/ASMUDEV/ASMLIB-specific guard for backup dest
     precondition {
       condition = (
         (local.is_fs && (var.ora_backup_dest == "" || can(regex("^/.*$", var.ora_backup_dest))))
         ||
         (!local.is_fs && (var.ora_backup_dest == "" || can(regex("^\\+.*$", var.ora_backup_dest)) || can(regex("^/.*$", var.ora_backup_dest))))
       )
-      error_message = "FS mode: ora_backup_dest must be an absolute path like '/u03/backup'. ASM mode: ora_backup_dest must be an ASM diskgroup like '+RECO'."
+      error_message = "FS mode: ora_backup_dest must be an absolute path like '/u03/backup'. ASMUDEV/ASMLIB mode: ora_backup_dest must be an ASMUDEV/ASMLIB diskgroup like '+RECO'."
     }
   }
 
