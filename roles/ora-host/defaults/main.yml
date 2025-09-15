@@ -14,7 +14,6 @@
 
 ---
 install_os_packages: true
-disable_firewall: false
 disable_selinux: true
 firewall_service: "firewalld"
 
