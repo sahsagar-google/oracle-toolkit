@@ -13,26 +13,21 @@
 # limitations under the License.
 
 ---
-- name: Check if firewall is installed
-  package:
-    list: "{{ firewall_service }}"
-    disablerepo: "*"
-    lock_timeout: "{{ pkg_mgr_lock_timeout }}"
+- name: Gather service facts
+  service_facts:
   when:
     - disable_firewall | bool
     - ansible_os_family == 'RedHat'
   tags: firewall
-  register: firewall
 
-- name: Disable firewall
+- name: Stop and disable firewall if present
   service:
     name: "{{ firewall_service }}"
     state: stopped
     enabled: false
   when:
-    - disable_firewall | bool
-    - ansible_os_family == 'RedHat'
-    - firewall.results
+    - ansible_facts.services is defined
+    - firewall_service + ".service" in ansible_facts.services
   tags: firewall
 
 - name: Disable selinux (permanently)
