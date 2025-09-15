@@ -13,9 +13,18 @@
 # limitations under the License.
 
 ---
-- name: Ensure yum is not running, send Ctrl-C if it is
-  shell: pidof -x /usr/bin/yum /bin/yum | xargs -t -r -n 1 kill -INT
+- name: Stop package manager processes if they exist (using a CTRL-c equivalent SIGINT)
+  shell: |
+    pids=$(pidof -x /usr/bin/dnf /usr/bin/yum /usr/bin/dnf-3 /bin/dnf /bin/yum /bin/dnf-3)
+    if [ -n "$pids" ]; then
+      echo "Killing processes with PIDs: $pids"
+      kill -INT $pids
+    else
+      echo "No running package manager processes found."
+    fi
+  register: package_managed_proc_kill
   when: install_os_packages
+  changed_when: package_managed_proc_kill.stdout != 'No running package manager processes found.'
   tags: os_packages
 
 - name: Remove ntpd package
