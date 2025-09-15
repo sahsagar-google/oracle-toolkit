@@ -26,6 +26,8 @@
     state: stopped
     enabled: false
   when:
+    - disable_firewall | bool
+    - ansible_os_family == 'RedHat'
     - ansible_facts.services is defined
     - firewall_service + ".service" in ansible_facts.services
   tags: firewall
