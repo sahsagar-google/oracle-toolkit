@@ -618,11 +618,10 @@ ORA_STAGING="${ORA_STAGING:-$ORA_SWLIB_PATH}"
 [[ "$COMPATIBLE_RDBMS" == "0" ]] && {
   COMPATIBLE_RDBMS=$ORA_VERSION
 }
+
 #
 # Variables verification
 #
-shopt -s nocasematch
-
 [[ ! "$ORA_VERSION" =~ $ORA_VERSION_PARAM ]] && {
   echo "Incorrect parameter provided for ora-version: $ORA_VERSION"
   exit 1
@@ -1034,7 +1033,7 @@ else
   exit 124
 fi
 #
-# Build the logfile for this session
+# Build the log file for this session
 #
 if [[ "${CLUSTER_TYPE}" = "RAC" ]] || [[ "${CLUSTER_TYPE}" = "DG" ]]; then
   LOG_FILE="${LOG_FILE}_${ORA_DB_NAME}_${TIMESTAMP}_${CLUSTER_TYPE}.log"
