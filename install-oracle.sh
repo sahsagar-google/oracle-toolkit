@@ -285,7 +285,7 @@ GETOPT_OPTIONAL="$GETOPT_OPTIONAL,backup-start-hour:,backup-start-min:,archive-b
 GETOPT_OPTIONAL="$GETOPT_OPTIONAL,ora-swlib-type:,ora-swlib-path:,ora-swlib-credentials:,instance-ip-addr:,primary-ip-addr:,instance-ssh-user:"
 GETOPT_OPTIONAL="$GETOPT_OPTIONAL,instance-ssh-key:,instance-hostname:,ntp-pref:,inventory-file:,compatible-rdbms:,instance-ssh-extra-args:"
 GETOPT_OPTIONAL="$GETOPT_OPTIONAL,help,validate,check-instance,prep-host,install-sw,config-db,debug,allow-install-on-vm,skip-database-config,swap-blk-device:"
-GETOPT_OPTIONAL="$GETOPT_OPTIONAL,install-workload-agent,oracle-metrics-secret:,db-password-secret:,data-guard-protection-mode:"
+GETOPT_OPTIONAL="$GETOPT_OPTIONAL,install-workload-agent,oracle-metrics-secret:,db-password-secret:,data-guard-protection-mode:,is-terraform-run"
 GETOPT_LONG="$GETOPT_MANDATORY,$GETOPT_OPTIONAL"
 GETOPT_SHORT="h"
 
@@ -551,6 +551,9 @@ while true; do
     ;;
   --install-workload-agent)
     INSTALL_WORKLOAD_AGENT=true
+    ;;
+  --is-terraform-run)
+    IS_TERRAFORM_RUN=true
     ;;
   --data-guard-protection-mode)
     DATA_GUARD_PROTECTION_MODE="$2"
@@ -1131,6 +1134,10 @@ if [[ -n "${ORA_ASM_DISKS_JSON}" ]]; then
 fi
 if [[ -n "${ORA_DATA_MOUNTS_JSON}" ]]; then
   ANSIBLE_EXTRA_PARAMS="${ANSIBLE_EXTRA_PARAMS} -e '{\"data_mounts_input\":${ORA_DATA_MOUNTS_JSON}}'"
+fi
+
+if [[ "${IS_TERRAFORM_RUN}" == "true" ]]; then
+  ANSIBLE_EXTRA_PARAMS="${ANSIBLE_EXTRA_PARAMS} -e 'is_terraform_run=true'"
 fi
 
 echo "Ansible params: ${ANSIBLE_EXTRA_PARAMS}"

@@ -247,6 +247,7 @@ locals {
     "--ora-data-dest ${local.data_dest}",
     "--ora-reco-dest ${local.reco_dest}",
     "--swap-blk-device /dev/disk/by-id/google-swap",
+    "--is-terraform-run",
     var.ora_swlib_bucket != "" ? "--ora-swlib-bucket ${var.ora_swlib_bucket}" : "",
     var.ora_version != "" ? "--ora-version ${var.ora_version}" : "",
     var.ora_backup_dest != "" ? "--backup-dest ${var.ora_backup_dest}" : "",
