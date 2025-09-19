@@ -35,7 +35,7 @@
     - "stop_all.sh"
   tags: db-start
 
-- name: Setup automatic Oracle database stop and start services
+- name: Set up automatic Oracle database stop and start services
   become: true
   block:
     - name: Ensure autostart in oratab

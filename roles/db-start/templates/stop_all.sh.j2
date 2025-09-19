@@ -15,17 +15,17 @@
 
 while IFS=':' read -r ORACLE_SID ORACLE_HOME AUTOSTART_FLAG; do
     if [[ "$AUTOSTART_FLAG" =~ [Yy] ]]; then
-        PATH_SAVE=$PATH
-        LD_LIBRARY_PATH_SAVE=$LD_LIBRARY_PATH
+        PATH_SAVE="$PATH"
+        LD_LIBRARY_PATH_SAVE="$LD_LIBRARY_PATH"
         export ORACLE_SID ORACLE_HOME
-        export PATH=$ORACLE_HOME/bin:$PATH
-        export LD_LIBRARY_PATH=$ORACLE_HOME/lib:$LD_LIBRARY_PATH
+        export PATH="$ORACLE_HOME/bin:$PATH"
+        export LD_LIBRARY_PATH="$ORACLE_HOME/lib:$LD_LIBRARY_PATH"
         if pgrep -f "tnslsnr.*{{ listener_name }}" ; then
             echo Stopping listener {{ listener_name }}
-            $ORACLE_HOME/bin/lsnrctl stop {{ listener_name }}
+            "$ORACLE_HOME"/bin/lsnrctl stop {{ listener_name }}
         fi
         if pgrep -f "ora_smon_$ORACLE_SID" ; then
-            echo Stopping Oracle instance $ORACLE_SID
+            echo "Stopping Oracle instance $ORACLE_SID"
             sqlplus -S / as sysdba << EOF
 SET SERVEROUTPUT ON;
 SET TERMOUT ON FEED OFF ECHO OFF;
@@ -46,13 +46,13 @@ SHUTDOWN IMMEDIATE;
 EXIT;
 EOF
             if [ $? -ne 0 ]; then
-                echo ERROR: Failed to stop $ORACLE_SID
+                echo "ERROR: Failed to stop $ORACLE_SID"
             else
-                echo Oracle instance $ORACLE_SID is stopped
+                echo "Oracle instance $ORACLE_SID is stopped"
             fi
         fi
-        PATH=$PATH_SAVE
-        LD_LIBRARY_PATH=$LD_LIBRARY_PATH_SAVE
+        PATH="$PATH_SAVE"
+        LD_LIBRARY_PATH="$LD_LIBRARY_PATH_SAVE"
         export PATH LD_LIBRARY_PATH
     fi
 done < <(sed 's/#.*//; /^[[:space:]]*$/d' /etc/oratab)
