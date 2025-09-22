@@ -62,5 +62,4 @@
       systemd:
         name: dbora.service
         enabled: true
-  ignore_errors: true
   tags: db-start
