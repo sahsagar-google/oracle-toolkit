@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+source "{{ scripts_dir }}"/dbstart_func.sh
 rc=0
 
 while IFS=':' read -r ORACLE_SID ORACLE_HOME AUTOSTART_FLAG; do
@@ -22,36 +23,14 @@ while IFS=':' read -r ORACLE_SID ORACLE_HOME AUTOSTART_FLAG; do
         export ORACLE_SID ORACLE_HOME
         export PATH="$ORACLE_HOME/bin:$PATH"
         export LD_LIBRARY_PATH="$ORACLE_HOME/lib:$LD_LIBRARY_PATH"
-        if pgrep -f "tnslsnr.*{{ listener_name }}" ; then
-            echo Stopping listener {{ listener_name }}
-            "$ORACLE_HOME"/bin/lsnrctl stop {{ listener_name }}
+
+        if ! stop_listener "{{ listener_name }}"; then
+            rc=1
         fi
+
         if pgrep -f "[ora|db]_smon_$ORACLE_SID" ; then
-            echo "Stopping Oracle instance $ORACLE_SID"
-            sqlplus -S / as sysdba << EOF
-SET SERVEROUTPUT ON;
-SET TERMOUT ON FEED OFF ECHO OFF;
-DECLARE
-    v_database_role VARCHAR2(30);
-    v_open_mode     VARCHAR2(30);
-BEGIN
-    SELECT database_role, open_mode INTO v_database_role, v_open_mode FROM V\$DATABASE;
-    IF v_database_role = 'PHYSICAL STANDBY' THEN
-        DBMS_OUTPUT.PUT_LINE('Current role is PHYSICAL STANDBY. Stopping managed recovery.');
-        EXECUTE IMMEDIATE 'ALTER DATABASE RECOVER MANAGED STANDBY DATABASE CANCEL';
-    END IF;
-END;
-/
-WHENEVER OSERROR EXIT FAILURE
-WHENEVER SQLERROR EXIT FAILURE
-SHUTDOWN IMMEDIATE;
-EXIT;
-EOF
-            if [ $? -ne 0 ]; then
-                echo "ERROR: Failed to stop $ORACLE_SID"
-                rc=1
-            else
-                echo "Oracle instance $ORACLE_SID is stopped"
+            if ! stop_db; then
+                rc="$?"
             fi
         fi
         PATH="$PATH_SAVE"

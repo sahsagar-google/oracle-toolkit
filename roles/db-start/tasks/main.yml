@@ -20,6 +20,7 @@
     owner: "{{ oracle_user }}"
     group: "{{ oracle_group }}"
     mode: u=wrx,go=
+  tags: db-start
 
 - name: Copy startup and shutdown scripts to target server
   become: true
@@ -33,6 +34,7 @@
   with_items:
     - "start_all.sh"
     - "stop_all.sh"
+    - "dbstart_func.sh"
   tags: db-start
 
 - name: Set up automatic Oracle database stop and start services

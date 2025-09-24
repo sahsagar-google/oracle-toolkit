@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+source "{{ scripts_dir }}"/dbstart_func.sh
 rc=0
 
 while IFS=':' read -r ORACLE_SID ORACLE_HOME AUTOSTART_FLAG; do
@@ -22,64 +23,17 @@ while IFS=':' read -r ORACLE_SID ORACLE_HOME AUTOSTART_FLAG; do
         export ORACLE_SID ORACLE_HOME
         export PATH="$ORACLE_HOME/bin:$PATH"
         export LD_LIBRARY_PATH="$ORACLE_HOME/lib:$LD_LIBRARY_PATH"
-        if ! pgrep -f "tnslsnr.*{{ listener_name }}" ; then
-            echo "Starting listener {{ listener_name }}"
-            "$ORACLE_HOME"/bin/lsnrctl start {{ listener_name }}
+
+        if ! start_listener "{{ listener_name }}"; then
+            rc=1
         fi
+
         if ! pgrep -f "[ora|db]_smon_$ORACLE_SID" ; then
-            # startup is in separate sqlplus calls due to dbms_output not working correctly
-            echo "Starting Oracle instance $ORACLE_SID"
-            sqlplus -S / as sysdba <<EOF
-WHENEVER OSERROR EXIT FAILURE
-WHENEVER SQLERROR EXIT FAILURE
-STARTUP MOUNT;
-EXIT;
-EOF
-            if [ $? -ne 0 ]; then
-                echo "ERROR: Failed to mount $ORACLE_SID"
-                rc=1;
-            else
-                IFS="," read -r db_role db_mode <<<"$(sqlplus -S / as sysdba <<EOF
-SET PAGES 0 FEED OFF VERIFY OFF HEADING OFF ECHO OFF COLSEP , TRIMSPOOL ON TAB OFF
-SELECT database_role, open_mode FROM v\$database;
-EXIT;
-EOF
-)"
-                if [[ "$db_role" =~ "PRIMARY" ]]; then
-                    echo "Current role is PRIMARY."
-                    if [[ "$db_mode" != "READ WRITE" ]]; then
-                        echo "Opening database."
-                        sqlplus -S / as sysdba <<EOF
-WHENEVER OSERROR EXIT FAILURE
-WHENEVER SQLERROR EXIT FAILURE
-SET PAGES 0 FEED OFF VERIFY OFF HEADING OFF ECHO OFF
-ALTER DATABASE OPEN;
-EXIT;
-EOF
-                        if [ $? -ne 0 ]; then
-                            echo "ERROR: Failed to open $ORACLE_SID"
-                            rc=2;
-                        fi
-                    else
-                        echo "Database is already open."
-                    fi
-                elif [[ "$db_role" =~ "PHYSICAL STANDBY" ]]; then
-                    echo "Current role is PHYSICAL STANDBY. Starting managed recovery."
-                    sqlplus -S / as sysdba <<EOF
-ALTER DATABASE RECOVER MANAGED STANDBY DATABASE DISCONNECT FROM SESSION;
-EXIT;
-EOF
-                    if [ $? -ne 0 ]; then
-                        echo "ERROR: Failed to start automatic MRP."
-                        rc=3;
-                    fi
-                else
-                    echo "Unrecognized database role: $db_role. Database will remain in MOUNT mode."
-                    rc=4;
-                fi
+            if ! startup_db; then
+                rc="$?"
             fi
         else
-            echo "Oracle instance $ORACLE_SID is already running."
+            log "WARN" "Oracle instance $ORACLE_SID is already running."
         fi
         PATH="$PATH_SAVE"
         LD_LIBRARY_PATH="$LD_LIBRARY_PATH_SAVE"
