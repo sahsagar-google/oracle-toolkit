@@ -145,10 +145,6 @@ echo
 
 # Run locally only; the trailing comma indicates a hostname rather than a file.
 INVENTORY_FILE="localhost,"
-ANSIBLE_PARAMS="-i ${INVENTORY_FILE} ${ANSIBLE_PARAMS}"
-ANSIBLE_EXTRA_PARAMS="${*}"
-
-export ANSIBLE_DISPLAY_SKIPPED_HOSTS=false
 
 ANSIBLE_PLAYBOOK="ansible-playbook"
 if ! type ansible-playbook >/dev/null 2>&1; then
@@ -158,11 +154,25 @@ else
     echo "Found Ansible: $(type ansible-playbook)"
 fi
 
+declare -a CMD_ARRAY=("$ANSIBLE_PLAYBOOK" -i "$INVENTORY_FILE")
+CMD_ARRAY+=("$@")
+
+# Add any passthrough arguments from the script command line
+if [[ -n "$ANSIBLE_PARAMS" ]]; then
+  echo "Processing ANSIBLE_PARAMS string: [$ANSIBLE_PARAMS]"
+  CMD_ARRAY+=(-e "$ANSIBLE_PARAMS")
+fi
+
+export ANSIBLE_DISPLAY_SKIPPED_HOSTS=false
+
 # exit on any error from the following scripts
 set -e
 
 PLAYBOOK="check-swlib.yml"
-ANSIBLE_COMMAND="${ANSIBLE_PLAYBOOK} ${ANSIBLE_PARAMS} ${ANSIBLE_EXTRA_PARAMS} ${PLAYBOOK}"
-echo
-echo "Running Ansible playbook: ${ANSIBLE_COMMAND}"
-eval "${ANSIBLE_COMMAND}"
+
+declare -a CMDLINE=("${CMD_ARRAY[@]}")
+CMDLINE+=("${PLAYBOOK}")
+
+printf "Running Ansible playbook: %s\n" "${CMDLINE[*]}"
+
+"${CMDLINE[@]}"
