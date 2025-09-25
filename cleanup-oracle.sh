@@ -275,14 +275,13 @@ if [[ "$#" -gt 0 ]]; then
   CMD_ARRAY+=("$@")
 fi
 
-# Add the JSON arguments. Each part must be a separate array element
+# not using backslash-escaped double quotes in the JSON strings
 if [[ -n "${ORA_ASM_DISKS_JSON}" ]]; then
-  # The '-e' is one element. The JSON string is the next.
-  CMD_ARRAY+=(-e "{\"asm_disk_input\":${ORA_ASM_DISKS_JSON}}")
+  CMD_ARRAY+=(-e $(printf '%s' '{"asm_disk_input":'"${ORA_ASM_DISKS_JSON}}") )
 fi
 
 if [[ -n "${ORA_DATA_MOUNTS_JSON}" ]]; then
-  CMD_ARRAY+=(-e "{\"data_mounts_input\":${ORA_DATA_MOUNTS_JSON}}")
+  CMD_ARRAY+=(-e $(printf '%s' '{"data_mounts_input":'"${ORA_DATA_MOUNTS_JSON}}") )
 fi
 
 if [ $VALIDATE -eq 1 ]; then

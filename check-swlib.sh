@@ -154,19 +154,13 @@ else
     echo "Found Ansible: $(type ansible-playbook)"
 fi
 
-declare -a CMD_ARRAY=()
+declare -a CMD_ARRAY=("$ANSIBLE_PLAYBOOK" -i "$INVENTORY_FILE")
+CMD_ARRAY+=("$@")
 
-CMD_ARRAY+=($ANSIBLE_PLAYBOOK)
-CMD_ARRAY+=(-i "$INVENTORY_FILE")
-
+# Add any passthrough arguments from the script command line
 if [[ -n "$ANSIBLE_PARAMS" ]]; then
   echo "Processing ANSIBLE_PARAMS string: [$ANSIBLE_PARAMS]"
   CMD_ARRAY+=(-e "$ANSIBLE_PARAMS")
-fi
-
-# Add any passthrough arguments from the script command line
-if [[ "$#" -gt 0 ]]; then
-  CMD_ARRAY+=("$@")
 fi
 
 export ANSIBLE_DISPLAY_SKIPPED_HOSTS=false

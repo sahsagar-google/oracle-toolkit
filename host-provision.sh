@@ -113,9 +113,7 @@ if [[ -n "$ANSIBLE_PARAMS" ]]; then
 fi
 
 # Add any passthrough arguments from the script command line
-if [[ "$#" -gt 0 ]]; then
-  CMD_ARRAY+=("$@")
-fi
+ CMD_ARRAY+=("$@")
 
 declare -a CMDLINE=("${CMD_ARRAY[@]}")
 CMDLINE+=("${PLAYBOOK}")
