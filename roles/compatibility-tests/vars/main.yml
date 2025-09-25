@@ -137,7 +137,7 @@ oracle_compatibility_matrix:
     "9":
       supported: true
       min_linux_release: "9.0"
-      max_linux_release: "9.6"
+      max_linux_release: "9.7" # 9.7 expected in 2026, should be supported for  23c at that time
       min_db_ru: "23.0.0.0"
       min_kernel:
         rh: "5.14.0-284.30.1.el9"
