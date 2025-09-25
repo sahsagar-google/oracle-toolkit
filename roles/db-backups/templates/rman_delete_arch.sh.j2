@@ -36,13 +36,13 @@ fi
 #
 # We can now build the output file and log file names
 #
-outfile="${log_dir}/rman_${start_ts}_${type}.out"
-logfile="${log_dir}/rman_${start_ts}_${type}.log"
+outfile="${log_dir}/rman_${ora_inst_name}_${start_ts}_${type}.out"
+logfile="${log_dir}/rman_${ora_inst_name}_${start_ts}_${type}.log"
 #
 # Set the Oracle env
 #
-export ORACLE_SID="${ora_inst_name}"
-source oraenv <<<"${ora_inst_name}" >/dev/null 2>&1
+export PATH="/usr/local/bin:${PATH}"
+source oraenv <<<"${ora_inst_name}" >/dev/null 2>&1 || exit 1
 #
 # RMAN archivelog deletion
 #
