@@ -271,9 +271,7 @@ if [[ -n "$ANSIBLE_PARAMS" ]]; then
 fi
 
 # Add any passthrough arguments from the script command line
-if [[ "$#" -gt 0 ]]; then
-  CMD_ARRAY+=("$@")
-fi
+CMD_ARRAY+=("$@")
 
 # not using backslash-escaped double quotes in the JSON strings
 if [[ -n "${ORA_ASM_DISKS_JSON}" ]]; then
