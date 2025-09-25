@@ -128,5 +128,5 @@
         - set environment variable SKIP_PLATFORM_COMPATIBILITY=1
         - or use the '--skip-platform-compatibility' option when running 'install-oracle.sh'
 
-  when: managed_host_checks and not platform_compatibility_override
+  when: managed_host_checks and not skip_platform_compatibility
   tags: readiness_checks
