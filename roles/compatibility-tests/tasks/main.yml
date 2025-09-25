@@ -125,8 +125,8 @@
 
       Compatibility Override:
         - The compability checks may be overridden
-        - set environment variable PLATFORM_COMPATIBILITY_OVERRIDE=1
-        - or use the '--platform-compatibility-override' option when running 'install-oracle.sh'
+        - set environment variable SKIP_PLATFORM_COMPATIBILITY=1
+        - or use the '--skip-platform-compatibility' option when running 'install-oracle.sh'
 
   when: managed_host_checks and not platform_compatibility_override
   tags: readiness_checks

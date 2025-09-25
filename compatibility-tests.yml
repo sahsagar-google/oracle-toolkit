@@ -21,7 +21,7 @@
 
   vars:
     managed_host_checks: true
-    platform_compatibility_override: "{{ lookup('env', 'PLATFORM_COMPATIBILITY_OVERRIDE') == '1' }}"
+    platform_compatibility_override: "{{ lookup('env', 'SKIP_PLATFORM_COMPATIBILITY') == '1' }}"
 
   pre_tasks:
     - name: Oracle_rel
