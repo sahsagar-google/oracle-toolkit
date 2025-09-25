@@ -53,12 +53,12 @@
 - name: Get some debug info
   vars:
     # Try to fetch the combo entry; keep it None if missing so we can detect absence
-    _test_combo: >-
+    test_combo: >-
       {{ (oracle_compatibility_matrix[oracle_major_ver] | default({}))[os_major_version] | default(None, true) }}
-    _my_entry_present: "{{ _test_combo is not none }}"
-    _my_compatibility_reqs: "{{ _test_combo | default({}) }}"
+    my_entry_present: "{{ test_combo is not none }}"
+    my_compatibility_reqs: "{{ test_combo | default({}) }}"
   ansible.builtin.set_fact:
-    comp_reqs: "{{ _my_compatibility_reqs }}"
+    comp_reqs: "{{ my_compatibility_reqs }}"
 
 - name: Linux, Kernel and Oracle Version Info
   ansible.builtin.debug:
@@ -74,40 +74,40 @@
 - name: Validate Oracle and Linux compatibility
   vars:
     # Try to fetch the combo entry; keep it None if missing so we can detect absence
-    _raw_combo: >-
+    raw_combo: >-
       {{ (oracle_compatibility_matrix[oracle_major_ver] | default({}))[os_major_version] | default(None, true) }}
-    _entry_present: "{{ _raw_combo is not none }}"
-    _compatibility_reqs: "{{ _raw_combo | default({}) }}"
+    entry_present: "{{ raw_combo is not none }}"
+    compatibility_reqs: "{{ raw_combo | default({}) }}"
 
     # Kernel requirements sub-dict (may be empty)
-    _kernel_reqs: "{{ _compatibility_reqs['min_kernel'] | default({}) }}"
+    kernel_reqs: "{{ compatibility_reqs['min_kernel'] | default({}) }}"
 
     # Strict support rule:
     # - If the combo entry is missing -> unsupported
     # - If present, use 'supported' (default true) to allow explicit blocks
-    _is_supported: "{{ _entry_present and (_compatibility_reqs['supported'] | default(true)) }}"
+    is_supported: "{{ entry_present and (compatibility_reqs['supported'] | default(true)) }}"
 
     # Version checks default to "current value" when a requirement is absent,
     # so they won't fail independently of support status.
-    _min_linux_ok: >-
-      {{ os_current_version is version((_compatibility_reqs['min_linux_release'] | default(os_current_version)), '>=') }}
+    min_linux_ok: >-
+      {{ os_current_version is version((compatibility_reqs['min_linux_release'] | default(os_current_version)), '>=') }}
 
-    _max_linux_ok: >-
-      {{ os_current_version is version((_compatibility_reqs['max_linux_release'] | default(os_current_version)), '<=') }}
+    max_linux_ok: >-
+      {{ os_current_version is version((compatibility_reqs['max_linux_release'] | default(os_current_version)), '<=') }}
 
-    _kernel_ok: >-
-      {{ kernel_version_full is version((_kernel_reqs[kernel_flavor] | default(kernel_version_full)), '>=') }}
+    kernel_ok: >-
+      {{ kernel_version_full is version((kernel_reqs[kernel_flavor] | default(kernel_version_full)), '>=') }}
 
-    _ru_ok: >-
-      {{ oracle_ru_ver is version((_compatibility_reqs['min_db_ru'] | default(oracle_ru_ver)), '>=') }}
+    ru_ok: >-
+      {{ oracle_ru_ver is version((compatibility_reqs['min_db_ru'] | default(oracle_ru_ver)), '>=') }}
 
   ansible.builtin.assert:
     that:
-      - _is_supported
-      - _min_linux_ok
-      - _max_linux_ok
-      - _kernel_ok
-      - _ru_ok
+      - is_supported
+      - min_linux_ok
+      - max_linux_ok
+      - kernel_ok
+      - ru_ok
     fail_msg: >-
       Incompatible combination detected.
       Current system:
@@ -117,11 +117,11 @@
 
       Required compatibility:
         - The combination of Oracle {{ oracle_major_ver }} and Linux {{ os_major_version }} is not supported
-          {{ '(no entry found in matrix)' if not _entry_present else '' }}.
-        - Allowed Linux range: {{ _compatibility_reqs['min_linux_release'] | default('N/A') }}
-          .. {{ _compatibility_reqs['max_linux_release'] | default('N/A') }}.
-        - Minimum kernel ({{ kernel_flavor }}): {{ _kernel_reqs[kernel_flavor] | default('N/A') }}.
-        - Minimum Oracle RU: {{ _compatibility_reqs['min_db_ru'] | default('N/A') }}.
+          {{ '(no entry found in matrix)' if not entry_present else '' }}.
+        - Allowed Linux range: {{ compatibility_reqs['min_linux_release'] | default('N/A') }}
+          .. {{ compatibility_reqs['max_linux_release'] | default('N/A') }}.
+        - Minimum kernel ({{ kernel_flavor }}): {{ kernel_reqs[kernel_flavor] | default('N/A') }}.
+        - Minimum Oracle RU: {{ compatibility_reqs['min_db_ru'] | default('N/A') }}.
 
       Compatibility Override:
         - The compability checks may be overridden
