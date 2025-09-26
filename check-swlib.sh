@@ -37,7 +37,7 @@ ORA_EDITION="${ORA_EDITION:-EE}"
 ORA_EDITION_PARAM="^(EE|SE|SE2|FREE)$"
 
 ORA_SWLIB_BUCKET="${ORA_SWLIB_BUCKET}"
-ORA_SWLIB_BUCKET_PARAM='^gs://.+[^/]$'
+ORA_SWLIB_BUCKET_PARAM="^gs://"
 
 ORA_DISK_MGMT="${ORA_DISK_MGMT:-ASMUDEV}"
 ORA_DISK_MGMT_PARAM="ASMLIB|ASMUDEV|UDEV|FS"
@@ -136,6 +136,9 @@ if [ "${ORA_SWLIB_BUCKET}" = "" ]; then
     echo "Please specify a GS bucket with --ora-swlib-bucket"
     exit 2
 fi
+
+# Trim tailing slashes from variables with paths
+ORA_SWLIB_BUCKET="${ORA_SWLIB_BUCKET%/}"
 
 export ORA_VERSION ORA_RELEASE ORA_EDITION ORA_SWLIB_BUCKET ORA_DISK_MGMT
 
