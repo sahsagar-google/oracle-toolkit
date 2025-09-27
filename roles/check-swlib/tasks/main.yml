@@ -13,22 +13,27 @@
 # limitations under the License.
 
 ---
+- name: check-swlib | Determine required installation files
+  include_role:
+    name: swlib
+    tasks_from: build_file_list.yml
+
 - name: check-swlib | Validate base software release
   shell: |
     set -o pipefail
-    if gcloud storage objects describe gs://"{{ swlib_mount_src }}"/"{{ item.1.name }}" >/dev/null 2>&1; then
-      f_name="{{ item.1.name }}"
-      expected_md5="{{ item.1.md5sum }}"
+    if gcloud storage objects describe gs://"{{ swlib_mount_src }}/{{ item.name }}" >/dev/null 2>&1; then
+      f_name="{{ item.name }}"
+      expected_md5="{{ item.md5sum }}"
     else
-      f_name="{{ item.1.alt_name | default('x') }}"
-      expected_md5="{{ item.1.alt_md5sum | default('x') }}"
+      f_name="{{ item.alt_name | default('x') }}"
+      expected_md5="{{ item.alt_md5sum | default('x') }}"
     fi
-    actual_md5=$(gcloud storage ls -L gs://"{{ swlib_mount_src }}"/"${f_name}" | awk '/MD5/ { print $3 }')
+    actual_md5=$(gcloud storage ls -L gs://"{{ swlib_mount_src }}/${f_name}" | awk '/MD5/ { print $3 }')
     if [[ "$?" -ne "0" ]] ; then
-      echo "ERROR locating {{ item.1.name }}{% if item.1.alt_name is defined and item.1.alt_name | length > 0 %} or {{ item.1.alt_name }}{% endif %}"
+      echo "ERROR locating {{ item.name }}{% if item.alt_name is defined and item.alt_name | length > 0 %} or {{ item.alt_name }}{% endif %}"
     else
       if [[ "$actual_md5" != "$expected_md5" ]]; then
-        echo "ERROR in {{ item.0.name }} md5: expected $expected_md5, but got $actual_md5 for ${f_name}"
+        echo "ERROR in {{ item.name }} md5: expected $expected_md5, but got $actual_md5 for ${f_name}"
       fi
     fi
   args:
@@ -36,92 +41,56 @@
   failed_when: "'ERROR' in base_repo_files.stdout"
   changed_when: false
   ignore_errors: true
-  loop: "{{ (((gi_software + gi_interim_patches) if ora_disk_management != 'fs' else []) + rdbms_software) | subelements('files') }}"
-  when: item.0.version == oracle_ver
+  when: item.name is not search('^https?://.*oracle\.com/.*$')
+  with_items: "{{ (gi_base_files | default([]) + rdbms_base_files) | unique }}"
   register: base_repo_files
-
-- name: check-swlib | Build list of unique RDBMS patches for GI installations
-  set_fact:
-    unique_patch_files: >-
-      {{ (rdbms_patches
-          | selectattr('release', 'equalto', oracle_rel)
-          | selectattr('category', 'equalto', 'RU_Combo')
-          | map(attribute='patchfile') | list) | unique }}
-  when: gi_install
-
-- name: check-swlib | Build list of unique RDBMS patches
-  set_fact:
-    unique_patch_files: >-
-      {{ (rdbms_patches
-          | selectattr('release', 'equalto', oracle_rel)
-          | selectattr('category', 'in', ['DB_OJVM_RU','DB_RU'])
-          | map(attribute='patchfile') | list) | unique }}
-  when: not gi_install
-
-- name: check-swlib | Capture full details for required patches
-  set_fact:
-    rdbms_patch_files: >-
-      {{ rdbms_patches
-          | selectattr('patchfile', 'in', unique_patch_files)
-          | list }}
 
 - name: check-swlib | Validate patchsets
   shell: |
     set -o pipefail
-    gcloud storage ls -L gs://{{ swlib_mount_src }}/{{ item.patchfile }} | \
-      awk '/MD5/ { print $3 }'
+    actual_md5=$(gcloud storage ls -L gs://"{{ swlib_mount_src }}/{{ item.patchfile }}" | awk '/MD5/ { print $3 }')
+    if [[ "$?" -ne "0" ]] ; then
+      echo "ERROR locating {{ item.patchfile }}"
+    else
+      if [[ "$actual_md5" != "{{ item.md5sum }}" ]]; then
+        echo "ERROR in {{ item.patchfile }} md5: expected {{ item.md5sum }}, but got $actual_md5 for {{ item.patchfile }}"
+      fi
+    fi
   args:
     executable: /bin/bash
-  failed_when: item.md5sum != patch_repo_files.stdout
+  failed_when: "'ERROR' in patch_repo_files.stdout"
   changed_when: false
   ignore_errors: true
-  with_items: >-
-    {{ rdbms_patch_files | default([]) +
-       gi_patches | default([]) if ora_disk_management != 'fs' else
-       rdbms_patch_files | default([]) }}
-  when:
-    - item.base == oracle_ver
-    - item.release == oracle_rel
+  with_items: "{{ patch_details_list | default([]) | unique }}"
   register: patch_repo_files
 
-# We can't reliably check hashes for opatch, as the same file name
+# We can't reliably check hashes for OPatch, as the same file name
 # can have different values based on version.
-- name: check-swlib | Validate opatch patches
+- name: check-swlib | Validate OPatch patches
   shell: |
     set -o pipefail
-    gcloud storage ls -L gs://{{ swlib_mount_src }}/{{ item.patchfile }} | \
+    gcloud storage ls -L gs://{{ swlib_mount_src }}/{{ item }} | \
       awk '/Content-Length/ { print $2 }'
   args:
     executable: /bin/bash
   failed_when: opatch_repo_files.stdout <= "0"
   changed_when: false
   ignore_errors: true
-  with_items: "{{ opatch_patches }}"
-  when:
-    - item.release == oracle_ver
-    - oracle_rel != "base"
+  with_items: "{{ opatch_file_list }}"
   register: opatch_repo_files
 
 - name: check-swlib | Report gcloud command failures (base)
-  fail:
-    msg: "ERROR locating {{ item.item.0.name }} {{ item.item.1.name }}: {{ item.stdout }}"
-  when: item.failed_when_result is defined and item.failed_when_result == true
-  with_items: "{{ base_repo_files.results }}"
+  assert:
+    that: item.failed is defined and not item.failed
+    quiet: true
+  with_items: "{{ base_repo_files | json_query('results[*].{name:item.name,alt_name:alt_name,failed:failed,stdout:stdout}') }}"
+  when: item.name is not search('^https?://.*oracle\.com/.*$')
 
 - name: check-swlib | Report gcloud command failures (patch)
-  fail:
-    msg: "ERROR locating {{ item.item.category }} patch {{ item.item.patchfile }}: {{ item.stderr_lines }}"
-  when: item.rc is defined and item.rc != 0
+  assert:
+    that: item.failed is defined and not item.failed
+    quiet: true
+    fail_msg: "ERROR: {{ item.category | default('') }} patch {{ item.patchfile }}: {{ item.stdout | default('') }} {{ item.stderr | default('') }}"
   with_items:
-    - "{{ patch_repo_files.results }}"
-    - "{{ opatch_repo_files.results }}"
-
-- name: check-swlib | Report MD5 mismatches (patch)
-  fail:
-    msg: |
-      MD5 mismatch: expected {{ item.item.md5sum }} got {{ item.stdout_lines }}
-      for {{ item.item.category }} patch {{ item.item.patchfile }}
-  when: item.failed is defined and item.failed
-  with_items:
-    - "{{ patch_repo_files.results }}"
-    - "{{ opatch_repo_files.results }}"
+    - "{{ patch_repo_files | json_query('results[*].{category:item.category,patchfile:item.patchfile,failed:failed,stdout:stdout,stderr:stderr}') }}"
+    - "{{ opatch_repo_files | json_query('results[*].{patchfile:item,failed:failed,stderr:stderr}') }}"
