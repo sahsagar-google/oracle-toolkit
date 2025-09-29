@@ -29,7 +29,7 @@ while IFS=':' read -r ORACLE_SID ORACLE_HOME AUTOSTART_FLAG; do
         fi
 
         if pgrep -f "[ora|db]_smon_$ORACLE_SID" ; then
-            if ! stop_db; then
+            if ! shutdown_db; then
                 rc="$?"
             fi
         fi

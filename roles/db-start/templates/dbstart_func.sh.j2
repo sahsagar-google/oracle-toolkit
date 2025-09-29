@@ -138,6 +138,8 @@ startup_db() {
             elif [[ -f "${ORACLE_HOME}/dbs/${ORACLE_SID}.adg" ]] ; then
                 final_command='ALTER DATABASE OPEN READ ONLY;'
                 log "INFO" "${ORACLE_SID}: Active Data Guard flag found. Opening READ ONLY."
+            else
+                final_command=""
             fi
             ;;
         *)
@@ -146,11 +148,13 @@ startup_db() {
             ;;
     esac
 
-    log "INFO" "${ORACLE_SID}: Executing final command: ${final_command}"
-    run_sql "${final_command}" || {
-        log "FATAL" "${ORACLE_SID}: Failed to execute final role command."
-        return 4
-    }
+    if [[ -n "$final_command" ]]; then
+        log "INFO" "${ORACLE_SID}: Executing final command: ${final_command}"
+        run_sql "${final_command}" || {
+            log "FATAL" "${ORACLE_SID}: Failed to execute final role command."
+            return 4
+        }
+    fi
 
     log "SUCCESS" "${ORACLE_SID}: Database started successfully."
     return 0
