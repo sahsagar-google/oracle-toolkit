@@ -898,9 +898,7 @@ if [ "${ORA_EDITION}" = "FREE" ]; then
   ORA_DISK_MGMT=FS
   ORA_ROLE_SEPARATION=FALSE
   ORA_DB_CONTAINER=TRUE
-  if [[ ! "${ORA_VERSION}" =~ ^23\. ]]; then
-    ORA_VERSION="23.0.0.0.0"
-  fi
+  ORA_VERSION="23.0.0.0.0"
   [[ ! "${ORA_DATA_DESTINATION}" =~ ^(/([^/]+))*/?$ ]] && ORA_DATA_DESTINATION="/u02/oradata" || true
   [[ ! "${ORA_RECO_DESTINATION}" =~ ^(/([^/]+))*/?$ ]] && ORA_RECO_DESTINATION="/opt/oracle/fast_recovery_area" || true
   if (( ORA_PDB_COUNT > 16 )); then
