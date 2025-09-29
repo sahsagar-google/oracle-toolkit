@@ -28,7 +28,7 @@
       f_name="{{ item.alt_name | default('x') }}"
       expected_md5="{{ item.alt_md5sum | default('x') }}"
     fi
-    actual_md5=$(gcloud storage ls -L gs://"{{ swlib_mount_src }}/${f_name}" | awk '/MD5/ { print $3 }')
+    actual_md5=$(gcloud storage objects describe gs://"{{ swlib_mount_src }}/${f_name}" --format="value(md5Hash)")
     if [[ "$?" -ne "0" ]] ; then
       echo "ERROR locating {{ item.name }}{% if item.alt_name is defined and item.alt_name | length > 0 %} or {{ item.alt_name }}{% endif %}"
     else
@@ -48,7 +48,7 @@
 - name: check-swlib | Validate patchsets
   shell: |
     set -o pipefail
-    actual_md5=$(gcloud storage ls -L gs://"{{ swlib_mount_src }}/{{ item.patchfile }}" | awk '/MD5/ { print $3 }')
+    actual_md5=$(gcloud storage objects describe gs://"{{ swlib_mount_src }}/{{ item.patchfile }}" --format="value(md5Hash)")
     if [[ "$?" -ne "0" ]] ; then
       echo "ERROR locating {{ item.patchfile }}"
     else
@@ -68,9 +68,7 @@
 # can have different values based on version.
 - name: check-swlib | Validate OPatch patches
   shell: |
-    set -o pipefail
-    gcloud storage ls -L gs://{{ swlib_mount_src }}/{{ item }} | \
-      awk '/Content-Length/ { print $2 }'
+    gcloud storage objects describe gs://"{{ swlib_mount_src }}/{{ item }}" --format="value(size)"
   args:
     executable: /bin/bash
   failed_when: opatch_repo_files.stdout <= "0"
