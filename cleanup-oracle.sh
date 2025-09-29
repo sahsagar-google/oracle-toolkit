@@ -161,7 +161,7 @@ shopt -s nocasematch
 # (including unsupported features such as role_separation)
 if [[ "${ORA_EDITION}" = "FREE" ]]; then
     ORA_ROLE_SEPARATION=FALSE
-    [[ ! "${ORA_VERSION}" =~ ^23\. ]] && ORA_VERSION="23.0.0.0.0"
+    ORA_VERSION="23.0.0.0.0"
 fi
 
 # Mandatory options

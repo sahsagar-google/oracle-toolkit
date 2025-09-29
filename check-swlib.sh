@@ -127,8 +127,9 @@ done
 }
 
 # Oracle Database free edition parameter overrides
-if [[ "${ORA_EDITION}" = "FREE" && ! "${ORA_VERSION}" =~ ^23\. ]]; then
-    ORA_VERSION="23.0.0.0.0"
+if [ "${ORA_EDITION}" = "FREE" ]; then
+  ORA_DISK_MGMT=FS
+  ORA_VERSION="23.0.0.0.0"
 fi
 
 # Mandatory options

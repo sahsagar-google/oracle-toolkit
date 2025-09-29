@@ -32,7 +32,7 @@
 - name: build_file_list | Build list of GI base software and interim patches
   set_fact:
     gi_base_files: >-
-      {{ gi_software
+      {{ (gi_software + gi_interim_patches)
          | selectattr('version', 'equalto', oracle_ver)
          | map(attribute='files')
          | flatten
