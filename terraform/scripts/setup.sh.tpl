@@ -192,6 +192,13 @@ for node in $(echo '${database_vm_nodes_json}' | jq -c '.[] | select(.role == "p
     exit 1
   }
 
+  if [[ -f "/root/.ssh/google_compute_engine.pub" ]]; then
+    echo "Setting expiration on SSH key"
+    if ! gcloud --quiet compute os-login ssh-keys update --key-file=/root/.ssh/google_compute_engine.pub --ttl=24h; then
+      echo "WARNING: Failed to set expiration for SSH key."
+    fi
+  fi
+
     echo "Configuring PRIMARY node: $node_name, IP: $node_ip, Zone: $node_zone"
     bash install-oracle.sh \
     --cluster-type NONE \
