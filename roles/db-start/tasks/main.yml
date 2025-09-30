@@ -65,3 +65,14 @@
         name: dbora.service
         enabled: true
   tags: db-start
+
+- name: Shut down database(s) manually
+  become: true
+  become_user: "{{ oracle_user }}"
+  shell: "{{ scripts_dir }}/stop_all.sh"
+
+- name: Start up database(s) using systemctl
+  become: true
+  systemd:
+    name: dbora.service
+    state: started
