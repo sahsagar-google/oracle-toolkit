@@ -164,7 +164,7 @@ proxy_setup: "{{ lookup('env','ORA_PROXY_SETUP') | lower | default('false',true)
 u01_lun: "{{ lookup('env','ORA_U01_LUN') | lower | default('',true) }}"
 
 #  Environment and infrastructure values (requirements) used for readiness checks
-minimum_ansible_version: "{{ lookup('file', playbook_dir + '/../.tool-versions') | regex_search('^ansible\\s+(.*)$', '\\1') | first }}"
+minimum_ansible_version: 2.9
 os_supported_architecture: "x86_64"
 os_family_supported: "RedHat"
 os_min_supported_version: "{% if free_edition %}8{% else %}7.3{% endif %}"
