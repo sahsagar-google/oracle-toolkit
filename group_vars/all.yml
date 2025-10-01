@@ -164,6 +164,8 @@ proxy_setup: "{{ lookup('env','ORA_PROXY_SETUP') | lower | default('false',true)
 u01_lun: "{{ lookup('env','ORA_U01_LUN') | lower | default('',true) }}"
 
 #  Environment and infrastructure values (requirements) used for readiness checks
+# NOTE: If you update minimum_ansible_version, please also update .tool-versions.
+# The .tool-versions file is the source of truth for SBOM generation.
 minimum_ansible_version: 2.9
 os_supported_architecture: "x86_64"
 os_family_supported: "RedHat"
