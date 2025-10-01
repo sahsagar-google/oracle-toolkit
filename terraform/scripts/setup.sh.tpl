@@ -4,6 +4,10 @@ control_node_name="$(curl -fsS http://metadata.google.internal/computeMetadata/v
   echo "Error: Failed to retrieve control node's instance name"
   exit 1
 }
+control_node_vmid="$(curl -fsS http://metadata.google.internal/computeMetadata/v1/instance/id -H 'Metadata-Flavor: Google')" || {
+  echo "Error: Failed to retrieve control node's instance ID"
+  exit 1
+}
 control_node_zone_full="$(curl -fsS http://metadata.google.internal/computeMetadata/v1/instance/zone -H 'Metadata-Flavor: Google')" || {
   echo "Error: Failed to retrieve control's node zone"
   exit 1
@@ -56,6 +60,7 @@ send_heartbeat() {
   "timestamp": "$timestamp",
   "deployment_name": "${deployment_name}",
   "instanceName": "$control_node_name",
+  "instanceId": "$control_node_vmid",
   "zone": "$control_node_zone"
 }
 EOF
@@ -81,6 +86,7 @@ send_ansible_completion_status() {
   "timestamp": "$timestamp",
   "deployment_name": "${deployment_name}",
   "instanceName": "$control_node_name",
+  "instanceId": "$control_node_vmid",
   "zone": "$control_node_zone"
 }
 EOF
@@ -101,6 +107,7 @@ send_startup_script_failure_status() {
   "timestamp": "$timestamp",
   "deployment_name": "${deployment_name}",
   "instanceName": "$control_node_name",
+  "instanceId": "$control_node_vmid",
   "zone": "$control_node_zone"
 }
 EOF
@@ -179,7 +186,7 @@ for node in $(echo '${database_vm_nodes_json}' | jq -c '.[] | select(.role == "p
     echo \"Waiting for SSH to become available on '$node_name'...\"
     sleep 5
   done" || {
-    error_message="ERROR: Timed out waiting for SSH"
+    error_message="ERROR: SSH timeout from VM $control_node_name to database VM $node_name in $node_zone. This is typically a VPC configuration issue."
     echo "$error_message"
     send_startup_script_failure_status "$error_message"
     exit 1
