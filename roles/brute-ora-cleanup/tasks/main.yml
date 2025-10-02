@@ -52,6 +52,17 @@
     - cluster_name is not defined
     - not free_edition
 
+- name: Shut down and disable the dbora systemd service
+  ansible.builtin.systemd:
+    name: "dbora.service"
+    state: stopped
+    enabled: false
+  when:
+    - cluster_type != "RAC"
+    - not free_edition
+  ignore_errors: true
+  tags: remove-systemd
+
 - name: Free Edition cleanup steps
   become: true
   become_user: root
@@ -281,6 +292,12 @@
     - "/var/log/oracleohasd"
   ignore_errors: true
   register: remove_files
+
+- name: Reload systemd daemon to unregister the removed services
+  ansible.builtin.systemd:
+    daemon_reload: true
+  ignore_errors: true
+  tags: reload-systemd
 
 - name: Clean up shared memory segments
   become: true
