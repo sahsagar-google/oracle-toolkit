@@ -51,7 +51,7 @@
     - name: Copy dbora.service definition to target server
       template:
         src: "dbora.service.j2"
-        dest: "/lib/systemd/system/dbora.service"
+        dest: "/etc/systemd/system/dbora.service"
         owner: root
         group: root
         mode: u=wr,g=r,o=r
