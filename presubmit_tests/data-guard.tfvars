@@ -45,7 +45,7 @@ data_disk = {
   size_gb = 20
 }
 reco_disk = {
-  size_gb = 10
+  size_gb = 15
 }
 ora_version = "19"
 ora_release = "latest"
