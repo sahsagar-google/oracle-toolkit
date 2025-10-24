@@ -168,6 +168,10 @@ variable "boot_disk_size_gb" {
   description = "The size of the boot disk for the database VM."
   type        = number
   default     = 50
+  validation {
+    condition     = var.boot_disk_size_gb >= 20
+    error_message = "boot_disk_size_gb must be at least 20."
+  }
 }
 
 variable "boot_disk_type" {
@@ -194,6 +198,10 @@ variable "oracle_home_disk" {
     size_gb = optional(number, 100)
     type    = optional(string, "hyperdisk-balanced")
   })
+  validation {
+    condition     = var.oracle_home_disk.size_gb >= 30
+    error_message = "oracle_home_disk.size_gb must be at least 30."
+  }
 }
 
 variable "data_disk" {
@@ -202,6 +210,10 @@ variable "data_disk" {
     size_gb = optional(number, 100)
     type    = optional(string, "hyperdisk-balanced")
   })
+  validation {
+    condition     = var.data_disk.size_gb >= 10
+    error_message = "data_disk.size_gb must be at least 10."
+  }
 }
 
 variable "reco_disk" {
@@ -210,6 +222,10 @@ variable "reco_disk" {
     size_gb = optional(number, 100)
     type    = optional(string, "hyperdisk-balanced")
   })
+  validation {
+    condition     = var.reco_disk.size_gb >= 15
+    error_message = "reco_disk.size_gb must be at least 15."
+  }
 }
 
 variable "project_id" {
