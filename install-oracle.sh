@@ -306,6 +306,7 @@ while true; do
   case "$1" in
   --ora-version)
     ORA_VERSION="$2"
+    if [[ "${ORA_VERSION}" = "26" ]]   ; then ORA_VERSION="23.26.0.0.0"; fi
     if [[ "${ORA_VERSION}" = "23" ]]   ; then ORA_VERSION="23.0.0.0.0"; fi
     if [[ "${ORA_VERSION}" = "21" ]]   ; then ORA_VERSION="21.3.0.0.0"; fi
     if [[ "${ORA_VERSION}" = "19" ]]   ; then ORA_VERSION="19.3.0.0.0"; fi
@@ -898,7 +899,9 @@ if [ "${ORA_EDITION}" = "FREE" ]; then
   ORA_DISK_MGMT=FS
   ORA_ROLE_SEPARATION=FALSE
   ORA_DB_CONTAINER=TRUE
-  ORA_VERSION="23.0.0.0.0"
+  if [[ -z "${ORA_VERSION}" || "${ORA_VERSION}" != 23.* ]]; then
+    ORA_VERSION="23.26.0.0.0"
+  fi
   [[ ! "${ORA_DATA_DESTINATION}" =~ ^(/([^/]+))*/?$ ]] && ORA_DATA_DESTINATION="/u02/oradata" || true
   [[ ! "${ORA_RECO_DESTINATION}" =~ ^(/([^/]+))*/?$ ]] && ORA_RECO_DESTINATION="/opt/oracle/fast_recovery_area" || true
   if (( ORA_PDB_COUNT > 16 )); then

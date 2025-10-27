@@ -61,6 +61,7 @@ while true; do
     case "$1" in
     --ora-version)
         ORA_VERSION="$2"
+        if [[ "${ORA_VERSION}" = "26" ]]   ; then ORA_VERSION="23.26.0.0.0"; fi
         if [[ "${ORA_VERSION}" = "23" ]]   ; then ORA_VERSION="23.0.0.0.0"; fi
         if [[ "${ORA_VERSION}" = "21" ]]   ; then ORA_VERSION="21.3.0.0.0"; fi
         if [[ "${ORA_VERSION}" = "19" ]]   ; then ORA_VERSION="19.3.0.0.0"; fi
@@ -129,7 +130,9 @@ done
 # Oracle Database free edition parameter overrides
 if [ "${ORA_EDITION}" = "FREE" ]; then
   ORA_DISK_MGMT=FS
-  ORA_VERSION="23.0.0.0.0"
+  if [[ -z "${ORA_VERSION}" || "${ORA_VERSION}" != 23.* ]]; then
+    ORA_VERSION="23.26.0.0.0"
+  fi
 fi
 
 # Mandatory options

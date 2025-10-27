@@ -111,7 +111,7 @@
 
     - name: Capture installed Free Edition related RPM packages
       shell:
-        cmd: "rpm -qa | grep -i 'oracle-database' || true"
+        cmd: "rpm -qa | grep -iE 'oracle-database|oracle-ai-database' || true"
       register: free_edition_rpm_packages
       changed_when:
         - not free_edition_rpm_packages.failed
@@ -157,16 +157,23 @@
         - "/etc/rc.d/rc4.d/S80oracle-free-{{ free_edition_name }}"
         - "/etc/rc.d/rc5.d/K05oracle-free-{{ free_edition_name }}"
         - "/etc/rc.d/rc5.d/S80oracle-free-{{ free_edition_name }}"
+        - "/etc/security/limits.d/oracle-ai-database-preinstall-{{ free_edition_name }}.conf"
         - "/etc/security/limits.d/oracle-database-preinstall-{{ free_edition_name }}.conf"
+        - "/etc/sysconfig/oracle-ai-database-preinstall-{{ free_edition_name }}"
         - "/etc/sysconfig/oracle-database-preinstall-{{ free_edition_name }}"
         - "/etc/sysconfig/oracle-free-{{ free_edition_name }}.conf"
+        - "/etc/systemd/system/oracle-ai-database-preinstall-{{ free_edition_name }}-firstboot.service"
         - "/etc/systemd/system/oracle-database-preinstall-{{ free_edition_name }}-firstboot.service"
         - "/opt/oracle"
         - "/opt/ORCLfmap"
+        - "/usr/bin/oracle-ai-database-preinstall-{{ free_edition_name }}-verify"
         - "/usr/bin/oracle-database-preinstall-{{ free_edition_name }}-verify"
         - "/usr/share/doc/oracle-free-{{ free_edition_name }}"
+        - "/usr/share/licenses/oracle-ai-database-preinstall-{{ free_edition_name }}"
         - "/usr/share/licenses/oracle-database-preinstall-{{ free_edition_name }}"
+        - "/var/log/oracle-ai-database-free-{{ free_edition_name }}"
         - "/var/log/oracle-database-free-{{ free_edition_name }}"
+        - "/var/log/oracle-ai-database-preinstall-{{ free_edition_name }}"
         - "/var/log/oracle-database-preinstall-{{ free_edition_name }}"
 
 - name: De-configure CRS (non-RAC)

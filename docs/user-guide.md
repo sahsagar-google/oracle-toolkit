@@ -243,7 +243,7 @@ RUs:
 - Oracle 18c
 - Oracle 19c
 - Oracle 21c
-- Oracle 23ai (currently [Free Edition](#oracle-database-free-edition-specific-details-and-changes))
+- Oracle 23ai/26ai (currently [Free Edition](#oracle-database-free-edition-specific-details-and-changes))
 
 The toolkit does not include any Oracle software. You must obtain the
 appropriate licenses and download the Oracle software on your own. This guide
@@ -2665,7 +2665,7 @@ However, Oracle Database "Free Edition" has a number of differences, including:
 1. Does not support RAC or Data Guard (single-instance only).
 1. Only one database/instance can be created per server.
 1. Installs via RPM packages only.
-1. Requires that the [Oracle Database Preinstallation RPM](https://docs.oracle.com/en/database/oracle/oracle-database/23/ladbi/about-the-oracle-preinstallation-rpm.html) be installed as it is a dependent package.
+1. Requires that the [Oracle Database Preinstallation RPM](https://docs.oracle.com/en/database/oracle/oracle-database/26/ladbi/about-the-oracle-preinstallation-rpm.html) be installed as it is a dependent package.
 1. Has CPU, memory, and user-data storage limits – see [Oracle Database Free FAQ – Installation](https://www.oracle.com/database/free/faq/#installation) for details.
 
 Similar to with the other editions, creation of an initial database and implementation of RMAN based backups is possible through this oracle-toolkit for Oracle Database free edition.
@@ -2674,20 +2674,25 @@ Similar to with the other editions, creation of an initial database and implemen
 
 > NOTE: Beginning with the April 2025 release (23.8), Oracle started using unique filenames for the Free edition, a change from their previous practice of reusing the same RPM filename for new versions.
 
-The toolkit can install _any_ free edition version. Which version is actually installed depends on the the actual RPM file in the software library, and possibly the command line switches.
+The toolkit can install _any_ free edition version. This includes both 23ai and 26ai branded versions.
 
-Specific supported versions of Oracle Database 23 Free currently includes:
+To install a version of **Oracle Database 23ai**, use the command line argument `--ora-version 23`. To install a version of **Oracle AI Database 26ai**, use the command line argument `--ora-version 26`. If the `--ora-version` argument is not provided, then the default will be the latest version of **Oracle AI Database 26ai**.
 
-| Product | Specific Version | Software RPM Filename                             | Preinstall RPM Filename                                |
-| :-----: | :--------------: | :------------------------------------------------ | :----------------------------------------------------- |
-|  23ai   |   23.9.0.25.07   | `oracle-database-free-23ai-23.9-1.el8.x86_64.rpm` | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm` |
-|  23ai   |   23.8.0.25.04   | `oracle-database-free-23ai-23.8-1.el8.x86_64.rpm` | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm` |
-|  23ai   |   23.7.0.25.01   | `oracle-database-free-23ai-1.0-1.el8.x86_64.rpm`  | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm` |
-|  23ai   |   23.6.0.24.10   | `oracle-database-free-23ai-1.0-1.el8.x86_64.rpm`  | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm` |
-|  23ai   |   23.5.0.24.07   | `oracle-database-free-23ai-1.0-1.el8.x86_64.rpm`  | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm` |
-|  23ai   |   23.4.0.24.05   | `oracle-database-free-23ai-1.0-1.el8.x86_64.rpm`  | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm` |
-|   23c   |   23.3.0.23.09   | `oracle-database-free-23c-1.0-1.el8.x86_64.rpm`   | `oracle-database-preinstall-23c-1.0-1.el8.x86_64.rpm`  |
-|   23c   |    23.2.0.0.0    | `oracle-database-free-23c-1.0-1.el8.x86_64.rpm`   | `oracle-database-preinstall-23c-1.0-1.el8.x86_64.rpm`  |
+Which version is actually installed depends on the the actual RPM file in the software library, and possibly the command line switches.
+
+Specific supported versions of Oracle Database 23ai/26ai Free currently includes:
+
+| Product | Specific Version | Software RPM Filename                                   | Preinstall RPM Filename                                   |
+| :-----: | :--------------: | :------------------------------------------------------ | :-------------------------------------------------------- |
+|  26ai   |   23.26.0.0.0    | `oracle-ai-database-free-26ai-23.26.0-1.el9.x86_64.rpm` | `oracle-ai-database-preinstall-26ai-1.0-1.el8.x86_64.rpm` |
+|  23ai   |   23.9.0.25.07   | `oracle-database-free-23ai-23.9-1.el8.x86_64.rpm`       | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm`    |
+|  23ai   |   23.8.0.25.04   | `oracle-database-free-23ai-23.8-1.el8.x86_64.rpm`       | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm`    |
+|  23ai   |   23.7.0.25.01   | `oracle-database-free-23ai-1.0-1.el8.x86_64.rpm`        | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm`    |
+|  23ai   |   23.6.0.24.10   | `oracle-database-free-23ai-1.0-1.el8.x86_64.rpm`        | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm`    |
+|  23ai   |   23.5.0.24.07   | `oracle-database-free-23ai-1.0-1.el8.x86_64.rpm`        | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm`    |
+|  23ai   |   23.4.0.24.05   | `oracle-database-free-23ai-1.0-1.el8.x86_64.rpm`        | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm`    |
+|   23c   |   23.3.0.23.09   | `oracle-database-free-23c-1.0-1.el8.x86_64.rpm`         | `oracle-database-preinstall-23c-1.0-1.el8.x86_64.rpm`     |
+|   23c   |    23.2.0.0.0    | `oracle-database-free-23c-1.0-1.el8.x86_64.rpm`         | `oracle-database-preinstall-23c-1.0-1.el8.x86_64.rpm`     |
 
 By default, the toolkit fetches Free edition software directly from oracle.com. It can also be configured to fetch from your own software library, such as when the database VM has no direct Internet access.
 
@@ -2695,12 +2700,13 @@ To leverage files in your software library, simply include just the file names i
 
 ```yaml
 rdbms_software:
-  - name: 23ai_free_23_8
-    version: 23.8.0.25.04
+  - name: 26ai_free_23_26
+    version: 23.26.0.0.0
     edition: FREE
+    os_version: 8
     files:
-      - { name: "oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm", sha256sum: "4578e6d1cf566e04541e0216b07a0372725726a7c339423ee560255cb918138b", md5sum: "TmjqUT878Owv7NbXGECpTA=="}
-      - { name: "oracle-database-free-23ai-23.8-1.el8.x86_64.rpm", sha256sum: "cd0d16939150e6ec5e70999a762a13687bfa99b05c4f310593e7ca3892e1d0ce", md5sum: "hkL/hxeYbB7z5lz+3r3kww=="}
+      - { name: "oracle-ai-database-preinstall-26ai-1.0-1.el8.x86_64.rpm", sha256sum: "050f1c3f3214f5979519147d08661d5670317288bd9a09d0863f3419206158e4", md5sum: "UOPNQ+SCxZpWRbxt61N4NQ=="}
+      - { name: "oracle-ai-database-free-26ai-23.26.0-1.el8.x86_64.rpm", sha256sum: "9abff8045b6c213d75198b96f3a85fe3d4e89aa5c9117ad5873c3182786ef254", md5sum: "mMOOzN3dtAYJP59sng/B5A=="}
 ```
 
 When installing from files staged in your software library, providing the GCS MD5 hash value is required.
@@ -2709,12 +2715,13 @@ If you would rather have the tooling download the software from the Oracle websi
 
 ```yaml
 rdbms_software:
-  - name: 23ai_free_23_9
-    version: 23.9.0.25.07
+  - name: 26ai_free_23_26
+    version: 23.26.0.0.0
     edition: FREE
+    os_version: 8
     files:
-      - { name: "https://yum.oracle.com/repo/OracleLinux/OL8/appstream/x86_64/getPackage/oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm", sha256sum: "4578e6d1cf566e04541e0216b07a0372725726a7c339423ee560255cb918138b", md5sum: ""}
-      - { name: "https://download.oracle.com/otn-pub/otn_software/db-free/oracle-database-free-23ai-23.9-1.el8.x86_64.rpm", sha256sum: "a6e64941ad940dd23e152e3d51213aeaea6d93b43688fbd030175935e0efe03d", md5sum: ""}
+      - { name: "https://yum.oracle.com/repo/OracleLinux/OL8/appstream/x86_64/getPackage/oracle-ai-database-preinstall-26ai-1.0-1.el8.x86_64.rpm", sha256sum: "050f1c3f3214f5979519147d08661d5670317288bd9a09d0863f3419206158e4", md5sum: ""}
+      - { name: "https://download.oracle.com/otn-pub/otn_software/db-free/oracle-ai-database-free-26ai-23.26.0-1.el8.x86_64.rpm", sha256sum: "9abff8045b6c213d75198b96f3a85fe3d4e89aa5c9117ad5873c3182786ef254", md5sum: ""}
 ```
 
 If installing by URL, refer to [Oracle Database Free Get Started](https://www.oracle.com/database/free/get-started/) to obtain the most recent links and `sha256sum` values.
@@ -2753,6 +2760,8 @@ ORA_VERSION
 --ora-version
 </pre></p></td>
 <td>
+23.26.0.0.0<br>
+23.9.0.25.07<br>
 23.8.0.25.04<br>
 23.7.0.25.01<br>
 23.6.0.24.10<br>

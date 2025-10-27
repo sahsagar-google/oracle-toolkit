@@ -36,19 +36,37 @@
     - oracle_rel != "base"
   tags: oracle-rel
 
-- name: populate-vars | Resolve Free Edition software release
+- name: Extract all Free edition versions
+  set_fact:
+    free_versions: "{{ rdbms_software | selectattr('edition', 'equalto', 'FREE') | map(attribute='version') | sort | list }}"
+  when: free_edition
+  tags: oracle-rel
+
+- name: populate-vars | Resolve the Free edition software release
   set_fact:
     oracle_ver: "{{
-      (oracle_rel == 'latest') and (free_versions | last) or
-      (oracle_rel == 'base') and (free_versions | first) or
-      (oracle_rel in free_versions) and oracle_rel or
-      (free_versions | last)
+      (oracle_rel == 'latest') and (filtered_versions | last) or
+      (oracle_rel == 'base') and (filtered_versions | first) or
+      (oracle_rel in filtered_versions) and oracle_rel or
+      (filtered_versions | last)
     }}"
   vars:
-    free_versions: "{{ rdbms_software | selectattr('edition', 'equalto', 'FREE') | map(attribute='version') | sort | list }}"
+    filtered_versions: "{{
+        free_versions
+          | select('version', '23.26.0.0.0', operator='<')
+          | list
+        if oracle_ver == '23.0.0.0.0'
+        else
+        free_versions
+          | select('version', '23.26.0.0.0', operator='>=')
+          | list
+        if oracle_ver == '23.26.0.0.0'
+        else
+        []
+    }}"
   when:
     - free_edition
-    - oracle_ver == "23.0.0.0.0"
+    - oracle_ver == "23.0.0.0.0" or oracle_ver == "23.26.0.0.0"
   tags: oracle-rel
 
 - name: populate-vars | Show resolved release

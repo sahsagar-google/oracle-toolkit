@@ -1,6 +1,6 @@
 # Oracle Toolkit for Google Cloud - Disaster Recovery Configurations
 
-This Oracle Toolkit for Google Cloud document will support Disaster Recovery (DR) through the provisioning of Oracle Data Guard configurations, with a [physical standby](https://docs.oracle.com/en/database/oracle/oracle-database/23/sbydb/introduction-to-oracle-data-guard-concepts.html#GUID-C49AC6F4-C89B-4487-BC18-428D65865B9A) using the [Data Guard Broker](https://docs.oracle.com/en/database/oracle/oracle-database/23/sbydb/introduction-to-oracle-data-guard-concepts.html#GUID-538B9DDD-1553-479D-8E1D-0B5C6848403E).
+This Oracle Toolkit for Google Cloud document will support Disaster Recovery (DR) through the provisioning of Oracle Data Guard configurations, with a [physical standby](https://docs.oracle.com/en/database/oracle/oracle-database/26/sbydb/introduction-to-oracle-data-guard-concepts.html#GUID-C49AC6F4-C89B-4487-BC18-428D65865B9A) using the [Data Guard Broker](https://docs.oracle.com/en/database/oracle/oracle-database/26/sbydb/introduction-to-oracle-data-guard-concepts.html#GUID-538B9DDD-1553-479D-8E1D-0B5C6848403E).
 
 Implementation involves two similar steps:
 
