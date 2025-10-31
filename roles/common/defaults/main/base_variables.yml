@@ -16,7 +16,8 @@
 # Variables used by more than one role
 pkg_mgr_lock_timeout: 180
 
-oracle_ver_dir: "{% if free_edition %}{% if oracle_ver[:4] == '23.2' or oracle_ver[:4] == '23.3' %}23c{% else %}{{ oracle_ver[:2] }}ai{% endif %}{% else %}{{ oracle_ver[:6] }}{% endif %}"
+free_edition_name: "{% if free_edition %}{% if oracle_ver[:5] == '23.26' %}26ai{% elif oracle_ver[:4] == '23.2' or oracle_ver[:4] == '23.3' %}23c{% else %}{{ oracle_ver[:2] }}ai{% endif %}{% endif %}"
+oracle_ver_dir: "{% if free_edition %}{{ free_edition_name }}{% else %}{{ oracle_ver[:6] }}{% endif %}"
 oracle_inventory: "{{ oracle_root }}/oraInventory"
 oracle_base: "{% if free_edition %}/opt/oracle{% else %}{{ oracle_root }}/oracle{% endif %}"
 oracle_home: "{{ oracle_base }}/product/{{ oracle_ver_dir }}/{{ home_name }}"
@@ -145,8 +146,7 @@ diskgroup_compatible_rdbms: "{# assign to variable c compatible parameter and se
 
 run_cluvfy: false
 
-# Systemd service name used with Free Edition
-free_edition_name: "{% if free_edition %}{% if oracle_ver[:4] == '23.2' or oracle_ver[:4] == '23.3' %}23c{% else %}{{ oracle_ver[:2] }}ai{% endif %}{% endif %}"
+# Systemd service name used with Free edition
 systemd_service_name: "{% if free_edition %}oracle-free-{{ free_edition_name }}.service{% endif %}"
 
 # ignorance of prerequisites depending on version

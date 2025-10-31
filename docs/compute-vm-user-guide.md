@@ -105,7 +105,7 @@ NETWORK_TAGS="NETWORK_TAGS"
 
 Choosing the VM shape is of importance, but also can be adjusted post deployment if required.
 
-Oracle databases usually require multiple CPUs and at least 8GB of memory when running Grid Infrastructure. See the Oracle [Database Installation Guide for Linux - Server Hardware Checklist for Oracle Database Installation](https://docs.oracle.com/en/database/oracle/oracle-database/23/ladbi/server-hardware-checklist-for-oracle-database-installation.html) for specific requirements. Oracle licensing may also require consideration when choosing the VM shape and specifically the number of CPUs or vCPUs.
+Oracle databases usually require multiple CPUs and at least 8GB of memory when running Grid Infrastructure. See the Oracle [Database Installation Guide for Linux - Server Hardware Checklist for Oracle Database Installation](https://docs.oracle.com/en/database/oracle/oracle-database/26/ladbi/server-hardware-checklist-for-oracle-database-installation.html) for specific requirements. Oracle licensing may also require consideration when choosing the VM shape and specifically the number of CPUs or vCPUs.
 
 While Oracle database can run on a wide variety of virtual machine families and types, the C4 series is often used. However, depending on your use case, other families and types may be more suitable for your Oracle database workload. For additional details, see the Google [Machine families resource and comparison guide](https://cloud.google.com/compute/docs/machine-resource).
 

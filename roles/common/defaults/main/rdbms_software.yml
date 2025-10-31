@@ -14,6 +14,20 @@
 
 ---
 rdbms_software:
+  - name: 26ai_free_23_26
+    version: 23.26.0.0.0
+    edition: FREE
+    os_version: 9
+    files:
+      - { name: "https://yum.oracle.com/repo/OracleLinux/OL9/appstream/x86_64/getPackage/oracle-ai-database-preinstall-26ai-1.0-1.el9.x86_64.rpm", sha256sum: "6a25ab29277f5af2d301d90b2d60a82357bbacfac7d8d9eddce126eb40cecb54", md5sum: "EB5v+3ksbx0/neke9JTAbA=="}
+      - { name: "https://download.oracle.com/otn-pub/otn_software/db-free/oracle-ai-database-free-26ai-23.26.0-1.el9.x86_64.rpm", sha256sum: "346d08a1bc836e97ca74f3c4f1bb3a8d80726480be28991b36b72ee648a06666", md5sum: "8/Ee53BD09rNxcXDwDaI8w=="}
+  - name: 26ai_free_23_26
+    version: 23.26.0.0.0
+    edition: FREE
+    os_version: 8
+    files:
+      - { name: "https://yum.oracle.com/repo/OracleLinux/OL8/appstream/x86_64/getPackage/oracle-ai-database-preinstall-26ai-1.0-1.el8.x86_64.rpm", sha256sum: "050f1c3f3214f5979519147d08661d5670317288bd9a09d0863f3419206158e4", md5sum: "UOPNQ+SCxZpWRbxt61N4NQ=="}
+      - { name: "https://download.oracle.com/otn-pub/otn_software/db-free/oracle-ai-database-free-26ai-23.26.0-1.el8.x86_64.rpm", sha256sum: "9abff8045b6c213d75198b96f3a85fe3d4e89aa5c9117ad5873c3182786ef254", md5sum: "mMOOzN3dtAYJP59sng/B5A=="}
   - name: 23ai_free_23_9
     version: 23.9.0.25.07
     edition: FREE
