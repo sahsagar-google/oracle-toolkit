@@ -16,6 +16,7 @@
 - name: rac-opatch | Unzip GI patch
   # Using the "shell" module instead of "unarchive" for unzip performance
   shell: |
+    "{{ unzipcheck }}" "{{ swlib_path }}/{{ item.patchfile }}" "{{ swlib_unzip_path }}" && \
     unzip -o -q "{{ swlib_path }}/{{ item.patchfile }}" -d "{{ swlib_unzip_path }}" || exit $?
     chown -R {{ grid_user }}:{{ oracle_group }} "{{ swlib_unzip_path }}"
   with_items: "{{ gi_patches }}"
@@ -195,6 +196,7 @@
 - name: rac-opatch | Unzip RDBMS patch
   # Using the "shell" module instead of "unarchive" for unzip performance
   shell: |
+    "{{ unzipcheck }}" "{{ swlib_path }}/{{ item.patchfile }}" "{{ swlib_unzip_path }}" && \
     unzip -o -q "{{ swlib_path }}/{{ item.patchfile }}" -d "{{ swlib_unzip_path }}" || exit $?
     chown -R {{ oracle_user }}:{{ oracle_group }} "{{ swlib_unzip_path }}"
   with_items: "{{ rdbms_patches }}"

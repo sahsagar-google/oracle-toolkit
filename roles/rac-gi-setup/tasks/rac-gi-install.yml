@@ -31,6 +31,7 @@
 - name: rac-gi-install | Unzip GI patch
   # Using the "shell" module instead of "unarchive" for unzip performance
   shell: |
+    "{{ unzipcheck }}" "{{ swlib_path }}/{{ item.patchfile }}" "{{ swlib_unzip_path }}" && \
     unzip -o -q "{{ swlib_path }}/{{ item.patchfile }}" -d "{{ swlib_unzip_path }}" || exit $?
     chown -R {{ grid_user }}:{{ oracle_group }} "{{ swlib_unzip_path }}"
   args:
@@ -64,7 +65,9 @@
   become: true
   become_user: "{{ grid_user }}"
   # Using the "shell" module instead of "unarchive" for unzip performance
-  shell: unzip -o -q "{{ swlib_path }}/{{ item | json_query('.files[*].name') | join() }}" -d "{{ swlib_unzip_path }}"
+  shell: |
+    "{{ unzipcheck }}" "{{ swlib_path }}/{{ item | json_query('.files[*].name') | join() }}" "{{ swlib_unzip_path }}" && \
+    unzip -o -q "{{ swlib_path }}/{{ item | json_query('.files[*].name') | join() }}" -d "{{ swlib_unzip_path }}"
   args:
     creates: .ha_patch_{{ oracle_ver }}
   with_items: "{{ gi_interim_patches }}"
@@ -82,7 +85,9 @@
   become: true
   become_user: "{{ grid_user }}"
   # Using the "shell" module instead of "unarchive" for unzip performance
-  shell: unzip -o -q "{{ swlib_path }}/{{ item }}" -d "{{ install_unzip_path }}"
+  shell: |
+    "{{ unzipcheck }}" "{{ swlib_path }}/{{ item }}" "{{ install_unzip_path }}" && \
+    unzip -o -q "{{ swlib_path }}/{{ item }}" -d "{{ install_unzip_path }}"
   with_items: "{{ osw_files }}"
   tags: rac-gi,sw-unzip
 

@@ -476,3 +476,11 @@
     - "{{ listdisks }}"
   when: ora_disk_management == "asmlib"
   tags: asm-disks
+
+- name: Copy unzipcheck script
+  copy:
+    src: unzipcheck
+    dest: "{{ unzipcheck }}"
+    owner: root
+    group: root
+    mode: "u=rwx,go=rx"
