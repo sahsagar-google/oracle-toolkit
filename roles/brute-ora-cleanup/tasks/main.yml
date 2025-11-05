@@ -270,7 +270,7 @@
     - "{{ pwgen_path }}/{{ pwgen_file }}"
     - "{{ scripts_dir }}"
     - "{{ swlib_unzip_path }}"
-    - "{{ unzipcheck }}"
+    - "{{ safe_unzip }}"
     - "/usr/tmp/.oracle"
     - "/var/tmp/.oracle"
     - "/tmp/.oracle"

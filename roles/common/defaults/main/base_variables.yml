@@ -134,9 +134,9 @@ pwgen_file: pwgen.sh
 pwgen_path: /usr/local/bin
 pass_param: "{{ pwgen_path }}/{{ pwgen_file }} 16"
 
-unzipcheck_file: unzipcheck.sh
-unzipcheck_path: /usr/local/bin
-unzipcheck: "{{ unzipcheck_path }}/{{ unzipcheck_file }}"
+safe_unzip_file: safe_unzip.sh
+safe_unzip_path: /usr/local/bin
+safe_unzip: "{{ safe_unzip_path }}/{{ safe_unzip_file }}"
 
 diskgroup_compatible_asm: "{{ oracle_ver }}"
 diskgroup_compatible_rdbms: "{# assign to variable c compatible parameter and set to default if not defined #}\
