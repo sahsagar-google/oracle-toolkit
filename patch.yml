@@ -30,6 +30,7 @@
       include_role:
         name: common
         tasks_from: populate-vars.yml
+      tags: always
 
   roles:
     - common
@@ -38,7 +39,7 @@
     - name: Check if database is Oracle Restart/Clusterware configured
       shell: |
         set -o pipefail
-        if srvctl config database -d {{ db_name }} &>/dev/null; then
+        if srvctl config database -d {{ db_name }} &>/dev/null || srvctl config database -d {{ standby_name }} &>/dev/null; then
           CLUSTERWARE_USER=$(ps -eo user,comm | awk '/(crsd|ocssd|evmd)\.bin/{print $1}' | sort -u)
         else
           CLUSTERWARE_USER=""
@@ -52,11 +53,13 @@
       become: true
       become_user: "{{ oracle_user }}"
       changed_when: false
+      tags: always
 
     - name: Set variables based on the Restart/Clusterware findings
       set_fact:
         gi_install: "{{ (clusterware_check.stdout | length) > 0 }}"
         grid_user: "{{ clusterware_check.stdout if (clusterware_check.stdout | length) > 0 else oracle_user }}"
+      tags: always
 
     - name: Values for variables gi_install and grid_user
       debug:
@@ -64,6 +67,7 @@
           - "gi_install: {{ gi_install }}"
           - "grid_user: {{ grid_user }}"
         verbosity: 1
+      tags: always
 
 - name: Download patches
   hosts: dbasm
@@ -79,8 +83,8 @@
         tasks_from: main.yml
       vars:
         patch_only: true
+      tags: download-patches
   become: false
-  tags: download-patches
 
 - name: OPatch Restart patch
   hosts: dbasm
@@ -89,10 +93,10 @@
         name: patch
         tasks_from: main.yml
       when: hostvars[groups['dbasm'].0]['cluster_name'] | default('', true) | length == 0
+      tags: opatch_restart
   remote_user: "{{ oracle_user }}"
   become: true
   become_user: root
-  tags: opatch_restart
 
 - name: RAC install opatch
   hosts: dbasm
@@ -103,7 +107,7 @@
       vars:
         db_config_type: RAC
       when: hostvars[groups['dbasm'].0]['cluster_name'] | default('', true) | length > 0
-  tags: rac-ins-opatch
+      tags: rac-ins-opatch
 
 - name: RAC patch apply
   hosts: dbasm
@@ -116,7 +120,7 @@
       vars:
         db_config_type: RAC
       when: hostvars[groups['dbasm'].0]['cluster_name'] | default('', true) | length > 0
-  tags: rac-opatch
+      tags: rac-opatch
 
 - name: RAC database patch
   hosts: dbasm[0]
@@ -127,4 +131,4 @@
       vars:
         db_config_type: RAC
       when: hostvars[groups['dbasm'].0]['cluster_name'] | default('', true) | length > 0
-  tags: rac-dbpatch
+      tags: rac-dbpatch

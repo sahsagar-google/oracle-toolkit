@@ -61,6 +61,7 @@ published: True
       - [A note on patch metadata](#a-note-on-patch-metadata)
     - [Patching RAC databases](#patching-rac-databases)
       - [BMS RAC install with latest RU](#bms-rac-install-with-latest-ru)
+    - [Data Guard Standby-First Patching](#data-guard-standby-first-patching)
     - [Destructive Cleanup](#destructive-cleanup)
 
 ## Command quick reference for single instance deployments
@@ -2684,7 +2685,7 @@ Specific supported versions of Oracle Database 23ai/26ai Free currently includes
 
 | Product | Specific Version | Software RPM Filename                                   | Preinstall RPM Filename                                   |
 | :-----: | :--------------: | :------------------------------------------------------ | :-------------------------------------------------------- |
-|  26ai   |   23.26.0.0.0    | `oracle-ai-database-free-26ai-23.26.0-1.el9.x86_64.rpm` | `oracle-ai-database-preinstall-26ai-1.0-1.el8.x86_64.rpm` |
+|  26ai   |   23.26.0.0.0    | `oracle-ai-database-free-26ai-23.26.0-1.el8.x86_64.rpm` | `oracle-ai-database-preinstall-26ai-1.0-1.el8.x86_64.rpm` |
 |  23ai   |   23.9.0.25.07   | `oracle-database-free-23ai-23.9-1.el8.x86_64.rpm`       | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm`    |
 |  23ai   |   23.8.0.25.04   | `oracle-database-free-23ai-23.8-1.el8.x86_64.rpm`       | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm`    |
 |  23ai   |   23.7.0.25.01   | `oracle-database-free-23ai-1.0-1.el8.x86_64.rpm`        | `oracle-database-preinstall-23ai-1.0-2.el8.x86_64.rpm`    |
@@ -3603,6 +3604,65 @@ For example:
   --ora-db-name ORCL
   -- "--extra-vars @patches.yaml"
 ```
+
+### Data Guard Standby-First Patching
+
+This toolkit supports reduced downtime patching using the standby-first
+approach. For full details see [Patching Oracle Database with Standby
+First Patching](https://docs.oracle.com/en/database/oracle/oracle-database/26/sbydb/upgrading-patching-downgrading-oracle-data-guard-configuration.html#GUID-A5226768-DB6B-4714-BB9A-0A3EF17A01C8).
+
+Non-rolling patching of a Data Guard configuration is also possible and
+usually involves first patching the STANDBY database.  Use the `apply-patch.sh`
+script - no special customizations are required. The toolkit will recognize
+that it's patching a STANDBY database and consequently will only apply the
+Oracle Home (file) patches using OPatch. And will not apply the SQL or catalog
+patch using `datapatch`.
+
+Example command:
+
+```bash
+./apply-patch.sh \
+  --inventory-file inventory_files/inventory_standby-ORCL \
+  --ora-version 19 \
+  --ora-swlib-bucket gs://oracle-software
+```
+
+Then similarly, patch the PRIMARY database:
+
+```bash
+./apply-patch.sh \
+  --inventory-file inventory_files/inventory_primary-ORCL \
+  --ora-version 19 \
+  --ora-swlib-bucket gs://oracle-software
+```
+
+Patching the PRIMARY will take longer as both the Oracle Home updates and
+catalog SQL updates will be applied during the single patch-window.
+
+To reduce the overall patching downtime, the Data Guard standby-first apporach
+can be used. The steps involved can be summarized as:
+
+1. Patch the STANDBY - the toolkit will recognize that the database is not open and will only apply Oracle Home file patches.
+2. Perform a Data Guard role transition/reversal (i.e. a graceful switchover).
+3. Patch the new STANDBY (old PRIMARY) - again only Oracle Home file patches will be applied.
+4. Patch the PRIMARY - this time only catalog SQL updates are applied (via `datapatch`) and the changes are replicated from the PRIMARY to the STANDBY.
+
+The first and third step can be run using `apply-patch.sh` and commands similar
+to those shown above. And while the same command can also be used for the
+final step, leveraging the toolkit's Ansible tags can expidite the final
+step by skipping many tasks not related to catalog SQL patching.
+
+Specifically, leverage Ansible tags in a command similar to the following:
+
+```bash
+./apply-patch.sh \
+  --inventory-file inventory_files/inventory_NEW_standby-ORCL \
+  --ora-version 19 \
+  --ora-swlib-bucket gs://oracle-software \
+  -- "--tags opatch_restart,oracle-rel,patch-rdbms"
+```
+
+> NOTE: substitute tag `opatch_restart` with `rac-opatch` etc, as required.
 
 ### Destructive Cleanup
 
