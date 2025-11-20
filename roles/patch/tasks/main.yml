@@ -42,22 +42,21 @@
   become_user: root
 
 - name: Clean up old files in OPatch directory (MOS Doc ID 2283767.1, case 3a)
+  when: gi_install
+  become: true
+  become_user: root
   block:
     - name: (GI) Remove existing OPatch directory
       file:
         path: "{{ grid_home }}/OPatch"
         state: absent
-
     - name: (GI) Create empty OPatch directory
       file:
         path: "{{ grid_home }}/OPatch"
         state: directory
-        mode: '0755'
+        mode: "0755"
         owner: "{{ grid_user }}"
         group: "{{ oracle_group }}"
-  when: gi_install
-  become: true
-  become_user: root
   tags: update-opatch-gi
 
 - name: (GI) Update OPatch
@@ -99,35 +98,36 @@
   become_user: "{{ grid_user }}"
   tags: patch-grid,sw-unzip
 
-- name: (RDBMS) Get database role
+- name: (RDBMS) Get database role from sqlplus
+  shell: |
+    set -o pipefail
+    sqlplus -s / as sysdba <<EOF
+    whenever sqlerror exit failure
+    set heading off
+    select database_role from v\$database;
+    EOF
+  environment:
+    ORACLE_HOME: "{{ oracle_home }}"
+    ORACLE_SID: "{{ oracle_sid }}"
+    PATH: "{{ oracle_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
+  register: db_role
+  become: true
+  become_user: "{{ oracle_user }}"
+  changed_when: false
   tags: patch-grid,patch-rdbms
-  block:
-    - name: Get database role from sqlplus
-      shell: |
-        set -o pipefail
-        sqlplus -s / as sysdba <<EOF
-        whenever sqlerror exit failure
-        set heading off
-        select database_role from v\$database;
-        EOF
-      environment:
-        ORACLE_HOME: "{{ oracle_home }}"
-        ORACLE_SID: "{{ oracle_sid }}"
-        PATH: "{{ oracle_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
-      register: db_role
-      become: true
-      become_user: "{{ oracle_user }}"
-    - name: Set boolean standby_db variable
-      set_fact:
-        standby_db: "{{ db_role.stdout is search('PHYSICAL STANDBY') | bool }}"
+
+- name: (RDBMS) Set boolean standby_db variable
+  set_fact:
+    standby_db: "{{ db_role.stdout is search('PHYSICAL STANDBY') | bool }}"
+  tags: patch-grid,patch-rdbms
 
 - name: (GI) Apply patch
   include_tasks: opatch_apply.yml
   vars:
     sw_home: "{{ grid_home }}"
-    sw_user: 'root'
-    silent: ''
-    home_type: 'GRID'
+    sw_user: "root"
+    silent: ""
+    home_type: "GRID"
   with_items: "{{ gi_patches }}"
   loop_control:
     loop_var: patch
@@ -158,6 +158,7 @@
           | selectattr('category', 'equalto', 'RU_Combo')
           | map(attribute='patchfile') | list) | unique }}
   when: gi_install
+  tags: patch-rdbms
 
 - name: (RDBMS) Build list of unique RDBMS patches
   set_fact:
@@ -167,6 +168,7 @@
           | selectattr('category', 'in', ['DB_OJVM_RU','DB_RU'])
           | map(attribute='patchfile') | list) | unique }}
   when: not gi_install
+  tags: patch-rdbms
 
 - name: (RDBMS) Capture full details for required patches
   set_fact:
@@ -174,6 +176,7 @@
       {{ rdbms_patches
           | selectattr('patchfile', 'in', unique_patch_files)
           | list }}
+  tags: patch-rdbms
 
 - name: (RDBMS) Unzip patch
   # Using the "shell" module instead of "unarchive" for unzip performance
@@ -182,7 +185,7 @@
   when: rdbms_patch_files is defined and rdbms_patch_files | length > 0
   become: true
   become_user: "{{ oracle_user }}"
-  tags: patch-rdbms,sw-unzip
+  tags: sw-unzip
 
 - name: (RDBMS) remove db_state.out if it exists
   file:
@@ -202,13 +205,15 @@
   become_user: "{{ oracle_user }}"
   tags: patch-rdbms,pre-rdbms,stop-home
 
-- name: (RDBMS) Stop database
+- name: (RDBMS) Stop database and listener
   shell: |
     set -o pipefail
+    -- Commented out following line to prevent premature task end due to the expected/normal ORA-01109 warning
+    -- whenever sqlerror exit failure
     sqlplus -s / as sysdba <<EOF
-    whenever sqlerror exit failure
     shutdown immediate;
     EOF
+    lsnrctl stop
   environment:
     ORACLE_HOME: "{{ oracle_home }}"
     ORACLE_SID: "{{ oracle_sid }}"
@@ -217,6 +222,7 @@
   register: stop_home
   become: true
   become_user: "{{ oracle_user }}"
+  failed_when: "stop_home.rc != 0 and 'ORA-01109: database not open' not in stop_home.stdout"
   tags: patch-rdbms,pre-rdbms,stop-home
 
 - name: (RDBMS) Stop home results
@@ -230,8 +236,8 @@
   vars:
     sw_home: "{{ oracle_home }}"
     sw_user: "{{ oracle_user }}"
-    silent: '-silent'
-    home_type: 'DB'
+    silent: "-silent"
+    home_type: "DB"
   with_items: "{{ rdbms_patches }}"
   loop_control:
     loop_var: patch
@@ -248,7 +254,7 @@
   when: rdbms_patch_files is defined and rdbms_patch_files | length > 0
   become: true
   become_user: root
-  tags: patch-rdbms,sw-remove
+  tags: sw-remove
 
 - name: (RDBMS) Start home
   command: "{{ oracle_home }}/bin/srvctl start home -o {{ oracle_home }} -s {{ swlib_unzip_path }}/db_state.out"
@@ -261,18 +267,41 @@
   become_user: "{{ oracle_user }}"
   tags: patch-rdbms,start-home
 
-- name: (RDBMS) Start database
+- name: (RDBMS) Start database and listener
   shell: |
     set -o pipefail
     sqlplus -s / as sysdba <<EOF
     whenever sqlerror exit failure
     startup;
     EOF
+    lsnrctl start
   environment:
     ORACLE_HOME: "{{ oracle_home }}"
     ORACLE_SID: "{{ oracle_sid }}"
     PATH: "{{ oracle_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
-  when: not gi_install
+  when:
+    - not gi_install
+    - not standby_db
+  register: start_home
+  become: true
+  become_user: "{{ oracle_user }}"
+  tags: patch-rdbms,start-home
+
+- name: (RDBMS) Mount database [STANDBY] and listener
+  shell: |
+    set -o pipefail
+    sqlplus -s / as sysdba <<EOF
+    whenever sqlerror exit failure
+    startup mount;
+    EOF
+    lsnrctl start
+  environment:
+    ORACLE_HOME: "{{ oracle_home }}"
+    ORACLE_SID: "{{ oracle_sid }}"
+    PATH: "{{ oracle_home }}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin"
+  when:
+    - not gi_install
+    - standby_db
   register: start_home
   become: true
   become_user: "{{ oracle_user }}"
