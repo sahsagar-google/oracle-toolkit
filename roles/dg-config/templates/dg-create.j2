@@ -1,5 +1,5 @@
 SET ECHO ON;
-HOST sleep 60;
+
 {% if primary_dg_config.stdout | length == 0 %}
 CREATE CONFIGURATION dg_{{ db_name }} AS
 PRIMARY DATABASE IS {{ db_name }}
