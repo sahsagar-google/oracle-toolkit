@@ -132,8 +132,8 @@ while true; do
     --ora-listener-port) YAML_VARS["ora_listener_port"]="$2"; shift 2 ;;
     --instance-ip-addr) YAML_VARS["instance_ip_addr"]="$2"; shift 2 ;;
     --instance-hostname) YAML_VARS["instance_hostname"]="$2"; shift 2 ;;
-    --instance-ssh-user) YAML_VARS["instance_ssh_user"]="$2"; shift 2 ;;
-    --instance-ssh-key) YAML_VARS["instance_ssh_key"]="$2"; shift 2 ;;
+    --instance-ssh-user) YAML_VARS["_instance_ssh_user"]="$2"; shift 2 ;;
+    --instance-ssh-key) YAML_VARS["_instance_ssh_key"]="$2"; shift 2 ;;
     --primary-ip-addr) YAML_VARS["primary_ip_addr"]="$2"; shift 2 ;;
     --instance-ssh-extra-args) YAML_VARS["instance_ssh_extra_args"]="$2"; shift 2 ;;
     --ntp-pref) YAML_VARS["ntp_pref"]="$2"; shift 2 ;;

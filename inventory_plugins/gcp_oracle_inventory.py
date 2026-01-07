@@ -119,8 +119,8 @@ class InventoryModule(BaseInventoryPlugin):
         primary_host.set_variable('is_primary_node', True)
 
         # Explicitly set connection vars for both hosts
-        ssh_user = self.config_data.get('instance_ssh_user')
-        ssh_key = self.config_data.get('instance_ssh_key')
+        ssh_user = self.config_data.get('_instance_ssh_user')
+        ssh_key = self.config_data.get('_instance_ssh_key')
         if ssh_user:
             standby_host.set_variable('ansible_ssh_user', ssh_user)
             primary_host.set_variable('ansible_ssh_user', ssh_user)
