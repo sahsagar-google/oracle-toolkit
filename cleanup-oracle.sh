@@ -80,8 +80,8 @@ while true; do
     --cluster-config-json) YAML_VARS["cluster_config_json"]="$2"; shift 2 ;;
     --instance-ip-addr) YAML_VARS["instance_ip_addr"]="$2"; shift 2 ;;
     --instance-hostname) YAML_VARS["instance_hostname"]="$2"; shift 2 ;;
-    --instance-ssh-user) YAML_VARS["instance_ssh_user"]="$2"; shift 2 ;;
-    --instance-ssh-key) YAML_VARS["instance_ssh_key"]="$2"; shift 2 ;;
+    --instance-ssh-user) YAML_VARS["_instance_ssh_user"]="$2"; shift 2 ;;
+    --instance-ssh-key) YAML_VARS["_instance_ssh_key"]="$2"; shift 2 ;;
     --instance-ssh-extra-args) YAML_VARS["instance_ssh_extra_args"]="$2"; shift 2 ;;
     --) shift; ANSIBLE_ARGS+=("$@"); break ;;
     *) echo "Internal error! Unexpected option: $1" >&2; exit 1 ;;

@@ -274,14 +274,14 @@
     - name: Validate instance_ssh_user
       ansible.builtin.assert:
         that:
-          - instance_ssh_user is defined # no default value set in group_vars/all.yml
+          - instance_ssh_user is defined
           - instance_ssh_user is match('^[a-z_][a-z0-9_-]{0,31}$')
         fail_msg: "Invalid instance-ssh-user format."
 
     - name: Validate instance_ssh_key
       ansible.builtin.assert:
         that:
-          - instance_ssh_key is defined # no default value set in group_vars/all.yml
+          - instance_ssh_key is defined
         fail_msg: "instance-ssh-key must be defined."
 
     - name: Validate ntp_pref
