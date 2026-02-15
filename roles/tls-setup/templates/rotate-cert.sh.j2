@@ -1,8 +1,38 @@
 #!/bin/bash
-export ORACLE_HOME={{ oracle_home }}
-export PATH=$ORACLE_HOME/bin:$PATH
-WALLET_DIR="{{ tls_wallet_dir }}"
+set -u
 
-echo "Starting Certificate Rotation..."
-# (Logic to re-download secrets would go here)
-echo "Rotation placeholder executed."
+# Configuration
+LOG_NAME="oracle-tls-rotation"
+INSTANCE_NAME="{{ instance_name }}"
+ZONE="{{ zone }}"
+PROJECT_ID="{{ project_id }}"
+
+log_failure() {
+    local msg="$1"
+    echo "ERROR: $msg"
+    
+    # Send structured JSON log to Cloud Logging so the Alert Policy triggers
+    # This matches the filter we defined in terraform/monitoring.tf
+    gcloud logging write "$LOG_NAME" --payload-type=json \
+      '{
+        "event": "CERT_ROTATION_FAILURE",
+        "message": "'"$msg"'",
+        "instance": "'"$INSTANCE_NAME"'",
+        "zone": "'"$ZONE"'"
+      }'
+}
+
+# 1. Check if certificate is expiring (e.g., within 7 days)
+# (Real logic would verify expiry date here using openssl)
+# For now, we assume this runs via cron only when needed or use a placeholder check
+echo "Starting certificate rotation check..."
+
+# 2. Simulate critical failure (Example: CAS is down)
+# Replace this with your actual renewal logic (e.g., gcloud privateca certificates create...)
+if ! gcloud privateca certificates list --location={{ region }} --project=$PROJECT_ID > /dev/null 2>&1; then
+    log_failure "Failed to contact CAS API. Renewal impossible."
+    exit 1
+fi
+
+# 3. If successful
+echo "Certificate check passed."
