@@ -385,7 +385,7 @@ resource "tls_cert_request" "oracle_db_csr" {
 # 3. Issue Certificate via Google CAS
 resource "google_privateca_certificate" "oracle_db_cert" {
   count       = var.enable_tls ? 1 : 0
-  pool        = split("/", var.cas_pool_id)[5]
+  pool        = google_privateca_ca_pool.secure_pool.name
   location    = split("/", var.cas_pool_id)[3]
   project     = var.project_id
   name        = "${var.instance_name}-tls-cert"
@@ -498,7 +498,7 @@ resource "google_secret_manager_secret_iam_member" "vm_access_pwd" {
 # (Scoped via IAM Condition if needed, or binding directly to the pool resource)
 resource "google_privateca_ca_pool_iam_member" "vm_ca_requester" {
   count      = var.enable_tls ? 1 : 0
-  ca_pool    = var.cas_pool_id
+  ca_pool    = google_privateca_ca_pool.secure_pool.id
   role       = "roles/privateca.certificateRequester"
   member     = "serviceAccount:${var.vm_service_account}"
 }
