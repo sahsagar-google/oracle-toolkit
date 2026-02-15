@@ -107,3 +107,67 @@
     name: "Rotate Oracle TLS Certificate"
     job: "/usr/local/bin/rotate-oracle-cert.sh >> /var/log/oracle-tls-rotation.log 2>&1"
     special_time: daily
+    
+- name: tls-setup | Define Client Wallet Directory
+  set_fact:
+    client_wallet_dir: "/home/{{ oracle_user }}/client_wallet"
+
+- name: tls-setup | Create Client Wallet Directory
+  file:
+    path: "{{ client_wallet_dir }}"
+    state: directory
+    owner: "{{ oracle_user }}"
+    group: "{{ oracle_group }}"
+    mode: '0755'
+
+- name: tls-setup | Create Client Auto-Login Wallet
+  shell: |
+    set -o pipefail
+    # Create a fresh wallet for clients
+    # We reuse the same pwd.txt for simplicity, but clients typically use auto-login (cwallet.sso) anyway
+    orapki wallet create -wallet "{{ client_wallet_dir }}" -auto_login -pwd $(cat "{{ tls_wallet_dir }}/pwd.txt")
+  args:
+    executable: /bin/bash
+  become: true
+  become_user: "{{ oracle_user }}"
+  environment:
+    ORACLE_HOME: "{{ oracle_home }}"
+    PATH: "{{ oracle_home }}/bin:{{ ansible_env.PATH }}"
+
+- name: tls-setup | Import Trusted Certificate Chain to Client Wallet
+  shell: |
+    set -o pipefail
+    # Import the certificate chain (cert.pem) as a TRUSTED certificate
+    # This gives the client the Root CA and Intermediate CA needed to verify the server
+    orapki wallet add -wallet "{{ client_wallet_dir }}" \
+      -trusted_cert -cert "{{ tls_wallet_dir }}/cert.pem" \
+      -pwd $(cat "{{ tls_wallet_dir }}/pwd.txt")
+  args:
+    executable: /bin/bash
+  become: true
+  become_user: "{{ oracle_user }}"
+  environment:
+    ORACLE_HOME: "{{ oracle_home }}"
+    PATH: "{{ oracle_home }}/bin:{{ ansible_env.PATH }}"
+
+- name: tls-setup | Copy Raw Certificate for Non-Oracle Clients
+  copy:
+    src: "{{ tls_wallet_dir }}/cert.pem"
+    dest: "{{ client_wallet_dir }}/root_ca_chain.pem"
+    remote_src: yes
+    owner: "{{ oracle_user }}"
+    group: "{{ oracle_group }}"
+    mode: '0644'
+
+- name: tls-setup | Create Client Artifact Bundle (ZIP)
+  community.general.archive:
+    path: "{{ client_wallet_dir }}/*"
+    dest: "/home/{{ oracle_user }}/client_bundle.zip"
+    format: zip
+    owner: "{{ oracle_user }}"
+    group: "{{ oracle_group }}"
+    mode: '0644'
+
+- name: tls-setup | Notify User of Client Bundle Location
+  debug:
+    msg: "Client Connectivity Bundle created at: /home/{{ oracle_user }}/client_bundle.zip. Download this file to configure SQL Developer or JDBC clients."
