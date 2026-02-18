@@ -69,6 +69,7 @@ GETOPT_OPTIONAL="$GETOPT_OPTIONAL,instance-ssh-key:,instance-hostname:,ntp-pref:
 GETOPT_OPTIONAL="$GETOPT_OPTIONAL,help,validate,check-instance,prep-host,install-sw,config-db,allow-install-on-vm,skip-database-config,swap-blk-device:"
 GETOPT_OPTIONAL="$GETOPT_OPTIONAL,install-workload-agent,oracle-metrics-secret:,db-password-secret:,data-guard-protection-mode:,skip-platform-compatibility"
 GETOPT_OPTIONAL="$GETOPT_OPTIONAL,enable-tls,tls-key-secret:,tls-cert-secret:,wallet-pwd-secret:"
+GETOPT_OPTIONAL="$GETOPT_OPTIONAL,ar-repo-url:"
 GETOPT_LONG="$GETOPT_MANDATORY,$GETOPT_OPTIONAL"
 GETOPT_SHORT="h"
 
@@ -163,6 +164,7 @@ while true; do
     --tls-key-secret) YAML_VARS["tls_key_secret"]="$2"; shift 2 ;;
     --tls-cert-secret) YAML_VARS["tls_cert_secret"]="$2"; shift 2 ;;
     --wallet-pwd-secret) YAML_VARS["wallet_pwd_secret"]="$2"; shift 2 ;;
+    --ar-repo-url) YAML_VARS["ar_repo_url"]="$2"; shift 2 ;;
     --) shift; ANSIBLE_ARGS+=("$@"); break ;;
     *) echo "Internal error! Unexpected option: $1" >&2; exit 1 ;;
   esac
@@ -291,6 +293,7 @@ if [ "$HELP_ONLY" = true ]; then
   echo "  --compatible-rdbms <version> Compatible RDBMS version."
   echo "  --data-guard-protection-mode Data Guard protection mode (Maximum Performance, Maximum Availability, Maximum Protection)."
   echo "  --inventory-file <file>      Custom Ansible inventory file."
+  echo "  --ar-repo-url <url>          Artifact Registry remote repository base URL."
   exit 0
 fi
 

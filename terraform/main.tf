@@ -151,6 +151,21 @@ data "google_compute_subnetwork" "subnetwork" {
 
 locals {
   network = local.subnetwork1_opt == null ? "projects/${var.project_id}/global/networks/default" : data.google_compute_subnetwork.subnetwork[0].network
+  # Derive region from zone1 (e.g., us-central1-b -> us-central1)
+  region = join("-", slice(split("-", var.zone1), 0, 2))
+
+  os_repo_types = ["baseos", "appstream"]
+
+  os_upstreams = {
+    "oracle-linux-8" = {
+      "baseos"    = "https://yum.oracle.com/repo/OracleLinux/OL8/baseos/latest/x86_64"
+      "appstream" = "https://yum.oracle.com/repo/OracleLinux/OL8/appstream/x86_64"
+    }
+    "oracle-linux-9" = {
+      "baseos"    = "https://yum.oracle.com/repo/OracleLinux/OL9/baseos/latest/x86_64"
+      "appstream" = "https://yum.oracle.com/repo/OracleLinux/OL9/appstream/x86_64"
+    }
+  }
 }
 
 data "google_compute_image" "os_image" {
@@ -247,6 +262,8 @@ locals {
     }
   ]
 
+  ar_repo_base_url = var.enable_ar_repo ? "https://${local.region}-yum.pkg.dev/remote/${var.project_id}" : ""
+
   common_flags = join(" ", compact([
     local.ora_disk_mgmt_flag != "" ? "--ora-disk-mgmt ${local.ora_disk_mgmt_flag}" : "",
     length(local.asm_disk_config) > 0 ? "--ora-asm-disks-json '${jsonencode(local.asm_disk_config)}'" : "",
@@ -277,6 +294,7 @@ locals {
     var.enable_tls ? "--tls-key-secret ${google_secret_manager_secret_version.db_private_key_val[0].name}" : "",
     var.enable_tls ? "--tls-cert-secret ${google_secret_manager_secret_version.db_cert_val[0].name}" : "",
     var.enable_tls ? "--wallet-pwd-secret ${google_secret_manager_secret_version.wallet_pwd_val[0].name}" : ""
+    local.ar_repo_base_url != "" ? "--ar-repo-url '${local.ar_repo_base_url}'" : ""
   ]))
 }
 
@@ -540,6 +558,24 @@ resource "google_compute_firewall" "db_sync" {
 
   source_tags = [local.db_tag]
   target_tags = [local.db_tag]
+}
+
+resource "google_artifact_registry_repository" "os_package_repos" {
+  # Only create repositories if the guard is true and the image family is supported
+  for_each = (var.enable_ar_repo && contains(keys(local.os_upstreams), var.source_image_family)) ? toset(local.os_repo_types) : []
+
+  project       = var.project_id
+  location      = local.region
+  repository_id = "${var.source_image_family}-${each.key}-repo"
+  description   = "Remote repo for ${var.source_image_family} ${each.key} packages"
+  format        = "YUM"
+  mode          = "REMOTE_REPOSITORY"
+
+  remote_repository_config {
+    common_repository {
+      uri = local.os_upstreams[var.source_image_family][each.key]
+    }
+  }
 }
 
 output "control_node_log_url" {
