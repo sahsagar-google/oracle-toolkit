@@ -34,7 +34,7 @@
       yum_repository:
         name: "ar-{{ item }}"
         description: "Internal Artifact Registry repository for {{ item }}"
-        baseurl: "{{ ar_repo_url }}/oracle-linux-{{ ansible_distribution_major_version }}-{{ item }}-repo"
+        baseurl: "{{ ar_repo_url }}-{{ item }}"
         enabled: yes
         gpgcheck: yes
         repo_gpgcheck: no
