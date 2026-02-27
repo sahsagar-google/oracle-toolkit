@@ -157,11 +157,13 @@ DEST_DIR="/oracle-toolkit"
 %{ if !assign_public_ip }
 # Disable default external mirrors that cause timeouts without internet access
 for list in /etc/apt/mirrors/debian.list /etc/apt/mirrors/debian-security.list; do
-    if [ -f "$list" ]; then
+    if [[ -f "$list" ]]; then
         mv "$list" "$list.bak"
     fi
 done
-if [ -f /etc/apt/sources.list ]; then
+mkdir -p /etc/apt/sources.list.d/backup
+mv /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources /etc/apt/sources.list.d/backup/ 2>/dev/null || true
+if [[ -f /etc/apt/sources.list ]]; then
     mv /etc/apt/sources.list /etc/apt/sources.list.bak
 fi
 # Use a package mirror accessible via Private Google Access
