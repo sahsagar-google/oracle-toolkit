@@ -256,7 +256,7 @@ locals {
     }
   ]
 
-  ar_repo_base_url = var.enable_ar_repo ? "https://${local.region}-yum.pkg.dev/remote/${var.project_id}" : ""
+  ar_repo_url_prefix = var.enable_ar_repo ? "https://${local.region}-yum.pkg.dev/remote/${var.project_id}/${local.deployment_id}" : ""
 
   common_flags = join(" ", compact([
     local.ora_disk_mgmt_flag != "" ? "--ora-disk-mgmt ${local.ora_disk_mgmt_flag}" : "",
@@ -284,7 +284,7 @@ locals {
     var.ora_pga_target_mb != "" ? "--ora-pga-target-mb ${var.ora_pga_target_mb}" : "",
     var.ora_sga_target_mb != "" ? "--ora-sga-target-mb ${var.ora_pga_target_mb}" : "",
     var.data_guard_protection_mode != "" ? "--data-guard-protection-mode '${var.data_guard_protection_mode}'" : "",
-    local.ar_repo_base_url != "" ? "--ar-repo-url '${local.ar_repo_base_url}'" : ""
+    local.ar_repo_url_prefix != "" ? "--ar-repo-url '${local.ar_repo_url_prefix}'" : ""
   ]))
 }
 
@@ -399,8 +399,8 @@ resource "google_artifact_registry_repository" "os_package_repos" {
 
   project       = var.project_id
   location      = local.region
-  repository_id = "${var.source_image_family}-${each.key}-repo"
-  description   = "Remote repo for ${var.source_image_family} ${each.key} packages"
+  repository_id = "${local.deployment_id}-${each.key}"
+  description   = "Remote repo for ${local.deployment_id} ${each.key} packages"
   format        = "YUM"
   mode          = "REMOTE_REPOSITORY"
 

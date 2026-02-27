@@ -1789,9 +1789,16 @@ Optional: set if you would like a swap partition and swap file created.</td>
 --ar-repo-url
 </pre></p></td>
 <td>Empty: don't configure Artifact Registry</td>
-<td>Base URL of the registry location.  When provided, the installer configures
-the system to use these repositories for `BaseOS` and `AppStream` instead of
-public mirrors.<br>
+<td>URL prefix for Artifact Registry repositories.
+When provided, the installer appends <code>-baseos</code> and
+<code>-appstream</code> to this prefix to configure the system to use these
+repositories instead of public mirrors.<br>
+For example, with reporitories named <code>mydeployment-baseos</code> and 
+<code>mydeployment-appstream</code> in project <code>myproject</code> region 
+<code>us-central1</code>, use 
+<code>--ar-repo-url="https://us-central1-yum.pkg.dev/remote/myproject/mydeployment"</code>,
+and the <code>-baseos</code> and <code>-appstream</code> will be appended as needed.
+<br>
 To avoid hangs with default OS configurations, this parameter will also mark
 existing YUM repositories as `disabled`.<br>
 This parameter has no effect with Red Hat Enterprise Linux, where Google Cloud
