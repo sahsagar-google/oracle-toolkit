@@ -24,6 +24,24 @@ rdbms_software:
       - { name: "V1054592-01.zip", sha256sum: "2A5D2583DF076209E624DFF750829F9A562473C27C8F926D546CF9AD2A1A2EFD", md5sum: "kfS0nf1YbfK8kEqrEa3v9w==",
           alt_name: "LINUX.X64_2326100_db_home.zip", alt_sha256sum: "2A5D2583DF076209E624DFF750829F9A562473C27C8F926D546CF9AD2A1A2EFD", alt_md5sum: "kfS0nf1YbfK8kEqrEa3v9w==" }
 
+  - name: 26ai_base
+    version: 23.26.1.0.0
+    edition:
+      - EE
+      - SE2
+    files:
+      - { name: "V1054592-01.zip", sha256sum: "2A5D2583DF076209E624DFF750829F9A562473C27C8F926D546CF9AD2A1A2EFD", md5sum: "kfS0nf1YbfK8kEqrEa3v9w==",
+          alt_name: "LINUX.X64_2326100_db_home.zip", alt_sha256sum: "2A5D2583DF076209E624DFF750829F9A562473C27C8F926D546CF9AD2A1A2EFD", alt_md5sum: "kfS0nf1YbfK8kEqrEa3v9w==" }
+
+  - name: 26ai_base
+    version: 23.26.1.0.0
+    edition:
+      - EE
+      - SE2
+    files:
+      - { name: "V1054592-01.zip", sha256sum: "2A5D2583DF076209E624DFF750829F9A562473C27C8F926D546CF9AD2A1A2EFD", md5sum: "kfS0nf1YbfK8kEqrEa3v9w==",
+          alt_name: "LINUX.X64_2326100_db_home.zip", alt_sha256sum: "2A5D2583DF076209E624DFF750829F9A562473C27C8F926D546CF9AD2A1A2EFD", alt_md5sum: "kfS0nf1YbfK8kEqrEa3v9w==" }
+
     version: 23.26.1.0.0
     edition:
       - EE
