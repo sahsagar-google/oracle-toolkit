@@ -47,7 +47,7 @@ data_disk = {
 reco_disk = {
   size_gb = 15
 }
-ora_version = "19"
+ora_version = "26"
 ora_release = "latest"
 ora_edition = "EE"
 ora_backup_dest = "/u03/backup"
