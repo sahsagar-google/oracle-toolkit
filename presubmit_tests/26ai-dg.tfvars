@@ -8,5 +8,5 @@ source_image_project = "oracle-linux-cloud"
 ora_version = "26"
 ora_release = "base"
 ora_edition = "EE"
-ora_db_container = false
+ora_db_container = true
 ora_disk_mgmt = "FS"

@@ -51,4 +51,4 @@ fi
 --ora-asm-disks /etc/files_needed_for_tk/rac-asm.json \
 --ora-data-mounts /etc/files_needed_for_tk/rac-data-mounts.json --cluster-type RAC \
 --cluster-config /etc/files_needed_for_tk/rac-config.json --ora-data-destination DATA \
---ora-reco-destination RECO --ora-db-name orcl --ora-db-container false 
+--ora-reco-destination RECO --ora-db-name orcl --ora-db-container true

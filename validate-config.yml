@@ -319,6 +319,13 @@
         fail_msg: "Artifact Registry repositories (--ar-repo-url) are not supported with the Oracle Database free edition."
       when: ora_edition is defined and ora_edition == 'FREE'
 
+    - name: Validate Oracle 21+ is a container database
+      ansible.builtin.assert:
+        that:
+          - container_db | bool
+        fail_msg: "Oracle 21c and newer (including 23ai/26ai) require a Container Database. Set 'ora-db-container' to true."
+      when: oracle_ver is version('21.0.0.0.0', '>=')
+
     - name: Validate ASM Disk Configuration
       block:
         - name: Assert that ora_asm_disks and ora_asm_disks_json are mutually exclusive
