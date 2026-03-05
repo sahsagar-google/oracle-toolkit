@@ -132,7 +132,7 @@
   set_fact:
     cv_distid: "{{ 'OEL7' if ansible_os_family == 'RedHat'
                            and (ansible_distribution_major_version | int) >= 8
-                           and (oracle_ver_base | float) <= 19.3
+                           and (oracle_ver is version('21.0.0.0.0', '<'))
                            else '' }}"
   tags: rdbms-setup
 
