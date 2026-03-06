@@ -293,8 +293,11 @@
   command: "{{ grid_home }}/gridSetup.sh -executeConfigTools -silent -responseFile {{ swlib_unzip_path }}/grid_install.rsp"
   register: install_grid_plugins
   when: oracle_ver not in ['11.2.0.4.0','12.1.0.2.0']
-  failed_when: "(   ('Successfully Setup Software' not in install_grid_plugins.stdout) or
-                    (install_grid_plugins.rc not in [0,6,250]) )
-               and
-               ('The Installer has detected that there are no config tools to execute for the specified Oracle home' not in install_grid_plugins.stdout)"
+  failed_when: >
+    (
+      ('Successfully Setup Software' not in install_grid_plugins.stdout) or
+      (install_grid_plugins.rc not in [0, 6, 250])
+    ) and
+    ('no config tools to execute' not in install_grid_plugins.stdout) and
+    ('no config tools to run' not in install_grid_plugins.stdout)
   tags: gi-setup
