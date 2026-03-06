@@ -36,7 +36,6 @@
 
 - name: brute-ora-cleanup | Remove any remaining VIP, SCAN, and HAIP addresses from interfaces
   # Explicitly use bash to support readarray and safe array expansions
-  executable: /bin/bash
   shell: |
     # 1. Isolate the Ansible managed block to identify VIP/SCAN IPs
     BLOCK=$(sed -n '/# BEGIN ANSIBLE MANAGED BLOCK/,/# END ANSIBLE MANAGED BLOCK/p' /etc/hosts)
@@ -54,6 +53,8 @@
         fi
       fi
     done
+  args:
+    executable: /bin/bash
   register: ip_cleanup_output
   ignore_errors: true
   become: true
