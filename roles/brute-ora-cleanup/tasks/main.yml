@@ -34,6 +34,32 @@
   become_user: "{{ grid_user }}"
   when: cluster_name is defined
 
+- name: brute-ora-cleanup | Remove any remaining VIP, SCAN, and HAIP addresses from interfaces
+  # Explicitly use bash to support readarray and safe array expansions
+  executable: /bin/bash
+  shell: |
+    # 1. Isolate the Ansible managed block to identify VIP/SCAN IPs
+    BLOCK=$(sed -n '/# BEGIN ANSIBLE MANAGED BLOCK/,/# END ANSIBLE MANAGED BLOCK/p' /etc/hosts)
+    # 2. Collect VIP/SCAN IPs into the target array
+    readarray -t TARGET_IPS < <(echo "$BLOCK" | grep -E "(-vip|scan)" | awk '{print $1}' | sort -u)
+    # 3. Append HAIP addresses (169.254.0.0/19) to the target array
+    readarray -t -O "${#TARGET_IPS[@]}" TARGET_IPS < <(ip -o addr show | grep " 169.254." | awk '{print $4}' | cut -d/ -f1 | sort -u)
+    # 4. Iterate and remove active IPs found in the combined list
+    for ip in "${TARGET_IPS[@]}"; do
+      if [[ -n "$ip" ]]; then
+        IFACE=$(ip -o addr show | grep " $ip/" | awk '{print $2}')
+        if [[ -n "$IFACE" ]]; then
+          echo "Removing RAC/HAIP IP $ip from $IFACE"
+          ip addr del "$ip" dev "$IFACE" || true
+        fi
+      fi
+    done
+  register: ip_cleanup_output
+  ignore_errors: true
+  become: true
+  when: cluster_name is defined
+  changed_when: "'Removing RAC/HAIP IP' in ip_cleanup_output.stdout"
+
 - name: Stop services with srvctl
   shell: |
     ( srvctl stop listener -l {{ listener_name }} -f ) || true
