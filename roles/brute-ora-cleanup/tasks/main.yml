@@ -31,7 +31,7 @@
 
 - name: brute-ora-cleanup | Shut down RAC clusterware (systemd)
   systemd:
-    name: ohasd
+    name: oracle-ohasd
     state: stopped
   failed_when: false
   become: true
