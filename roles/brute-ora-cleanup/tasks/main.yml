@@ -26,8 +26,9 @@
   failed_when: false
   become: true
   when:
-    - ohasd_script.stat.exists
     - cluster_name is defined
+    - ohasd_script.stat is defined
+    - ohasd_script.stat.exists
 
 - name: brute-ora-cleanup | Shut down RAC clusterware (systemd)
   systemd:
@@ -36,9 +37,8 @@
   failed_when: false
   become: true
   when:
-    - not ohasd_script.stat.exists
-    - ansible_service_mgr == "systemd"
     - cluster_name is defined
+    - (ohasd_script.stat is not defined) or (not ohasd_script.stat.exists)
 
 - name: De-configure RAC CRS
   shell: |
