@@ -13,13 +13,32 @@
 # limitations under the License.
 
 ---
-- name: Shut down RAC clusterware
-  # Regrettably we can't use ansible's service module, as Oracle's init scripts don't report status
-  shell: /etc/init.d/init.ohasd stop
-  become: true
-  register: service_stop
-  ignore_errors: true
+- name: brute-ora-cleanup | Check if legacy init.ohasd exists
+  stat:
+    path: /etc/init.d/init.ohasd
+  register: ohasd_script
   when: cluster_name is defined
+
+- name: brute-ora-cleanup | Shut down RAC clusterware (legacy 19c)
+  # Using shell directly because init.ohasd doesn't support 'status'
+  # which breaks the standard service/systemd modules.
+  shell: "/etc/init.d/init.ohasd stop"
+  failed_when: false
+  become: true
+  when:
+    - ohasd_script.stat.exists
+    - cluster_name is defined
+
+- name: brute-ora-cleanup | Shut down RAC clusterware (systemd)
+  systemd:
+    name: ohasd
+    state: stopped
+  failed_when: false
+  become: true
+  when:
+    - not ohasd_script.stat.exists
+    - ansible_service_mgr == "systemd"
+    - cluster_name is defined
 
 - name: De-configure RAC CRS
   shell: |
