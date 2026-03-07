@@ -529,7 +529,6 @@
   shell: awk '/^oracle/ {print $1}' /proc/modules | sudo xargs -r modprobe -r
 
 - name: brute-ora-cleanup | Remove any remaining VIP, SCAN, and HAIP addresses
-  become: true
   shell: |
     # 1. Isolate the Ansible managed block
     BLOCK=$(sed -n '/# BEGIN ANSIBLE MANAGED BLOCK/,/# END ANSIBLE MANAGED BLOCK/p' /etc/hosts)
