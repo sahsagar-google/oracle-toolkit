@@ -342,18 +342,6 @@ certified OS versions:
 - Red Hat Enterprise Linux (RHEL) 7 and 8 (versions 7.3 and up).
 - Oracle Linux (OL) 7 and 8 (versions 7.3 and up).
 
-<tr>
-<td>23.26.1.0.0</td>
-<td>Base - eDelivery or OTN</td>
-<td>Oracle Database 23.26.1.0.0 for Linux x86-64</td>
-<td>V1054592-01.zip or LINUX.X64_2326100_db_home.zip</td>
-</tr>
-<tr>
-<td></td>
-<td>Base - eDelivery or OTN</td>
-<td>Oracle Grid Infrastructure 23.26.1.0.0 for Linux x86-64</td>
-<td>V1054596-01.zip or LINUX.X64_2326100_grid_home.zip</td>
-</tr>
 For more information about Oracle-supported platforms see the Oracle
 certification matrix in the "My Oracle Support" (MOS) site (sign in required):
 [https://support.oracle.com](https://support.oracle.com).
@@ -430,6 +418,18 @@ Support")</th>
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>23.26.1.0.0</td>
+<td>Base - eDelivery or OTN</td>
+<td>Oracle Database 23.26.1.0.0 for Linux x86-64</td>
+<td>V1054592-01.zip or LINUX.X64_2326100_db_home.zip</td>
+</tr>
+<tr>
+<td></td>
+<td>Base - eDelivery or OTN</td>
+<td>Oracle Grid Infrastructure 23.26.1.0.0 for Linux x86-64</td>
+<td>V1054596-01.zip or LINUX.X64_2326100_grid_home.zip</td>
+</tr>
 <tr>
 <td>21.3.0.0.0</td>
 <td>Base - eDelivery or OTN</td>
