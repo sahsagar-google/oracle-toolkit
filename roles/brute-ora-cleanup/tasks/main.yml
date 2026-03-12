@@ -528,32 +528,48 @@
   become_user: root
   shell: awk '/^oracle/ {print $1}' /proc/modules | sudo xargs -r modprobe -r
 
-- name: brute-ora-cleanup | Remove any remaining VIP, SCAN, and HAIP addresses
-  shell: |
-    # 1. Isolate the Ansible managed block
-    BLOCK=$(sed -n '/# BEGIN ANSIBLE MANAGED BLOCK/,/# END ANSIBLE MANAGED BLOCK/p' /etc/hosts)
-    # 2. Collect VIP/SCAN IPs
-    readarray -t TARGET_IPS < <(grep -E "(-vip|scan)" <<< "$BLOCK" | awk '{print $1}' | sort -u)
-    # 3. Collect active HAIP addresses (169.254.0.0/16 range)
-    readarray -t HAIPS < <(ip -o addr show | grep -oE "169\.254\.[0-9]+\.[0-9]+" | sort -u)
-    # 4. Iterate and remove
-    for ip in "${TARGET_IPS[@]}" "${HAIPS[@]}"; do
-      if [[ -n "$ip" ]]; then
-        IFACE=$(ip -o addr show | grep " $ip/" | awk '{print $2}')
-        if [[ -n "$IFACE" ]]; then
-          echo "Removing RAC/HAIP IP $ip from $IFACE"
-          # Appending /32 avoids the "wildcard deletion" warning
-          ip addr del "${ip}/32" dev "$IFACE" || true
-        fi
-      fi
-    done
-  args:
-    executable: /bin/bash
-  register: ip_cleanup_output
-  ignore_errors: true
+- name: brute-ora-cleanup | Remove VIP and SCAN addresses from interfaces
   become: true
+  become_user: root
+  # We use the 'ip' command directly to ensure we match the exact interface
+  # and avoid 'wildcard' warnings by using the existing IP/Mask from facts.
+  shell: |
+    # Check if the IP exists on any interface
+    IFACE=$(ip -o addr show | grep " {{ item }}/" | awk '{print $2}')
+    if [[ -n "$IFACE" ]]; then
+      echo "Removing IP {{ item }} from $IFACE"
+      # We delete the specific IP. The kernel handles the mask association.
+      ip addr del {{ item }} dev $IFACE
+    fi
+  loop:
+    - "{{ vip_ip | default(omit) }}"
+    - "{{ scan_ip1 | default(omit) }}"
+    - "{{ scan_ip2 | default(omit) }}"
+    - "{{ scan_ip3 | default(omit) }}"
+  # Filter out 'omit' values if some SCAN IPs aren't defined
+  when:
+    - cluster_name is defined
+    - item != None
+  register: ip_removal_results
+  changed_when: "'Removing' in ip_removal_results.stdout"
+  failed_when: false
+
+- name: brute-ora-cleanup | Remove any remaining HAIP addresses (169.254.0.0/16)
+  become: true
+  become_user: root
+  shell: |
+    # HAIPs are dynamic, so we still need a small discovery loop for these.
+    # This finds 169.254.x.x addresses and their parent interfaces.
+    ip -o addr show | grep "169.254." | awk '{print $4 " " $2}' | while read -r entry; do
+      full_ip=$(echo $entry | awk '{print $1}')
+      iface=$(echo $entry | awk '{print $2}')
+      echo "Removing HAIP $full_ip from $iface"
+      ip addr del "$full_ip" dev "$iface"
+    done
   when: cluster_name is defined
-  changed_when: "'Removing' in ip_cleanup_output.stdout"
+  register: haip_removal_results
+  changed_when: "'Removing' in haip_removal_results.stdout"
+  failed_when: false
 
 - name: Reset kernel sysctl values to EL defaults
   sysctl:
