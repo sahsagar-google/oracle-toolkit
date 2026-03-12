@@ -67,6 +67,7 @@
   when:
     - free_edition
     - oracle_ver in ["23.0.0.0.0", "23.26.0.0.0", "23.26.1.0.0"]
+  tags: oracle-rel
 
 - name: populate-vars | Show resolved release
   debug:

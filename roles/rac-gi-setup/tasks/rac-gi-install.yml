@@ -166,21 +166,12 @@
     verbosity: 0
   tags: rac-gi,rac-gi-install
 
-- name: rac-gi-install | Set CV_ASSUME_DISTID to OEL7 when installing on RHEL8  # MOS Note 3017836.1
-  set_fact:
-    cv_distid: "CV_ASSUME_DISTID=OEL7.9"
-  when:
-    - ansible_distribution_major_version in ["8", "9"]
-    - oracle_ver is version('21.0.0.0.0', '<')
-  tags: rac-gi,rac-gi-install
-
 - name: rac-gi-install | Run installer
   command: "{{ installer_command }}"
   become: true
   become_user: "{{ grid_user }}"
   register: install_rac_gi
-  environment:
-    CV_ASSUME_DISTID: "{{ cv_distid | default(omit) }}"
+  environment: "{{ oracle_install_env_extras }}"
   failed_when: >
     ('Successfully Setup Software' not in install_rac_gi.stdout) or
     (install_rac_gi.rc not in [0,6,250])

@@ -128,20 +128,11 @@
     verbosity: 0
   tags: rdbms-setup
 
-- name: rdbms-install | Set CV_ASSUME_DISTID to OEL7 when installing on RHEL8  # MOS Note 3017836.1
-  set_fact:
-    cv_distid: "CV_ASSUME_DISTID=OEL7.9"
-  when:
-    - ansible_distribution_major_version in ["8", "9"]
-    - oracle_ver is version('21.0.0.0.0', '<')
-  tags: rdbms-setup
-
 - name: rdbms-install | Run DB installer
   become: true
   become_user: "{{ oracle_user }}"
   command: "{{ db_installer_cmd }}"
-  environment:
-    CV_ASSUME_DISTID: "{{ cv_distid | default(omit) }}"
+  environment: "{{ oracle_install_env_extras }}"
   register: db_install_result
   failed_when: >
     ('Successfully Setup Software' not in db_install_result.stdout) or

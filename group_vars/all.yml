@@ -40,6 +40,13 @@ home_name: "{% if free_edition %}dbhomeFree{% else %}dbhome_1{% endif %}"
 create_db: true
 create_listener: true
 install_rdbms: true
+# Set CV_ASSUME_DISTID with old DB versions and new OS versions (MOS Note: 3017836.1)
+oracle_install_env_extras: >-
+  {{
+    {'CV_ASSUME_DISTID': 'OEL7.9'}
+    if (ansible_distribution_major_version in ['8', '9'] and oracle_ver is version('21.0.0.0.0', '<'))
+    else {}
+  }}
 
 
 ################################################################################

@@ -165,20 +165,11 @@
     verbosity: 0
   tags: gi-setup
 
-- name: gi-install | Set CV_ASSUME_DISTID to OEL7 when installing on RHEL8  # MOS Note: 3017836.1
-  set_fact:
-    cv_distid: "CV_ASSUME_DISTID=OEL7.9"
-  when:
-    - ansible_distribution_major_version in ["8", "9"]
-    - oracle_ver is version('21.0.0.0.0', '<')
-  tags: gi-setup
-
 - name: gi-install | Run installer
   become: true
   become_user: "{{ grid_user }}"
   command: "{{ installer_command }}"
-  environment:
-    CV_ASSUME_DISTID: "{{ cv_distid | default(omit) }}"
+  environment: "{{ oracle_install_env_extras }}"
   register: install_grid_software
   failed_when: >
     ('Successfully Setup Software' not in install_grid_software.stdout) or
