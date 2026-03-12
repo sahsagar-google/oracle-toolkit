@@ -13,7 +13,8 @@ scanPort={{ hostvars[groups['dbasm'].0]['scan_port'] }}
 clusterName={{ hostvars[groups['dbasm'].0]['cluster_name'][:15] }}
 configureDHCPAssignedVIPs=false
 clusterNodes={% set c = joiner(",") %}{% for h in groups['dbasm'] %}{{ c() }}{{ h }}{{ domain() }}:{{ hostvars[h]['vip_name'] }}{{ domain() }}{% endfor %}
-{# Comment to ensure that the rendered template has a newline here. #}
+{# Keep the following line empty #}
+
 networkInterfaceList={% set pub = hostvars[groups['dbasm'].0]['public_net'] | regex_replace('@.*$', '') -%}
 {% set prv = hostvars[groups['dbasm'].0]['private_net'] | regex_replace('@.*$', '') -%}
 {{ pub }}:{{ hostvars[groups['dbasm'].0]['ansible_facts'][pub]['ipv4']['network'] }}:1,{{ prv }}:{{ hostvars[groups['dbasm'].0]['ansible_facts'][prv]['ipv4']['network'] }}:5
