@@ -40,6 +40,21 @@
     pga_target: "{{ pga_target_mb }}M"
   tags: db-create
 
+- name: Fix directory permissions post-GI install
+  file:
+    path: "{{ oracle_base }}/{{ item }}"
+    state: directory
+    owner: "{{ oracle_user }}"
+    group: "{{ oracle_group }}"
+    mode: '0775'
+  loop:
+    - audit
+    - cfgtoollogs
+    - admin
+  when: gi_install | bool
+  become: true
+  tags: db-create
+
 - name: Create DBCA response file script
   become: true
   become_user: "{{ oracle_user }}"

@@ -244,7 +244,7 @@ RUs:
 - Oracle 18c
 - Oracle 19c
 - Oracle 21c
-- Oracle 23ai/26ai (currently [Free Edition](#oracle-database-free-edition-specific-details-and-changes))
+- Oracle 23ai/26ai
 
 The toolkit does not include any Oracle software. You must obtain the
 appropriate licenses and download the Oracle software on your own. This guide
@@ -418,6 +418,18 @@ Support")</th>
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>23.26.1.0.0</td>
+<td>Base - eDelivery or OTN</td>
+<td>Oracle Database 23.26.1.0.0 for Linux x86-64</td>
+<td>V1054592-01.zip or LINUX.X64_2326100_db_home.zip</td>
+</tr>
+<tr>
+<td></td>
+<td>Base - eDelivery or OTN</td>
+<td>Oracle Grid Infrastructure 23.26.1.0.0 for Linux x86-64</td>
+<td>V1054596-01.zip or LINUX.X64_2326100_grid_home.zip</td>
+</tr>
 <tr>
 <td>21.3.0.0.0</td>
 <td>Base - eDelivery or OTN</td>
