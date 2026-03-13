@@ -12,39 +12,52 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# See variables.tf for a full list, and descriptions.
-# General settings
-gcs_source                   = "@gcs_source@"
+# --- Managed Uniqueness & Staging ---
+# These placeholders are automatically substituted by tools/deploy-infra-manager.sh
+project_id      = "@project_id@"
+deployment_name = "@deployment_name@"
+gcs_source      = "@gcs_source@"
+
+# --- General Settings ---
+# See terraform/variables.tf for a full list of Terraform parameters.
 ora_swlib_bucket             = "gs://your-oracle-software-bucket"
-project_id                   = "your-project-id"
-vm_service_account           = "your-vm-service-account@your-project-id.iam.gserviceaccount.com"
-control_node_service_account = "your-control-node-service-account@your-project-id.iam.gserviceaccount.com"
+vm_service_account           = "oracle-vm-sa@@project_id@.iam.gserviceaccount.com"
+control_node_service_account = "infra-manager-sa@@project_id@.iam.gserviceaccount.com"
 
-# Primary node for the Single-instance deployment
-zone1       = "us-central1-b"
-subnetwork1 = ""
+# --- Authentication & Secrets ---
+# With default empty values, you must SSH to the DB VMs and use Oracle OS
+# authentication (/ as sysdba) to create additional users.
+db_password_secret    = ""
+oracle_metrics_secret = ""
 
-# Standby node for the Multi-instance Data Guard deployment
-zone2       = "us-central1-c"
-subnetwork2 = ""
+# --- Network Settings ---
+# Security recommendations: Disable public IPs and enable artifact registry repositories
+assign_public_ip = false
+enable_ar_repo   = true
+subnetwork1      = ""
+subnetwork2      = ""
 
-# Instance settings
+# Primary zone for the Single-instance deployment
+zone1 = "us-central1-b"
+
+# Standby zone for the Multi-instance Data Guard deployment
+zone2 = ""
+
+# --- Instance Settings ---
+# Uses the unique deployment ID for the instance name to prevent project-wide collisions
 instance_name        = "@deployment_name@"
 source_image_family  = "oracle-linux-8"
 source_image_project = "oracle-linux-cloud"
 machine_type         = "n4-standard-2"
 
-# Disk settings
-# By default, the list below will create /u01 (Oracle Home), /u02 (DATA), and /u03 (RECO), the minimum required for a basic Oracle installation.
-# Feel free to adjust the disk sizes and types to match your requirements.
-# You can add more disks to the list below to create additional disks for ASM or filesystem.
-# fs_disks will be mounted as /u01, /u02, /u03, etc and formatted as XFS
-# Disk type options "pd-balanced", "pd-ssd", "pd-standard", "hyperdisk-extreme"
+# --- Disk Settings ---
+# All Terraform installs create these three mandatory disks formatted as XFS:
+# /u01 (Home), /u02 (Data), and /u03 (RECO). This cannot be modified.
 boot_disk_type    = "hyperdisk-balanced"
-boot_disk_size_gb    = 50
+boot_disk_size_gb = 50
 
 swap_disk_type    = "hyperdisk-balanced"
-swap_disk_size_gb    = 50
+swap_disk_size_gb = 50
 
 oracle_home_disk = {
   size_gb = 50
@@ -61,25 +74,16 @@ reco_disk = {
   type    = "hyperdisk-balanced"
 }
 
-# Parameters below are optional
-# A full list of parameters can be found here https://google.github.io/oracle-toolkit/user-guide.html#parameters
-# The example below will install Oracle 19c, using the Oracle software stored in a GCS bucket, and will configure the backup destination to be RECO diskgroup.
-ora_version                = "26"
-ora_release                = "latest"
-ora_edition                = "EE"
-ora_backup_dest            = "/u03/backup"        
-ora_db_name                = "orcl"
-ora_db_container           = false    
-ora_disk_mgmt              = "FS"                
-ntp_pref                   = "169.254.169.254"
-ora_listener_port          = "1521"
-ora_redo_log_size          = "100MB"
-skip_database_config       = false
-install_workload_agent     = true
-oracle_metrics_secret      = ""
-db_password_secret         = ""
-data_guard_protection_mode = "Maximum Availability"
-assign_public_ip           = false
-enable_ar_repo             = true
-
-
+# --- Optional Parameters ---
+ora_version            = "26"
+ora_release            = "latest"
+ora_edition            = "EE"
+ora_backup_dest        = "/u03/backup"
+ora_db_name            = "orcl"
+ora_db_container       = false
+ora_disk_mgmt          = "FS"
+ntp_pref               = "169.254.169.254"
+ora_listener_port      = "1521"
+ora_redo_log_size      = "100MB"
+skip_database_config   = false
+install_workload_agent = true
