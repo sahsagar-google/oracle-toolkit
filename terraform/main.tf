@@ -377,12 +377,13 @@ resource "tls_cert_request" "oracle_db_csr" {
   private_key_pem = tls_private_key.oracle_db_key[each.key].private_key_pem
 
   subject {
-    common_name  = "${each.key}.${trimsuffix(var.dns_domain_name, ".")}"
+    common_name  = each.key
     organization = "Oracle Database Internal"
   }
 
   dns_names = [
-    "${each.key}.${trimsuffix(var.dns_domain_name, ".")}"
+    "${each.key}.${trimsuffix(var.dns_domain_name, ".")}",
+    each.key
   ]
 }
 
