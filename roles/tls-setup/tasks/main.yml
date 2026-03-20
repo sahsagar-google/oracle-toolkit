@@ -1,0 +1,106 @@
+---
+- name: tls-setup | Define Oracle 26ai WALLET_ROOT Directory
+  set_fact:
+    # We standardize on wallet_root/tls for all versions to align with modern best practices
+    tls_wallet_dir: "{{ oracle_base }}/admin/{{ oracle_db_name }}/wallet_root/tls"
+
+- name: tls-setup | Create TLS Wallet Directory
+  file:
+    path: "{{ tls_wallet_dir }}"
+    state: directory
+    owner: "{{ oracle_user }}"
+    group: "{{ oracle_group }}"
+    mode: '0700'
+
+- name: tls-setup | Retrieve Node-Specific TLS Secret
+  shell: |
+    set -o pipefail
+    # Dynamically pull the correct secret based on the node's cluster hostname
+    SECRET_NAME="{{ inventory_hostname }}-tls-secret"
+    gcloud secrets versions access latest --secret="$SECRET_NAME" --project="{{ google_project_id }}"
+  args:
+    executable: /bin/bash
+  register: tls_secret_raw
+  become: true
+  become_user: "{{ oracle_user }}"
+  no_log: true
+  changed_when: false
+
+- name: tls-setup | Write Parsed TLS Artifacts to Disk
+  copy:
+    content: "{{ item.content }}"
+    dest: "{{ tls_wallet_dir }}/{{ item.dest }}"
+    owner: "{{ oracle_user }}"
+    group: "{{ oracle_group }}"
+    mode: '0600'
+  no_log: true
+  become: true
+  become_user: "{{ oracle_user }}"
+  loop:
+    - { dest: 'key.pem', content: "{{ (tls_secret_raw.stdout | from_json).key }}" }
+    - { dest: 'cert.pem', content: "{{ (tls_secret_raw.stdout | from_json).cert }}" }
+
+- name: tls-setup | Create PKCS#12 Keystore
+  shell: |
+    set -o pipefail
+    openssl pkcs12 -export -in "{{ tls_wallet_dir }}/cert.pem" \
+    -inkey "{{ tls_wallet_dir }}/key.pem" \
+    -out "{{ tls_wallet_dir }}/ewallet.p12" \
+    -name "oracle-db-server" \
+    -passout pass:"$WALLET_PWD"
+  args:
+    executable: /bin/bash
+  become: true
+  become_user: "{{ oracle_user }}"
+  environment:
+    WALLET_PWD: "{{ (tls_secret_raw.stdout | from_json).pwd }}"
+  no_log: true
+
+- name: tls-setup | Create Oracle Auto-Login Wallet
+  shell: |
+    set -o pipefail
+    # Create empty wallet
+    orapki wallet create -wallet "{{ tls_wallet_dir }}" -auto_login -pwd "$WALLET_PWD"
+    
+    # Import the PKCS#12 content (Key + Cert)
+    orapki wallet import_pkcs12 -wallet "{{ tls_wallet_dir }}" \
+      -pkcs12file "{{ tls_wallet_dir }}/ewallet.p12" \
+      -pwd "$WALLET_PWD" \
+      -pkcs12pwd "$WALLET_PWD"
+  args:
+    executable: /bin/bash
+  become: true
+  become_user: "{{ oracle_user }}"
+  environment:
+    ORACLE_HOME: "{{ oracle_home }}"
+    PATH: "{{ oracle_home }}/bin:{{ ansible_env.PATH }}"
+    WALLET_PWD: "{{ (tls_secret_raw.stdout | from_json).pwd }}"
+  no_log: true
+
+- name: tls-setup | Secure Wallet Permissions (0600)
+  file:
+    path: "{{ tls_wallet_dir }}"
+    state: directory
+    owner: "{{ oracle_user }}"
+    group: "{{ oracle_group }}"
+    mode: '0600'
+
+- name: tls-setup | Configure listener.ora for TCPS
+  template:
+    src: listener.ora.j2
+    dest: "{{ oracle_home }}/network/admin/listener.ora"
+    owner: "{{ oracle_user }}"
+    group: "{{ oracle_group }}"
+    mode: '0644'
+    backup: yes
+  notify: Reload Listener
+
+- name: tls-setup | Configure sqlnet.ora for TLS
+  template:
+    src: sqlnet.ora.j2
+    dest: "{{ oracle_home }}/network/admin/sqlnet.ora"
+    owner: "{{ oracle_user }}"
+    group: "{{ oracle_group }}"
+    mode: '0644'
+    backup: yes
+  notify: Reload Listener

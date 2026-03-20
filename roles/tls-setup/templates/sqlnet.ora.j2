@@ -1,0 +1,25 @@
+# sqlnet.ora Network Configuration File
+
+SQLNET.AUTHENTICATION_SERVICES = (BEQ, TCPS, NTS)
+SSL_CLIENT_AUTHENTICATION = FALSE
+SSL_CIPHER_SUITES = (TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256)
+
+{% if ora_version | int < 26 %}
+# -------------------------------------------------------------------------
+# Fallback for Oracle 19c (and older)
+# -------------------------------------------------------------------------
+WALLET_LOCATION =
+  (SOURCE =
+    (METHOD = FILE)
+    (METHOD_DATA =
+      (DIRECTORY = {{ tls_wallet_dir }})
+    )
+  )
+{% else %}
+# -------------------------------------------------------------------------
+# Oracle 26ai Configuration
+# -------------------------------------------------------------------------
+# WALLET_LOCATION is deprecated for the database server in 26ai+. 
+# The database relies on the WALLET_ROOT system parameter instead.
+# Ensure ALTER SYSTEM SET WALLET_ROOT='{{ oracle_base }}/admin/{{ oracle_db_name }}/wallet_root' SCOPE=SPFILE; is run in the DB.
+{% endif %}
