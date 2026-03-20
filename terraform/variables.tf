@@ -423,3 +423,9 @@ variable "db_hostname" {
   type        = string
   default     = ""
 }
+
+variable "enable_ar_repo" {
+  description = "Enable creation of Artifact Registry repositories for OS packages."
+  type        = bool
+  default     = false
+}
