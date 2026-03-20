@@ -13,9 +13,11 @@
 # limitations under the License.
 
 locals {
+  # Mode helper
   is_fs              = upper(var.ora_disk_mgmt) == "FS"
   ora_disk_mgmt_flag = upper(var.ora_disk_mgmt)
 
+  # Base disk definitions (do not change device_name values)
   _u01 = {
     auto_delete  = true
     device_name  = "oracle_home"
@@ -24,6 +26,7 @@ locals {
     disk_labels  = { purpose = "software" }
   }
 
+  # DATA / RECO in ASMUDEV and ASMLIB mode (with disk groups)
   _data_asm = {
     auto_delete  = true
     device_name  = "data"
@@ -39,6 +42,7 @@ locals {
     disk_labels  = { diskgroup = "reco", purpose = "asm" }
   }
 
+  # DATA / RECO in FS mode
   _data_fs = {
     auto_delete  = true
     device_name  = "data"
@@ -62,8 +66,12 @@ locals {
     disk_labels  = { purpose = "swap" }
   }
 
+  # Build lists based on mode
+  # Filesystem disks (participate in XFS mounts via data_mounts_config)
   fs_disks = concat(
-    [local._u01],
+    [
+      local._u01
+    ],
     local.is_fs ? [local._data_fs, local._reco_fs] : []
   )
 
@@ -72,9 +80,11 @@ locals {
     [local._swap]
   )
 
+  # DBCA destinations
   data_dest = local.is_fs ? "/u02/oradata" : "DATA"
   reco_dest = local.is_fs ? "/u03/fast_recovery_area" : "RECO"
 
+  # Takes the list of filesystem disks and converts them into a list of objects with the required fields by ansible
   data_mounts_config = [
     for i, d in local.fs_disks : {
       purpose     = d.disk_labels.purpose
@@ -86,6 +96,7 @@ locals {
     }
   ]
 
+  # Takes the list of asm disks and converts them into a list of objects with the required fields by ansible
   asm_disk_config = [
     for g in distinct([for d in local.asm_disks : d.disk_labels.diskgroup if lookup(d.disk_labels, "diskgroup", null) != null]) : {
       diskgroup = upper(g)
@@ -98,6 +109,7 @@ locals {
     }
   ]
 
+  # Concatenetes both lists to be passed down to the instance module
   additional_disks = concat(local.fs_disks, local.asm_disks)
 
   project_id = var.project_id
@@ -131,6 +143,7 @@ locals {
   control_tag   = "ora-control-node-${local.deployment_id}"
 }
 
+# Resolve parent VPC network from the subnetwork URI
 data "google_compute_subnetwork" "subnetwork" {
   count     = local.subnetwork1_opt != null ? 1 : 0
   self_link = "https://www.googleapis.com/compute/v1/${local.subnetwork1_opt}"
@@ -138,7 +151,9 @@ data "google_compute_subnetwork" "subnetwork" {
 
 locals {
   network = local.subnetwork1_opt == null ? "projects/${var.project_id}/global/networks/default" : data.google_compute_subnetwork.subnetwork[0].network
+  # Derive region from zone1 (e.g., us-central1-b -> us-central1)
   region = join("-", slice(split("-", var.zone1), 0, 2))
+
   os_repo_types = ["baseos", "appstream"]
 
   os_upstreams = {
@@ -217,6 +232,7 @@ resource "google_compute_instance_from_template" "database_vm" {
   source_instance_template = google_compute_instance_template.default.self_link
 
   network_interface {
+    # Provide one of: subnetwork (preferred) OR default network
     subnetwork = each.value.subnetwork
     network    = each.value.subnetwork == null ? "projects/${var.project_id}/global/networks/default" : null
 
@@ -247,6 +263,7 @@ locals {
     local.ora_disk_mgmt_flag != "" ? "--ora-disk-mgmt ${local.ora_disk_mgmt_flag}" : "",
     length(local.asm_disk_config) > 0 ? "--ora-asm-disks-json '${jsonencode(local.asm_disk_config)}'" : "",
     length(local.data_mounts_config) > 0 ? "--ora-data-mounts-json '${jsonencode(local.data_mounts_config)}'" : "",
+    # Keep DBCA destinations aligned with the computed mode
     "--ora-data-destination ${local.data_dest}",
     "--ora-reco-destination ${local.reco_dest}",
     "--swap-blk-device /dev/disk/by-id/google-swap",
@@ -309,6 +326,7 @@ resource "google_compute_instance" "control_node" {
   }
 
   lifecycle {
+    # FS/ASMUDEV/ASMLIB-specific guard for backup dest
     precondition {
       condition = (
         (local.is_fs && (var.ora_backup_dest == "" || can(regex("^/.*$", var.ora_backup_dest))))
@@ -346,141 +364,14 @@ locals {
   listener_port = var.enable_tls && var.ora_listener_port == "1521" ? "2484" : var.ora_listener_port
 }
 
+# 1. Generate Private Keys for each node (Stored securely in Secret Manager)
 resource "tls_private_key" "oracle_db_key" {
   for_each  = var.enable_tls ? local.instances : {}
   algorithm = "RSA"
   rsa_bits  = 2048
 }
 
+# 2. Create Certificate Signing Requests (CSR) for each node
 resource "tls_cert_request" "oracle_db_csr" {
   for_each        = var.enable_tls ? local.instances : {}
-  private_key_pem = tls_private_key.oracle_db_key[each.key].private_key_pem
-
-  subject {
-    common_name  = "${each.key}.${trimsuffix(var.dns_domain_name, ".")}"
-    organization = "Oracle Database Internal"
-  }
-
-  dns_names = [
-    "${each.key}.${trimsuffix(var.dns_domain_name, ".")}"
-  ]
-}
-
-resource "google_privateca_certificate" "oracle_db_cert" {
-  for_each = var.enable_tls ? local.instances : {}
-  pool     = split("/", var.cas_pool_id)[5]
-  location = split("/", var.cas_pool_id)[3]
-  project  = var.project_id
-  name     = "${each.key}-tls-cert"
-
-  pem_csr  = tls_cert_request.oracle_db_csr[each.key].cert_request_pem
-  lifetime = "31536000s"
-}
-
-resource "google_dns_record_set" "db_a_record" {
-  for_each     = var.enable_tls ? local.instances : {}
-  project      = var.project_id
-  managed_zone = var.dns_zone_name
-  name         = "${each.key}.${var.dns_domain_name}"
-  type         = "A"
-  ttl          = 300
-  rrdatas      = [google_compute_instance_from_template.database_vm[each.key].network_interface[0].network_ip]
-}
-
-resource "random_password" "wallet_password" {
-  for_each = var.enable_tls ? local.instances : {}
-  length   = 16
-  special  = true
-}
-
-resource "google_secret_manager_secret" "db_tls_secret" {
-  for_each  = var.enable_tls ? local.instances : {}
-  secret_id = "${each.key}-tls-secret"
-  project   = var.project_id
-
-  replication {
-    auto {}
-  }
-}
-
-resource "google_secret_manager_secret_version" "db_tls_secret_val" {
-  for_each = var.enable_tls ? local.instances : {}
-  secret   = google_secret_manager_secret.db_tls_secret[each.key].id
-
-  secret_data = jsonencode({
-    key  = tls_private_key.oracle_db_key[each.key].private_key_pem
-    cert = "${google_privateca_certificate.oracle_db_cert[each.key].pem_certificate}\n${join("\n", google_privateca_certificate.oracle_db_cert[each.key].pem_certificate_chain)}"
-    pwd  = random_password.wallet_password[each.key].result
-  })
-}
-
-resource "google_secret_manager_secret_iam_member" "vm_access_tls_secret" {
-  for_each  = var.enable_tls ? local.instances : {}
-  secret_id = google_secret_manager_secret.db_tls_secret[each.key].id
-  role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${var.vm_service_account}"
-}
-
-resource "google_compute_firewall" "control_ssh" {
-  count       = var.create_firewall ? 1 : 0
-  name        = "ora-ssh-${google_compute_instance.control_node.name}"
-  project     = var.project_id
-  network     = local.network
-  description = "Temporary rule for deployment ${local.deployment_id}: Allows Control Node SSH access to Database VMs for initial provisioning."
-  allow {
-    protocol = "tcp"
-    ports    = ["22"]
-  }
-  allow {
-    protocol = "icmp"
-  }
-
-  source_tags = [local.control_tag]
-  target_tags = [local.db_tag]
-}
-
-resource "google_compute_firewall" "db_sync" {
-  count       = (local.is_multi_instance && var.create_firewall) ? 1 : 0
-  name        = "oracle-${local.deployment_id}-db-sync"
-  project     = var.project_id
-  network     = local.network
-  description = "Deployment ${local.deployment_id}: Allows inter-database communication on the Oracle listener port for Data Guard synchronization."
-  
-  allow {
-    protocol = "tcp"
-    ports    = [var.ora_listener_port, local.listener_port]
-  }
-  allow {
-    protocol = "icmp"
-  }
-
-  source_tags = [local.db_tag]
-  target_tags = [local.db_tag]
-}
-
-resource "google_artifact_registry_repository" "os_package_repos" {
-  for_each = (var.enable_ar_repo && contains(keys(local.os_upstreams), var.source_image_family)) ? toset(local.os_repo_types) : []
-
-  project       = var.project_id
-  location      = local.region
-  repository_id = "${local.deployment_id}-${each.key}"
-  description   = "Remote repo for ${local.deployment_id} ${each.key} packages"
-  format        = "YUM"
-  mode          = "REMOTE_REPOSITORY"
-
-  remote_repository_config {
-    common_repository {
-      uri = local.os_upstreams[var.source_image_family][each.key]
-    }
-  }
-}
-
-output "control_node_log_url" {
-  description = "Logs Explorer URL with Oracle Toolkit output"
-  value       = "https://console.cloud.google.com/logs/query;query=resource.labels.instance_id%3D${urlencode(google_compute_instance.control_node.instance_id)};duration=P30D?project=${urlencode(var.project_id)}"
-}
-
-output "database_vm_names" {
-  description = "Names of the created database VMs from instance templates"
-  value       = [for vm in google_compute_instance_from_template.database_vm : vm.name]
-}
+  private_key_pem = tls_private_key.oracle_db_
