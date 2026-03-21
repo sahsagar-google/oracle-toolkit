@@ -64,6 +64,7 @@
   environment:
     WALLET_PWD: "{{ (tls_secret_raw.stdout | from_json).pwd }}"
   no_log: true
+  creates: "{{ tls_wallet_dir }}/ewallet.p12"
 
 - name: tls-setup | Create Oracle Auto-Login Wallet
   shell: >
@@ -78,6 +79,7 @@
     PATH: "{{ oracle_home }}/bin:/usr/local/bin:/usr/bin:/bin"
     WALLET_PWD: "{{ (tls_secret_raw.stdout | from_json).pwd }}"
   no_log: true
+  creates: "{{ tls_wallet_dir }}/cwallet.sso"
 
 - name: tls-setup | Secure Wallet Permissions (0600)
   file:
