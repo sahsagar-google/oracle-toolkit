@@ -59,16 +59,19 @@
     -out "{{ tls_wallet_dir }}/ewallet.p12"
     -name "oracle-db-server"
     -passout pass:"$WALLET_PWD"
+  args:
+    creates: "{{ tls_wallet_dir }}/ewallet.p12"
   become: true
   become_user: "{{ oracle_user }}"
   environment:
     WALLET_PWD: "{{ (tls_secret_raw.stdout | from_json).pwd }}"
   no_log: true
-  creates: "{{ tls_wallet_dir }}/ewallet.p12"
 
 - name: tls-setup | Create Oracle Auto-Login Wallet (Initialize)
   shell: >
     orapki wallet create -wallet "{{ tls_wallet_dir }}" -auto_login -pwd "$WALLET_PWD"
+  args:
+    creates: "{{ tls_wallet_dir }}/cwallet.sso"
   become: true
   become_user: "{{ oracle_user }}"
   environment:
@@ -76,7 +79,6 @@
     PATH: "{{ oracle_home }}/bin:/usr/local/bin:/usr/bin:/bin"
     WALLET_PWD: "{{ (tls_secret_raw.stdout | from_json).pwd }}"
   no_log: true
-  creates: "{{ tls_wallet_dir }}/cwallet.sso"
 
 - name: tls-setup | Create Oracle Auto-Login Wallet (Import PKCS12)
   shell: >
@@ -146,3 +148,16 @@
   environment:
     ORACLE_HOME: "{{ oracle_home }}"
   when: listener_update.changed or sqlnet_update.changed
+
+- name: tls-setup | Capture Listener Status
+  shell: "{{ oracle_home }}/bin/lsnrctl status"
+  become: true
+  become_user: "{{ oracle_user }}"
+  environment:
+    ORACLE_HOME: "{{ oracle_home }}"
+  register: listener_status
+  changed_when: false
+
+- name: tls-setup | Show Listener Status (Verify TCPS Endpoint)
+  debug:
+    var: listener_status.stdout_lines
