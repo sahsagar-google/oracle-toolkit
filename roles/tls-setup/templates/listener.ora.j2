@@ -1,116 +1,17 @@
-# Copyright 2020 Google LLC
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# ANSIBLE MANAGED FILE - listener.ora
+LISTENER =
+  (DESCRIPTION_LIST =
+    (DESCRIPTION =
+      (ADDRESS = (PROTOCOL = TCP)(HOST = {{ ansible_hostname }})(PORT = 1521))
+      (ADDRESS = (PROTOCOL = TCPS)(HOST = {{ ansible_hostname }})(PORT = 2484))
+      (ADDRESS = (PROTOCOL = IPC)(KEY = EXTPROC1521))
+    )
+  )
 
----
-- name: tls-setup | Define Version-Specific Wallet Directory
-  set_fact:
-    tls_wallet_dir: >-
-      {% if '19.' in oracle_home %}
-      {{ oracle_base }}/admin/{{ ora_db_name }}/wallet
-      {% else %}
-      {{ oracle_base }}/admin/{{ ora_db_name }}/wallet_root/tls
-      {% endif %}
-
-- name: tls-setup | Create TLS Wallet Directory
-  file:
-    path: "{{ tls_wallet_dir }}"
-    state: directory
-    owner: "{{ oracle_user }}"
-    group: "{{ oracle_group }}"
-    mode: '0700'
-
-- name: tls-setup | Retrieve Node-Specific TLS Secret
-  shell: "gcloud --quiet secrets versions access latest --secret='{{ ansible_hostname }}-tls-secret'"
-  register: tls_secret_raw
-  become: true
-  become_user: "{{ oracle_user }}"
-  changed_when: false
-  no_log: true
-
-- name: tls-setup | Write Parsed TLS Artifacts to Disk
-  copy:
-    content: "{{ item.content }}"
-    dest: "{{ tls_wallet_dir }}/{{ item.dest }}"
-    owner: "{{ oracle_user }}"
-    group: "{{ oracle_group }}"
-    mode: '0600'
-  no_log: true
-  become: true
-  become_user: "{{ oracle_user }}"
-  loop:
-    - { dest: 'key.pem', content: "{{ (tls_secret_raw.stdout | from_json).key }}" }
-    - { dest: 'cert.pem', content: "{{ (tls_secret_raw.stdout | from_json).cert }}" }
-
-- name: tls-setup | Create PKCS#12 Keystore
-  shell: >
-    openssl pkcs12 -export -in "{{ tls_wallet_dir }}/cert.pem"
-    -inkey "{{ tls_wallet_dir }}/key.pem"
-    -out "{{ tls_wallet_dir }}/ewallet.p12"
-    -name "oracle-db-server"
-    -passout pass:"$WALLET_PWD"
-  become: true
-  become_user: "{{ oracle_user }}"
-  environment:
-    WALLET_PWD: "{{ (tls_secret_raw.stdout | from_json).pwd }}"
-  no_log: true
-
-- name: tls-setup | Create Oracle Auto-Login Wallet
-  shell: >
-    orapki wallet create -wallet "{{ tls_wallet_dir }}" -auto_login -pwd "$WALLET_PWD" &&
-    orapki wallet import_pkcs12 -wallet "{{ tls_wallet_dir }}"
-    -pkcs12file "{{ tls_wallet_dir }}/ewallet.p12"
-    -pwd "$WALLET_PWD" -pkcs12pwd "$WALLET_PWD"
-  become: true
-  become_user: "{{ oracle_user }}"
-  environment:
-    ORACLE_HOME: "{{ oracle_home }}"
-    PATH: "{{ oracle_home }}/bin:/usr/local/bin:/usr/bin:/bin"
-    WALLET_PWD: "{{ (tls_secret_raw.stdout | from_json).pwd }}"
-  no_log: true
-
-- name: tls-setup | Secure Wallet Permissions (0600)
-  file:
-    path: "{{ tls_wallet_dir }}"
-    state: directory
-    owner: "{{ oracle_user }}"
-    group: "{{ oracle_group }}"
-    mode: '0600'
-
-- name: tls-setup | Configure listener.ora for TCPS
-  template:
-    src: listener.ora.j2
-    dest: "{{ oracle_home }}/network/admin/listener.ora"
-    owner: "{{ oracle_user }}"
-    group: "{{ oracle_group }}"
-    mode: '0644'
-    backup: yes
-  register: listener_update
-
-- name: tls-setup | Configure sqlnet.ora for TLS
-  template:
-    src: sqlnet.ora.j2
-    dest: "{{ oracle_home }}/network/admin/sqlnet.ora"
-    owner: "{{ oracle_user }}"
-    group: "{{ oracle_group }}"
-    mode: '0644'
-    backup: yes
-  register: sqlnet_update
-
-- name: tls-setup | Explicitly Reload Listener
-  shell: "{{ oracle_home }}/bin/lsnrctl reload"
-  become: true
-  become_user: "{{ oracle_user }}"
-  environment:
-    ORACLE_HOME: "{{ oracle_home }}"
-  when: listener_update.changed or sqlnet_update.changed
+WALLET_LOCATION =
+  (SOURCE =
+    (METHOD = FILE)
+    (METHOD_DATA =
+      (DIRECTORY = {{ tls_wallet_dir }})
+    )
+  )
