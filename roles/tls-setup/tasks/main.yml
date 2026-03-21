@@ -1,7 +1,6 @@
 ---
 - name: tls-setup | Define Oracle 26ai WALLET_ROOT Directory
   set_fact:
-    # We standardize on wallet_root/tls for all versions to align with modern best practices
     tls_wallet_dir: "{{ oracle_base }}/admin/{{ oracle_db_name }}/wallet_root/tls"
 
 - name: tls-setup | Create TLS Wallet Directory
@@ -13,13 +12,7 @@
     mode: '0700'
 
 - name: tls-setup | Retrieve Node-Specific TLS Secret
-  shell: |
-    set -o pipefail
-    # Dynamically pull the correct secret based on the node's cluster hostname
-    SECRET_NAME="{{ inventory_hostname }}-tls-secret"
-    gcloud secrets versions access latest --secret="$SECRET_NAME" --project="{{ google_project_id }}"
-  args:
-    executable: /bin/bash
+  shell: "gcloud secrets versions access latest --secret='{{ inventory_hostname }}-tls-secret'"
   register: tls_secret_raw
   become: true
   become_user: "{{ oracle_user }}"
@@ -41,15 +34,12 @@
     - { dest: 'cert.pem', content: "{{ (tls_secret_raw.stdout | from_json).cert }}" }
 
 - name: tls-setup | Create PKCS#12 Keystore
-  shell: |
-    set -o pipefail
-    openssl pkcs12 -export -in "{{ tls_wallet_dir }}/cert.pem" \
-    -inkey "{{ tls_wallet_dir }}/key.pem" \
-    -out "{{ tls_wallet_dir }}/ewallet.p12" \
-    -name "oracle-db-server" \
+  shell: >
+    openssl pkcs12 -export -in "{{ tls_wallet_dir }}/cert.pem"
+    -inkey "{{ tls_wallet_dir }}/key.pem"
+    -out "{{ tls_wallet_dir }}/ewallet.p12"
+    -name "oracle-db-server"
     -passout pass:"$WALLET_PWD"
-  args:
-    executable: /bin/bash
   become: true
   become_user: "{{ oracle_user }}"
   environment:
@@ -57,18 +47,11 @@
   no_log: true
 
 - name: tls-setup | Create Oracle Auto-Login Wallet
-  shell: |
-    set -o pipefail
-    # Create empty wallet
-    orapki wallet create -wallet "{{ tls_wallet_dir }}" -auto_login -pwd "$WALLET_PWD"
-    
-    # Import the PKCS#12 content (Key + Cert)
-    orapki wallet import_pkcs12 -wallet "{{ tls_wallet_dir }}" \
-      -pkcs12file "{{ tls_wallet_dir }}/ewallet.p12" \
-      -pwd "$WALLET_PWD" \
-      -pkcs12pwd "$WALLET_PWD"
-  args:
-    executable: /bin/bash
+  shell: >
+    orapki wallet create -wallet "{{ tls_wallet_dir }}" -auto_login -pwd "$WALLET_PWD" &&
+    orapki wallet import_pkcs12 -wallet "{{ tls_wallet_dir }}"
+    -pkcs12file "{{ tls_wallet_dir }}/ewallet.p12"
+    -pwd "$WALLET_PWD" -pkcs12pwd "$WALLET_PWD"
   become: true
   become_user: "{{ oracle_user }}"
   environment:
