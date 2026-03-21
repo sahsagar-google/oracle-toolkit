@@ -26,7 +26,7 @@
     mode: '0700'
 
 - name: tls-setup | Retrieve Node-Specific TLS Secret
-  shell: "gcloud --quiet secrets versions access latest --secret='{{ inventory_hostname }}-tls-secret'"
+  shell: "gcloud --quiet secrets versions access latest --secret='{{ instance_hostname }}-tls-secret'"
   register: tls_secret_raw
   become: true
   become_user: "{{ oracle_user }}"
