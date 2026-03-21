@@ -15,7 +15,7 @@
 ---
 - name: tls-setup | Define Oracle 26ai WALLET_ROOT Directory
   set_fact:
-    tls_wallet_dir: "{{ oracle_base }}/admin/{{ oracle_db_name }}/wallet_root/tls"
+    tls_wallet_dir: "{{ oracle_base }}/admin/{{ ora_db_name }}/wallet_root/tls"
 
 - name: tls-setup | Create TLS Wallet Directory
   file:
@@ -70,7 +70,8 @@
   become_user: "{{ oracle_user }}"
   environment:
     ORACLE_HOME: "{{ oracle_home }}"
-    PATH: "{{ oracle_home }}/bin:{{ ansible_env.PATH }}"
+    # Explicit PATH prevents crashes when gather_facts: false disables ansible_env
+    PATH: "{{ oracle_home }}/bin:/usr/local/bin:/usr/bin:/bin"
     WALLET_PWD: "{{ (tls_secret_raw.stdout | from_json).pwd }}"
   no_log: true
 
@@ -90,7 +91,7 @@
     group: "{{ oracle_group }}"
     mode: '0644'
     backup: yes
-  notify: Reload Listener
+  register: listener_update
 
 - name: tls-setup | Configure sqlnet.ora for TLS
   template:
@@ -100,4 +101,12 @@
     group: "{{ oracle_group }}"
     mode: '0644'
     backup: yes
-  notify: Reload Listener
+  register: sqlnet_update
+
+- name: tls-setup | Explicitly Reload Listener
+  shell: "{{ oracle_home }}/bin/lsnrctl reload"
+  become: true
+  become_user: "{{ oracle_user }}"
+  environment:
+    ORACLE_HOME: "{{ oracle_home }}"
+  when: listener_update.changed or sqlnet_update.changed
