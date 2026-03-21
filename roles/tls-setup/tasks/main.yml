@@ -94,13 +94,19 @@
   register: listener_update
 
 - name: tls-setup | Configure sqlnet.ora for TLS
-  template:
-    src: sqlnet.ora.j2
-    dest: "{{ oracle_home }}/network/admin/sqlnet.ora"
-    owner: "{{ oracle_user }}"
-    group: "{{ oracle_group }}"
-    mode: '0644'
+  blockinfile:
+    path: "{{ oracle_home }}/network/admin/sqlnet.ora"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - TLS WALLET"
+    insertafter: EOF
     backup: yes
+    block: |
+      WALLET_LOCATION =
+        (SOURCE =
+          (METHOD = FILE)
+          (METHOD_DATA =
+            (DIRECTORY = {{ tls_wallet_dir }})
+          )
+        )
   register: sqlnet_update
 
 - name: tls-setup | Explicitly Reload Listener
