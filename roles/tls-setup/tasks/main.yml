@@ -66,9 +66,20 @@
   no_log: true
   creates: "{{ tls_wallet_dir }}/ewallet.p12"
 
-- name: tls-setup | Create Oracle Auto-Login Wallet
+- name: tls-setup | Create Oracle Auto-Login Wallet (Initialize)
   shell: >
-    orapki wallet create -wallet "{{ tls_wallet_dir }}" -auto_login -pwd "$WALLET_PWD" &&
+    orapki wallet create -wallet "{{ tls_wallet_dir }}" -auto_login -pwd "$WALLET_PWD"
+  become: true
+  become_user: "{{ oracle_user }}"
+  environment:
+    ORACLE_HOME: "{{ oracle_home }}"
+    PATH: "{{ oracle_home }}/bin:/usr/local/bin:/usr/bin:/bin"
+    WALLET_PWD: "{{ (tls_secret_raw.stdout | from_json).pwd }}"
+  no_log: true
+  creates: "{{ tls_wallet_dir }}/cwallet.sso"
+
+- name: tls-setup | Create Oracle Auto-Login Wallet (Import PKCS12)
+  shell: >
     orapki wallet import_pkcs12 -wallet "{{ tls_wallet_dir }}"
     -pkcs12file "{{ tls_wallet_dir }}/ewallet.p12"
     -pwd "$WALLET_PWD" -pkcs12pwd "$WALLET_PWD"
@@ -79,7 +90,6 @@
     PATH: "{{ oracle_home }}/bin:/usr/local/bin:/usr/bin:/bin"
     WALLET_PWD: "{{ (tls_secret_raw.stdout | from_json).pwd }}"
   no_log: true
-  creates: "{{ tls_wallet_dir }}/cwallet.sso"
 
 - name: tls-setup | Secure Wallet Permissions (0600)
   file:
