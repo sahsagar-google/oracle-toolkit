@@ -425,7 +425,7 @@ variable "db_hostname" {
 }
 
 variable "enable_ar_repo" {
-  description = "Enable creation of Artifact Registry repositories for OS packages."
+  description = "Controls whether to create Google Cloud Artifact Registry remote repositories to fetch OS packages."
   type        = bool
   default     = false
 }
