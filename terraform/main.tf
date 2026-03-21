@@ -217,6 +217,7 @@ resource "google_compute_instance_template" "default" {
   metadata = {
     metadata_startup_script = var.metadata_startup_script
     enable-oslogin          = "TRUE"
+    enable_tls              = var.enable_tls
   }
 
   tags = concat([local.db_tag], var.network_tags)
@@ -284,6 +285,7 @@ locals {
     var.ora_pga_target_mb != "" ? "--ora-pga-target-mb ${var.ora_pga_target_mb}" : "",
     var.ora_sga_target_mb != "" ? "--ora-sga-target-mb ${var.ora_pga_target_mb}" : "",
     var.data_guard_protection_mode != "" ? "--data-guard-protection-mode '${var.data_guard_protection_mode}'" : "",
+    var.enable_tls ? "--tls-secret DYNAMIC_MAPPED" : "",
     local.ar_repo_url_prefix != "" ? "--ar-repo-url '${local.ar_repo_url_prefix}'" : ""
   ]))
 }
@@ -354,6 +356,100 @@ resource "google_compute_instance" "control_node" {
   depends_on = [google_compute_instance_from_template.database_vm]
 }
 
+# -----------------------------------------------------------------------------
+# TLS Infrastructure & Identity (Data Guard / Secret Manager Architecture)
+# -----------------------------------------------------------------------------
+
+locals {
+  listener_port = var.enable_tls && var.ora_listener_port == "1521" ? "2484" : var.ora_listener_port
+}
+
+# 1. Generate Private Keys for each node (Stored securely in Secret Manager)
+resource "tls_private_key" "oracle_db_key" {
+  for_each  = var.enable_tls ? local.instances : {}
+  algorithm = "RSA"
+  rsa_bits  = 2048
+}
+
+# 2. Create Certificate Signing Requests (CSR) for each node
+resource "tls_cert_request" "oracle_db_csr" {
+  for_each        = var.enable_tls ? local.instances : {}
+  private_key_pem = tls_private_key.oracle_db_key[each.key].private_key_pem
+
+  subject {
+    common_name  = each.key
+    organization = "Oracle Database Internal"
+  }
+
+  dns_names = [
+    "${each.key}.${trimsuffix(var.dns_domain_name, ".")}",
+    each.key
+  ]
+}
+
+# 3. Issue Certificates via Google CAS for each node
+resource "google_privateca_certificate" "oracle_db_cert" {
+  for_each = var.enable_tls ? local.instances : {}
+  pool     = split("/", var.cas_pool_id)[5]
+  location = split("/", var.cas_pool_id)[3]
+  project  = var.project_id
+  name     = "${each.key}-tls-cert"
+
+  pem_csr  = tls_cert_request.oracle_db_csr[each.key].cert_request_pem
+  lifetime = "31536000s"
+}
+
+# 4. Create DNS A Records for each node
+resource "google_dns_record_set" "db_a_record" {
+  for_each     = var.enable_tls ? local.instances : {}
+  project      = var.project_id
+  managed_zone = var.dns_zone_name
+  name         = "${each.key}.${var.dns_domain_name}"
+  type         = "A"
+  ttl          = 300
+  rrdatas      = [google_compute_instance_from_template.database_vm[each.key].network_interface[0].network_ip]
+}
+
+# 5. Generate Wallet Passwords for each node
+resource "random_password" "wallet_password" {
+  for_each = var.enable_tls ? local.instances : {}
+  length   = 16
+  special  = true
+}
+
+# -----------------------------------------------------------------------------
+# Secrets Management (Secure Storage per Node)
+# -----------------------------------------------------------------------------
+
+resource "google_secret_manager_secret" "db_tls_secret" {
+  for_each  = var.enable_tls ? local.instances : {}
+  secret_id = "${each.key}-tls-secret"
+  project   = var.project_id
+
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret_version" "db_tls_secret_val" {
+  for_each = var.enable_tls ? local.instances : {}
+  secret   = google_secret_manager_secret.db_tls_secret[each.key].id
+
+  secret_data = jsonencode({
+    key  = tls_private_key.oracle_db_key[each.key].private_key_pem
+    cert = "${google_privateca_certificate.oracle_db_cert[each.key].pem_certificate}\n${join("\n", google_privateca_certificate.oracle_db_cert[each.key].pem_certificate_chain)}"
+    pwd  = random_password.wallet_password[each.key].result
+  })
+}
+
+# Grant VM Service Account access ONLY to its specific node-level TLS secret
+resource "google_secret_manager_secret_iam_member" "vm_access_tls_secret" {
+  for_each  = var.enable_tls ? local.instances : {}
+  secret_id = google_secret_manager_secret.db_tls_secret[each.key].id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${var.vm_service_account}"
+}
+
 # This rule is deleted by the startup script upon deployment completion.
 resource "google_compute_firewall" "control_ssh" {
   count       = var.create_firewall ? 1 : 0
@@ -383,7 +479,7 @@ resource "google_compute_firewall" "db_sync" {
 
   allow {
     protocol = "tcp"
-    ports    = [var.ora_listener_port]
+    ports    = [var.ora_listener_port, local.listener_port]
   }
   allow {
     protocol = "icmp"

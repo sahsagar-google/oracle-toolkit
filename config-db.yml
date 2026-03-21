@@ -79,6 +79,11 @@
       tags: workload-agent
 
     - include_role:
+        name: tls-setup
+      when: enable_tls | default(false) | bool
+      tags: tls-setup
+
+    - include_role:
         name: db-copy
         tasks_from: active-copy
       when:
