@@ -87,24 +87,44 @@
     group: "{{ oracle_group }}"
     mode: '0600'
 
-- name: tls-setup | Configure listener.ora for TCPS
-  template:
-    src: listener.ora.j2
-    dest: "{{ oracle_home }}/network/admin/listener.ora"
-    owner: "{{ oracle_user }}"
-    group: "{{ oracle_group }}"
-    mode: '0644'
+- name: tls-setup | Append TCPS configuration to listener.ora
+  blockinfile:
+    path: "{{ oracle_home }}/network/admin/listener.ora"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - TLS LISTENER"
+    insertafter: EOF
     backup: yes
+    block: |
+      LISTENER_TCPS =
+        (DESCRIPTION =
+          (ADDRESS = (PROTOCOL = TCPS)(HOST = {{ ansible_hostname }})(PORT = 2484))
+        )
+      
+      WALLET_LOCATION =
+        (SOURCE =
+          (METHOD = FILE)
+          (METHOD_DATA =
+            (DIRECTORY = {{ tls_wallet_dir }})
+          )
+        )
   register: listener_update
 
-- name: tls-setup | Configure sqlnet.ora for TLS
-  template:
-    src: sqlnet.ora.j2
-    dest: "{{ oracle_home }}/network/admin/sqlnet.ora"
-    owner: "{{ oracle_user }}"
-    group: "{{ oracle_group }}"
-    mode: '0644'
+- name: tls-setup | Append TLS Configuration to sqlnet.ora
+  blockinfile:
+    path: "{{ oracle_home }}/network/admin/sqlnet.ora"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - TLS WALLET"
+    insertafter: EOF
     backup: yes
+    block: |
+      {% if '19.' in oracle_home %}
+      WALLET_LOCATION =
+        (SOURCE =
+          (METHOD = FILE)
+          (METHOD_DATA =
+            (DIRECTORY = {{ tls_wallet_dir }})
+          )
+        )
+      {% endif %}
+      SSL_CLIENT_AUTHENTICATION = FALSE
   register: sqlnet_update
 
 - name: tls-setup | Explicitly Reload Listener
