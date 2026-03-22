@@ -101,21 +101,24 @@
     group: "{{ oracle_group }}"
     mode: '0600'
 
-- name: tls-setup | Inject TCPS Endpoint into default LISTENER
-  lineinfile:
-    path: "{{ oracle_home }}/network/admin/listener.ora"
-    insertafter: '(?i)\(PROTOCOL\s*=\s*TCP\)'
-    line: "      (ADDRESS = (PROTOCOL = TCPS)(HOST = {{ ansible_hostname }})(PORT = 2484))"
-    state: present
-  register: listener_endpoint_update
-
-- name: tls-setup | Append TLS Wallet Configuration to listener.ora
-  blockinfile:
-    path: "{{ oracle_home }}/network/admin/listener.ora"
-    marker: "# {mark} ANSIBLE MANAGED BLOCK - TLS LISTENER WALLET"
-    insertafter: EOF
+- name: tls-setup | Write full listener.ora configuration
+  copy:
+    dest: "{{ oracle_home }}/network/admin/listener.ora"
+    owner: "{{ oracle_user }}"
+    group: "{{ oracle_group }}"
+    mode: '0644'
     backup: yes
-    block: |
+    content: |
+      # ANSIBLE MANAGED - TLS ENCRYPTED LISTENER
+      LISTENER =
+        (DESCRIPTION_LIST =
+          (DESCRIPTION =
+            (ADDRESS = (PROTOCOL = TCP)(HOST = {{ ansible_fqdn }})(PORT = 1521))
+            (ADDRESS = (PROTOCOL = IPC)(KEY = EXTPROC1521))
+            (ADDRESS = (PROTOCOL = TCPS)(HOST = {{ ansible_fqdn }})(PORT = 2484))
+          )
+        )
+
       WALLET_LOCATION =
         (SOURCE =
           (METHOD = FILE)
@@ -123,7 +126,7 @@
             (DIRECTORY = {{ tls_wallet_dir }})
           )
         )
-  register: listener_wallet_update
+  register: listener_update
 
 - name: tls-setup | Append TLS Configuration to sqlnet.ora
   blockinfile:
@@ -150,7 +153,7 @@
   become_user: "{{ oracle_user }}"
   environment:
     ORACLE_HOME: "{{ oracle_home }}"
-  when: listener_endpoint_update.changed or listener_wallet_update.changed or sqlnet_update.changed
+  when: listener_update.changed or sqlnet_update.changed
 
 - name: tls-setup | Capture Listener Status
   shell: "{{ oracle_home }}/bin/lsnrctl status"
