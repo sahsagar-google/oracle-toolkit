@@ -99,7 +99,8 @@
     state: directory
     owner: "{{ oracle_user }}"
     group: "{{ oracle_group }}"
-    mode: '0700'
+    mode: 'u=rwX,go=-'
+    recurse: yes
 
 - name: tls-setup | Append TCPS configuration to listener.ora
   blockinfile:
