@@ -13,14 +13,15 @@
 # limitations under the License.
 
 ---
-- name: tls-setup | Define Version-Specific Wallet Directory
+- name: tls-setup | Define Version Specific Wallet Directory for 19c
   set_fact:
-    tls_wallet_dir: >-
-      {% if '19.' in oracle_home %}
-      {{ oracle_base }}/admin/{{ ora_db_name }}/wallet
-      {% else %}
-      {{ oracle_base }}/admin/{{ ora_db_name }}/wallet_root/tls
-      {% endif %}
+    tls_wallet_dir: "{{ oracle_base }}/admin/{{ ora_db_name }}/wallet"
+  when: "'19.' in oracle_home"
+
+- name: tls-setup | Define Version Specific Wallet Directory for modern
+  set_fact:
+    tls_wallet_dir: "{{ oracle_base }}/admin/{{ ora_db_name }}/wallet_root/tls"
+  when: "'19.' not in oracle_home"
 
 - name: tls-setup | Create TLS Wallet Directory
   file:
@@ -30,7 +31,7 @@
     group: "{{ oracle_group }}"
     mode: '0700'
 
-- name: tls-setup | Retrieve Node-Specific TLS Secret
+- name: tls-setup | Retrieve Node Specific TLS Secret
   shell: "gcloud --quiet secrets versions access latest --secret='{{ ansible_hostname }}-tls-secret'"
   register: tls_secret_raw
   become: true
@@ -52,7 +53,7 @@
     - { dest: 'key.pem', content: "{{ (tls_secret_raw.stdout | from_json).key }}" }
     - { dest: 'cert.pem', content: "{{ (tls_secret_raw.stdout | from_json).cert }}" }
 
-- name: tls-setup | Create PKCS#12 Keystore (Intermediate)
+- name: tls-setup | Create PKCS12 Keystore Intermediate
   shell: >
     openssl pkcs12 -export -in "{{ tls_wallet_dir }}/cert.pem"
     -inkey "{{ tls_wallet_dir }}/key.pem"
@@ -93,7 +94,7 @@
     WALLET_PWD: "{{ (tls_secret_raw.stdout | from_json).pwd }}"
   no_log: true
 
-- name: tls-setup | Create Oracle Auto-Login Wallet
+- name: tls-setup | Create Oracle Auto Login Wallet
   shell: >
     orapki wallet create -wallet "{{ tls_wallet_dir }}" -auto_login -pwd "$WALLET_PWD"
   args:
@@ -109,10 +110,9 @@
 - name: tls-setup | Find all files in wallet directory
   find:
     path: "{{ tls_wallet_dir }}"
-    file_type: file
   register: wallet_files
 
-- name: tls-setup | Explicitly Secure All Wallet Files (0600)
+- name: tls-setup | Explicitly Secure All Wallet Files
   file:
     path: "{{ item.path }}"
     owner: "{{ oracle_user }}"
@@ -120,7 +120,7 @@
     mode: '0600'
   loop: "{{ wallet_files.files }}"
 
-- name: tls-setup | Append TCPS configuration to listener.ora
+- name: tls-setup | Append TCPS configuration to listener configuration
   blockinfile:
     path: "{{ oracle_home }}/network/admin/listener.ora"
     marker: "# {mark} ANSIBLE MANAGED BLOCK - TLS LISTENER"
@@ -141,7 +141,7 @@
         )
   register: listener_update
 
-- name: tls-setup | Append TLS Configuration to sqlnet.ora
+- name: tls-setup | Append TLS Configuration to sqlnet configuration
   blockinfile:
     path: "{{ oracle_home }}/network/admin/sqlnet.ora"
     marker: "# {mark} ANSIBLE MANAGED BLOCK - TLS WALLET"
@@ -179,6 +179,6 @@
   register: listener_status
   changed_when: false
 
-- name: tls-setup | Show Listener Status (Verify TCPS Endpoint)
+- name: tls-setup | Show Listener Status
   debug:
     var: listener_status.stdout_lines
