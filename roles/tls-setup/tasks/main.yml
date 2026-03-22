@@ -106,14 +106,19 @@
     WALLET_PWD: "{{ (tls_secret_raw.stdout | from_json).pwd }}"
   no_log: true
 
-- name: tls-setup | Secure Wallet Directory Permissions (0700)
-  file:
+- name: tls-setup | Find all files in wallet directory
+  find:
     path: "{{ tls_wallet_dir }}"
-    state: directory
+    type: file
+  register: wallet_files
+
+- name: tls-setup | Explicitly Secure All Wallet Files (0600)
+  file:
+    path: "{{ item.path }}"
     owner: "{{ oracle_user }}"
     group: "{{ oracle_group }}"
-    mode: 'u=rwX,go=-'
-    recurse: yes
+    mode: '0600'
+  loop: "{{ wallet_files.files }}"
 
 - name: tls-setup | Append TCPS configuration to listener.ora
   blockinfile:
