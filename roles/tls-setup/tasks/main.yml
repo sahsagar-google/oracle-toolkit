@@ -109,7 +109,7 @@
 - name: tls-setup | Find all files in wallet directory
   find:
     path: "{{ tls_wallet_dir }}"
-    type: file
+    file_type: file
   register: wallet_files
 
 - name: tls-setup | Explicitly Secure All Wallet Files (0600)
