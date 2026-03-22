@@ -52,26 +52,26 @@
     - { dest: 'key.pem', content: "{{ (tls_secret_raw.stdout | from_json).key }}" }
     - { dest: 'cert.pem', content: "{{ (tls_secret_raw.stdout | from_json).cert }}" }
 
-- name: tls-setup | Create PKCS#12 Keystore
+- name: tls-setup | Create PKCS#12 Keystore (Intermediate)
   shell: >
     openssl pkcs12 -export -in "{{ tls_wallet_dir }}/cert.pem"
     -inkey "{{ tls_wallet_dir }}/key.pem"
-    -out "{{ tls_wallet_dir }}/ewallet.p12"
+    -out "{{ tls_wallet_dir }}/intermediate.p12"
     -name "oracle-db-server"
     -passout pass:"$WALLET_PWD"
   args:
-    creates: "{{ tls_wallet_dir }}/ewallet.p12"
+    creates: "{{ tls_wallet_dir }}/intermediate.p12"
   become: true
   become_user: "{{ oracle_user }}"
   environment:
     WALLET_PWD: "{{ (tls_secret_raw.stdout | from_json).pwd }}"
   no_log: true
 
-- name: tls-setup | Create Oracle Auto-Login Wallet (Initialize)
+- name: tls-setup | Create Empty Oracle Wallet
   shell: >
-    orapki wallet create -wallet "{{ tls_wallet_dir }}" -auto_login -pwd "$WALLET_PWD"
+    orapki wallet create -wallet "{{ tls_wallet_dir }}" -pwd "$WALLET_PWD"
   args:
-    creates: "{{ tls_wallet_dir }}/cwallet.sso"
+    creates: "{{ tls_wallet_dir }}/ewallet.p12"
   become: true
   become_user: "{{ oracle_user }}"
   environment:
@@ -80,11 +80,24 @@
     WALLET_PWD: "{{ (tls_secret_raw.stdout | from_json).pwd }}"
   no_log: true
 
-- name: tls-setup | Create Oracle Auto-Login Wallet (Import PKCS12)
+- name: tls-setup | Import PKCS12 into Oracle Wallet
   shell: >
     orapki wallet import_pkcs12 -wallet "{{ tls_wallet_dir }}"
-    -pkcs12file "{{ tls_wallet_dir }}/ewallet.p12"
+    -pkcs12file "{{ tls_wallet_dir }}/intermediate.p12"
     -pwd "$WALLET_PWD" -pkcs12pwd "$WALLET_PWD"
+  become: true
+  become_user: "{{ oracle_user }}"
+  environment:
+    ORACLE_HOME: "{{ oracle_home }}"
+    PATH: "{{ oracle_home }}/bin:/usr/local/bin:/usr/bin:/bin"
+    WALLET_PWD: "{{ (tls_secret_raw.stdout | from_json).pwd }}"
+  no_log: true
+
+- name: tls-setup | Create Oracle Auto-Login Wallet
+  shell: >
+    orapki wallet create -wallet "{{ tls_wallet_dir }}" -auto_login -pwd "$WALLET_PWD"
+  args:
+    creates: "{{ tls_wallet_dir }}/cwallet.sso"
   become: true
   become_user: "{{ oracle_user }}"
   environment:
