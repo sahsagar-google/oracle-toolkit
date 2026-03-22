@@ -93,13 +93,13 @@
     WALLET_PWD: "{{ (tls_secret_raw.stdout | from_json).pwd }}"
   no_log: true
 
-- name: tls-setup | Secure Wallet Permissions (0600)
+- name: tls-setup | Secure Wallet Directory Permissions (0700)
   file:
     path: "{{ tls_wallet_dir }}"
     state: directory
     owner: "{{ oracle_user }}"
     group: "{{ oracle_group }}"
-    mode: '0600'
+    mode: '0700'
 
 - name: tls-setup | Append TCPS configuration to listener.ora
   blockinfile:
@@ -143,8 +143,8 @@
 
 - name: tls-setup | Start and Reload Listeners
   shell: |
-    {{ oracle_home }}/bin/lsnrctl reload LISTENER || true
-    {{ oracle_home }}/bin/lsnrctl start LISTENER_TCPS || true
+    {{ oracle_home }}/bin/lsnrctl reload LISTENER
+    {{ oracle_home }}/bin/lsnrctl start LISTENER_TCPS
   become: true
   become_user: "{{ oracle_user }}"
   environment:
