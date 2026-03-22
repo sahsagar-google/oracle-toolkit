@@ -101,24 +101,18 @@
     group: "{{ oracle_group }}"
     mode: '0600'
 
-- name: tls-setup | Write full listener.ora configuration
-  copy:
-    dest: "{{ oracle_home }}/network/admin/listener.ora"
-    owner: "{{ oracle_user }}"
-    group: "{{ oracle_group }}"
-    mode: '0644'
+- name: tls-setup | Append TCPS configuration to listener.ora
+  blockinfile:
+    path: "{{ oracle_home }}/network/admin/listener.ora"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - TLS LISTENER"
+    insertafter: EOF
     backup: yes
-    content: |
-      # ANSIBLE MANAGED - TLS ENCRYPTED LISTENER
-      LISTENER =
-        (DESCRIPTION_LIST =
-          (DESCRIPTION =
-            (ADDRESS = (PROTOCOL = TCP)(HOST = {{ ansible_fqdn }})(PORT = 1521))
-            (ADDRESS = (PROTOCOL = IPC)(KEY = EXTPROC1521))
-            (ADDRESS = (PROTOCOL = TCPS)(HOST = {{ ansible_fqdn }})(PORT = 2484))
-          )
+    block: |
+      LISTENER_TCPS =
+        (DESCRIPTION =
+          (ADDRESS = (PROTOCOL = TCPS)(HOST = {{ ansible_fqdn }})(PORT = 2484))
         )
-
+      
       WALLET_LOCATION =
         (SOURCE =
           (METHOD = FILE)
@@ -147,16 +141,18 @@
       SSL_CLIENT_AUTHENTICATION = FALSE
   register: sqlnet_update
 
-- name: tls-setup | Explicitly Reload Listener
-  shell: "{{ oracle_home }}/bin/lsnrctl reload"
+- name: tls-setup | Start and Reload Listeners
+  shell: |
+    {{ oracle_home }}/bin/lsnrctl reload LISTENER || true
+    {{ oracle_home }}/bin/lsnrctl start LISTENER_TCPS || true
   become: true
   become_user: "{{ oracle_user }}"
   environment:
     ORACLE_HOME: "{{ oracle_home }}"
   when: listener_update.changed or sqlnet_update.changed
 
-- name: tls-setup | Capture Listener Status
-  shell: "{{ oracle_home }}/bin/lsnrctl status"
+- name: tls-setup | Capture TCPS Listener Status
+  shell: "{{ oracle_home }}/bin/lsnrctl status LISTENER_TCPS"
   become: true
   become_user: "{{ oracle_user }}"
   environment:
