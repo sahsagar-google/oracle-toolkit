@@ -1,8 +1,101 @@
 #!/bin/bash
-export ORACLE_HOME={{ oracle_home }}
-export PATH=$ORACLE_HOME/bin:$PATH
-WALLET_DIR="{{ tls_wallet_dir }}"
+set -u
+set -o pipefail
 
-echo "Starting Certificate Rotation..."
-# (Logic to re-download secrets would go here)
-echo "Rotation placeholder executed."
+# --- Configuration ---
+LOG_NAME="oracle-tls-rotation"
+INSTANCE_NAME="{{ instance_name }}"
+ZONE="{{ zone }}"
+PROJECT_ID="{{ project_id }}"
+# Days before expiration to trigger renewal
+ROTATION_WINDOW_DAYS=30
+WALLET_DIR="/u01/app/oracle/admin/ORCL/tls_wallet"
+CERT_FILE="${WALLET_DIR}/cert.pem"
+
+# --- Logging Helper ---
+log_event() {
+    local severity="$1"
+    local event_type="$2"
+    local msg="$3"
+    
+    echo "${severity}: ${msg}"
+    
+    # Send structured JSON to Cloud Logging
+    gcloud logging write "$LOG_NAME" --payload-type=json \
+      '{
+        "severity": "'"$severity"'",
+        "event": "'"$event_type"'",
+        "message": "'"$msg"'",
+        "instance": "'"$INSTANCE_NAME"'",
+        "zone": "'"$ZONE"'"
+      }' >/dev/null 2>&1
+}
+
+# --- Main Logic ---
+
+echo "Starting certificate rotation check for ${INSTANCE_NAME}..."
+
+if [[ ! -f "$CERT_FILE" ]]; then
+    log_event "ERROR" "CERT_MISSING" "Certificate file not found at $CERT_FILE"
+    exit 1
+fi
+
+# 1. Check Expiration Date
+# Get the expiration date in seconds (epoch)
+EXPIRY_DATE=$(openssl x509 -enddate -noout -in "$CERT_FILE" | cut -d= -f2)
+EXPIRY_EPOCH=$(date -d "$EXPIRY_DATE" +%s)
+CURRENT_EPOCH=$(date +%s)
+SECONDS_REMAINING=$((EXPIRY_EPOCH - CURRENT_EPOCH))
+DAYS_REMAINING=$((SECONDS_REMAINING / 86400))
+
+echo "Certificate expires on: $EXPIRY_DATE ($DAYS_REMAINING days remaining)"
+
+# 2. Compare against Threshold
+if [[ "$DAYS_REMAINING" -gt "$ROTATION_WINDOW_DAYS" ]]; then
+    echo "Certificate is valid. No rotation needed."
+    exit 0
+fi
+
+# 3. ROTATION NEEDED
+log_event "INFO" "CERT_ROTATION_STARTED" "Certificate is expiring in $DAYS_REMAINING days. Starting renewal..."
+
+# Generate a unique ID for the new cert request
+NEW_CERT_ID="${INSTANCE_NAME}-$(date +%Y%m%d-%H%M%S)"
+
+# A. Request New Cert from CAS
+# (Using the same pool and logic as the startup script)
+if ! gcloud privateca certificates create "$NEW_CERT_ID" \
+    --pool="{{ cas_pool_id | split('/') | last }}" \
+    --location="{{ region }}" \
+    --subject="CN={{ db_hostname }}.{{ dns_domain }}" \
+    --quiet; then
+    log_event "ERROR" "CERT_ROTATION_FAILURE" "Failed to request new certificate from CAS."
+    exit 1
+fi
+
+# B. Download the PEM
+if ! gcloud privateca certificates describe "$NEW_CERT_ID" \
+    --pool="{{ cas_pool_id | split('/') | last }}" \
+    --location="{{ region }}" \
+    --format="value(pem_certificate)" > "${WALLET_DIR}/new_cert.pem"; then
+    log_event "ERROR" "CERT_ROTATION_FAILURE" "Failed to download new certificate PEM."
+    exit 1
+fi
+
+# C. Update Oracle Wallet (orapki)
+# Note: In a real scenario, you might need to remove the old cert alias first or use a new alias.
+export ORACLE_HOME="{{ oracle_home }}"
+export PATH="$ORACLE_HOME/bin:$PATH"
+
+if ! orapki wallet add -wallet "$WALLET_DIR" -trusted_cert -cert "${WALLET_DIR}/new_cert.pem" -pwd "$(cat ${WALLET_DIR}/pwd.txt)"; then
+     log_event "ERROR" "CERT_ROTATION_FAILURE" "Failed to add new certificate to Oracle Wallet."
+     exit 1
+fi
+
+# D. Reload Listener
+if ! lsnrctl reload; then
+    log_event "ERROR" "CERT_ROTATION_FAILURE" "Failed to reload Oracle Listener."
+    exit 1
+fi
+
+log_event "INFO" "CERT_ROTATION_SUCCESS" "Successfully rotated certificate and reloaded listener."
