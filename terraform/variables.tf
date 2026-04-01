@@ -117,10 +117,20 @@ variable "ora_edition" {
 variable "ora_listener_port" {
   type        = string
   default     = "1521"
-  description = "TCP port for Oracle listener. Defaults to 1521, but should be set to 2484 (or similar) if enable_tls is true."
+  description = "TCP port for the Oracle default internal listener."
   validation {
     condition     = var.ora_listener_port == "" || can(regex("^[0-9]+$", var.ora_listener_port))
     error_message = "Invalid listener port. It must be a numeric value."
+  }
+}
+
+variable "tls_listener_port" {
+  type        = string
+  default     = "2484"
+  description = "TCP port for the encrypted TCPS listener (used if TLS is enabled)."
+  validation {
+    condition     = can(regex("^[0-9]+$", var.tls_listener_port))
+    error_message = "Invalid TLS listener port. It must be a numeric value."
   }
 }
 

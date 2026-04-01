@@ -15,7 +15,7 @@
 ---
 - name: Open listener port in firewall
   firewalld:
-    port: "{{ listener_port }}/tcp"
+    port: "{{ item }}/tcp"
     permanent: true
     immediate: true
     state: enabled
@@ -25,6 +25,7 @@
     - "'firewall is not currently running' not in firewall_output.msg"
     - "'Permanent and Non-Permanent(immediate) operation' not in firewall_output.msg"
   when: not disable_firewall | bool
+  loop: "{{ [listener_port | string, tls_listener_port | default('2484') | string] | unique if enable_tls | default(false) | bool else [listener_port | string] }}"
   tags: lsnr-create
 
 - name: Test whether port is free

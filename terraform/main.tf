@@ -361,7 +361,7 @@ resource "google_compute_instance" "control_node" {
 # -----------------------------------------------------------------------------
 
 locals {
-  listener_port = var.enable_tls && var.ora_listener_port == "1521" ? "2484" : var.ora_listener_port
+  listener_port = var.enable_tls ? var.tls_listener_port : var.ora_listener_port
 }
 
 # 1. Generate Private Keys for each node (Stored securely in Secret Manager)
@@ -390,6 +390,14 @@ resource "tls_cert_request" "oracle_db_csr" {
 # 3. Issue Certificates via Google CAS for each node
 resource "google_privateca_certificate" "oracle_db_cert" {
   for_each = var.enable_tls ? local.instances : {}
+  
+  lifecycle {
+    precondition {
+      condition     = var.cas_pool_id != ""
+      error_message = "cas_pool_id is required when enable_tls is true. See: https://cloud.google.com/certificate-authority-service/docs/"
+    }
+  }
+
   pool     = split("/", var.cas_pool_id)[5]
   location = split("/", var.cas_pool_id)[3]
   project  = var.project_id
@@ -476,10 +484,9 @@ resource "google_compute_firewall" "db_sync" {
   project     = var.project_id
   network     = local.network
   description = "Deployment ${local.deployment_id}: Allows inter-database communication on the Oracle listener port for Data Guard synchronization."
-
   allow {
     protocol = "tcp"
-    ports    = [var.ora_listener_port, local.listener_port]
+    ports    = [local.listener_port]
   }
   allow {
     protocol = "icmp"
