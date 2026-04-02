@@ -129,7 +129,7 @@
     block: |
       LISTENER_TCPS =
         (DESCRIPTION =
-          (ADDRESS = (PROTOCOL = TCPS)(HOST = {{ ansible_fqdn }})(PORT = {{ tls_listener_port | default('2484') }}))
+          (ADDRESS = (PROTOCOL = TCPS)(HOST = {{ ansible_fqdn }})(PORT = {{ tls_listener_port }}))
         )
       
       WALLET_LOCATION =

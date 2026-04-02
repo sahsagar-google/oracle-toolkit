@@ -28,7 +28,7 @@ while IFS=':' read -r ORACLE_SID ORACLE_HOME AUTOSTART_FLAG; do
             rc=1
         fi
         
-        {% if enable_tls | default(false) | bool %}
+        {% if enable_tls | bool %}
         # Start the TLS Listener
         if ! start_listener "LISTENER_TCPS"; then
             rc=1

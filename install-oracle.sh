@@ -165,9 +165,9 @@ while true; do
       YAML_VARS["enable_tls"]="true"
       shift 2 
       ;;
-    --enable-tls)
+    --tls-listener-port)
       YAML_VARS["tls_listener_port"]="$2"
-      shift
+      shift 2
       ;;
     --) shift; ANSIBLE_ARGS+=("$@"); break ;;
     *) echo "Internal error! Unexpected option: $1" >&2; exit 1 ;;
