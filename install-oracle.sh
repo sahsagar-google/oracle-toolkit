@@ -217,6 +217,7 @@ PB_VALIDATE="validate-config.yml"
 PB_CHECK_INSTANCE="check-instance.yml"
 PB_PREP_HOST="prep-host.yml"
 PB_INSTALL_SW="install-sw.yml"
+PB_TLS_SETUP="tls-setup.yml"
 PB_CONFIG_DB="config-db.yml"
 PB_CONFIG_RAC_DB="config-rac-db.yml"
 PB_COMPATIBLE="compatibility-tests.yml"
@@ -316,7 +317,13 @@ elif [ "$INSTALL_SW_ONLY" = true ]; then
 elif [ "$CONFIG_DB_ONLY" = true ]; then
   PB_LIST="${PB_CONFIG_DB}"
 else
-  PB_LIST="${PB_VALIDATE} ${PB_CHECK_INSTANCE} ${PB_PREP_HOST} ${PB_INSTALL_SW} ${PB_PATCH} ${PB_CONFIG_DB} ${PB_COMPATIBLE}"
+  PB_LIST="${PB_VALIDATE} ${PB_CHECK_INSTANCE} ${PB_PREP_HOST} ${PB_INSTALL_SW} ${PB_PATCH}"
+  
+  if [[ -n "${YAML_VARS[tls_secret]}" ]]; then
+    PB_LIST="${PB_LIST} ${PB_TLS_SETUP}"
+  fi
+  
+  PB_LIST="${PB_LIST} ${PB_CONFIG_DB} ${PB_COMPATIBLE}"
 fi
 
 if [ "$SKIP_DATABASE_CONFIG" = true ]; then

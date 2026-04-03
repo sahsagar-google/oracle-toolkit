@@ -358,7 +358,13 @@ resource "google_compute_instance" "control_node" {
 
 # -----------------------------------------------------------------------------
 # TLS Infrastructure & Identity (Data Guard / Secret Manager Architecture)
-# -----------------------------------------------------------------------------
+
+# Look up the existing DNS zone by its resource name (Conditional)
+data "google_dns_managed_zone" "selected_zone" {
+  count   = var.enable_tls ? 1 : 0
+  name    = var.dns_zone_name
+  project = var.project_id
+}
 
 # 1. Generate Private Keys for each node (Stored securely in Secret Manager)
 resource "tls_private_key" "oracle_db_key" {
@@ -378,7 +384,7 @@ resource "tls_cert_request" "oracle_db_csr" {
   }
 
   dns_names = [
-    "${each.key}.${trimsuffix(data.google_dns_managed_zone.selected_zone.dns_name, ".")}",
+    "${each.key}.${trimsuffix(data.google_dns_managed_zone.selected_zone[0].dns_name, ".")}",
     each.key
   ]
 }
@@ -401,7 +407,7 @@ resource "google_dns_record_set" "db_a_record" {
   for_each     = var.enable_tls ? local.instances : {}
   project      = var.project_id
   managed_zone = var.dns_zone_name
-  name         = "${each.key}.${data.google_dns_managed_zone.selected_zone.dns_name}"
+  name         = "${each.key}.${data.google_dns_managed_zone.selected_zone[0].dns_name}"
   type         = "A"
   ttl          = 300
   rrdatas      = [google_compute_instance_from_template.database_vm[each.key].network_interface[0].network_ip]
