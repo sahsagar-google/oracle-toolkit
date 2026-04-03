@@ -317,13 +317,7 @@ elif [ "$INSTALL_SW_ONLY" = true ]; then
 elif [ "$CONFIG_DB_ONLY" = true ]; then
   PB_LIST="${PB_CONFIG_DB}"
 else
-  PB_LIST="${PB_VALIDATE} ${PB_CHECK_INSTANCE} ${PB_PREP_HOST} ${PB_INSTALL_SW} ${PB_PATCH}"
-  
-  if [[ -n "${YAML_VARS[tls_secret]}" ]]; then
-    PB_LIST="${PB_LIST} ${PB_TLS_SETUP}"
-  fi
-  
-  PB_LIST="${PB_LIST} ${PB_CONFIG_DB} ${PB_COMPATIBLE}"
+  PB_LIST="${PB_VALIDATE} ${PB_CHECK_INSTANCE} ${PB_PREP_HOST} ${PB_INSTALL_SW} ${PB_PATCH} ${PB_CONFIG_DB} ${PB_COMPATIBLE}"
 fi
 
 if [ "$SKIP_DATABASE_CONFIG" = true ]; then
