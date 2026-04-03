@@ -143,10 +143,25 @@ locals {
   control_tag   = "ora-control-node-${local.deployment_id}"
 }
 
-# Resolve parent VPC network from the subnetwork URI
+# Resolves parent VPC network from the subnetwork URI
 data "google_compute_subnetwork" "subnetwork" {
   count     = local.subnetwork1_opt != null ? 1 : 0
   self_link = "https://www.googleapis.com/compute/v1/${local.subnetwork1_opt}"
+}
+
+# Resolves info for the primary subnetwork (explicit or default)
+data "google_compute_subnetwork" "subnetwork1_info" {
+  self_link = local.subnetwork1_opt != null ? 
+    "https://www.googleapis.com/compute/v1/${local.subnetwork1_opt}" : 
+    "https://www.googleapis.com/compute/v1/projects/${var.project_id}/regions/${local.region}/subnetworks/default"
+}
+
+# Resolves info for the standby subnetwork if in multi-instance mode
+data "google_compute_subnetwork" "subnetwork2_info" {
+  count = local.is_multi_instance ? 1 : 0
+  self_link = local.subnetwork2_opt != null ? 
+    "https://www.googleapis.com/compute/v1/${local.subnetwork2_opt}" : 
+    "https://www.googleapis.com/compute/v1/projects/${var.project_id}/regions/${join("-", slice(split("-", var.zone2), 0, 2))}/subnetworks/default"
 }
 
 locals {
@@ -324,7 +339,6 @@ resource "google_compute_instance" "control_node" {
   }
 
   lifecycle {
-    # FS/ASMUDEV/ASMLIB-specific guard for backup dest
     precondition {
       condition = (
         (local.is_fs && (var.ora_backup_dest == "" || can(regex("^/.*$", var.ora_backup_dest))))
@@ -332,6 +346,13 @@ resource "google_compute_instance" "control_node" {
         (!local.is_fs && (var.ora_backup_dest == "" || can(regex("^\\+.*$", var.ora_backup_dest)) || can(regex("^/.*$", var.ora_backup_dest))))
       )
       error_message = "FS mode: ora_backup_dest must be an absolute path like '/u03/backup'. ASMUDEV/ASMLIB mode: ora_backup_dest must be an ASMUDEV/ASMLIB diskgroup like '+RECO'."
+    }
+    precondition {
+      condition = !var.enable_ar_repo || (
+        data.google_compute_subnetwork.subnetwork1_info.private_ip_google_access &&
+        (!local.is_multi_instance || data.google_compute_subnetwork.subnetwork2_info[0].private_ip_google_access)
+      )
+      error_message = "The 'enable_ar_repo' feature is enabled, but Private Google Access (PGA) is not enabled on the target subnetwork(s). PGA is required for internal access to Artifact Registry."
     }
   }
 
