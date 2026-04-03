@@ -299,7 +299,7 @@ if [ "$HELP_ONLY" = true ]; then
   echo "  --inventory-file <file>      Custom Ansible inventory file."
   echo "  --ar-repo-url <url>          Artifact Registry remote repository base URL."
   echo "  --tls-secret <secret>        GCP Secret Manager ID containing a JSON payload with the TLS key, cert, and wallet password. Implicitly enables TLS."
-  echo "  --enable-tls                 Enable TLS configuration."
+  echo "  --tls-listener-port <port>   TCP port for the encrypted TCPS listener."
   exit 0
 fi
 

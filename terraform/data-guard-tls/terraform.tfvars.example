@@ -1,0 +1,42 @@
+# ------------------------------------------------------------------------
+# Google Cloud Environment Setup
+# ------------------------------------------------------------------------
+project_id                   = "your-gcp-project-id"
+vm_service_account           = "oracle-db-sa@your-gcp-project-id.iam.gserviceaccount.com"
+control_node_service_account = "oracle-control-sa@your-gcp-project-id.iam.gserviceaccount.com"
+
+# ------------------------------------------------------------------------
+# Data Guard Architecture (Multi-Instance)
+# ------------------------------------------------------------------------
+instance_name = "oracle-26ai-dg"
+zone1         = "us-central1-b"
+zone2         = "us-central1-c"
+
+# Must be full resource URIs
+subnetwork1   = "projects/your-gcp-project-id/regions/us-central1/subnetworks/your-subnetwork-1"
+subnetwork2   = "projects/your-gcp-project-id/regions/us-central1/subnetworks/your-subnetwork-2"
+
+# ------------------------------------------------------------------------
+# Oracle Database Software & Storage Configuration
+# ------------------------------------------------------------------------
+ora_version      = "26"                     # Setting to 26ai
+ora_edition      = "EE"
+ora_db_name      = "orcl"
+ora_db_container = "true"
+
+# Explicitly setting Disk Management to Filesystem (FS) instead of ASM
+ora_disk_mgmt    = "FS"
+
+# Software Library Bucket (Where the Oracle 26ai installation zips are stored)
+ora_swlib_bucket = "gs://your-oracle-swlib-bucket"
+
+# ------------------------------------------------------------------------
+# TLS / SSL Configuration
+# ------------------------------------------------------------------------
+# Enable TLS encryption and define the Certificate Authority & DNS integration
+enable_tls        = true
+tls_listener_port = 2484
+
+# You must substitute these with your actual CAS Pool ID and DNS Zone
+cas_pool_id       = "projects/your-gcp-project-id/locations/us-central1/caPools/oracle-db-ca-pool"
+dns_zone_name     = "oracle-internal-dns-zone"

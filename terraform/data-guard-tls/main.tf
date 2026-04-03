@@ -133,3 +133,8 @@ output "dns_zone_name" {
   value       = google_dns_managed_zone.db_private_zone.name
   description = "Pass this to the Oracle Terraform module as 'dns_zone_name'"
 }
+
+output "ca_certificate" {
+  value       = google_privateca_certificate_authority.db_root_ca.pem_ca_certificates
+  description = "The PEM-encoded CA certificate"
+}

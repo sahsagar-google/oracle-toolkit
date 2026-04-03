@@ -378,7 +378,7 @@ resource "tls_cert_request" "oracle_db_csr" {
   }
 
   dns_names = [
-    "${each.key}.${trimsuffix(var.dns_domain_name, ".")}",
+    "${each.key}.${trimsuffix(data.google_dns_managed_zone.selected_zone.dns_name, ".")}",
     each.key
   ]
 }
@@ -390,10 +390,10 @@ resource "google_privateca_certificate" "oracle_db_cert" {
   pool     = split("/", var.cas_pool_id)[5]
   location = split("/", var.cas_pool_id)[3]
   project  = var.project_id
-  name     = "${each.key}-tls-cert"
-
+  # Since certificate IDs are immutable across deployment deletions, add a random suffix
+  name     = "${substr(each.key, max(0, length(each.key) - 54), 54)}-${random_id.suffix.hex}"
   pem_csr  = tls_cert_request.oracle_db_csr[each.key].cert_request_pem
-  lifetime = "31536000s"
+  lifetime = "${47 * 24 * 60 * 60}s"
 }
 
 # 4. Create DNS A Records for each node
@@ -401,7 +401,7 @@ resource "google_dns_record_set" "db_a_record" {
   for_each     = var.enable_tls ? local.instances : {}
   project      = var.project_id
   managed_zone = var.dns_zone_name
-  name         = "${each.key}.${var.dns_domain_name}"
+  name         = "${each.key}.${data.google_dns_managed_zone.selected_zone.dns_name}"
   type         = "A"
   ttl          = 300
   rrdatas      = [google_compute_instance_from_template.database_vm[each.key].network_interface[0].network_ip]

@@ -422,13 +422,7 @@ variable "dns_zone_name" {
   default     = ""
 }
 
-variable "dns_domain_name" {
-  description = "The DNS domain suffix for the database (e.g. 'internal.example.com.'). Required if enable_tls is true."
-  type        = string
-  default     = ""
-}
-
-variable "db_hostname" {
+variable "db_dns_hostname" {
   description = "The desired hostname for the database A-record (without domain). If empty, defaults to instance_name."
   type        = string
   default     = ""
@@ -439,3 +433,5 @@ variable "enable_ar_repo" {
   type        = bool
   default     = false
 }
+
+
