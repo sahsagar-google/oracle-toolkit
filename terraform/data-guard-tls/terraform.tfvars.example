@@ -40,3 +40,12 @@ tls_listener_port = 2484
 # You must substitute these with your actual CAS Pool ID and DNS Zone
 cas_pool_id       = "projects/your-gcp-project-id/locations/us-central1/caPools/oracle-db-ca-pool"
 dns_zone_name     = "oracle-internal-dns-zone"
+
+# ------------------------------------------------------------------------
+# Required Global Variables
+# ------------------------------------------------------------------------
+# Required by main (4).tf for Private DNS Zone visibility
+vpc_network_self_link = "projects/your-gcp-project-id/global/networks/your-vpc-network"
+
+# Required by variables (4).tf to fetch the Oracle installation toolkit
+gcs_source            = "gs://your-toolkit-bucket/oracle-toolkit.zip"

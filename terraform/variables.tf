@@ -422,12 +422,6 @@ variable "dns_zone_name" {
   default     = ""
 }
 
-variable "db_dns_hostname" {
-  description = "The desired hostname for the database A-record (without domain). If empty, defaults to instance_name."
-  type        = string
-  default     = ""
-}
-
 variable "enable_ar_repo" {
   description = "Controls whether to create Google Cloud Artifact Registry remote repositories to fetch OS packages."
   type        = bool

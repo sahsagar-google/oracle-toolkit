@@ -123,6 +123,7 @@
 - name: tls-setup | Add IPC endpoint to existing standard LISTENER
   lineinfile:
     path: "{{ oracle_home }}/network/admin/listener.ora"
+    regexp: 'LISTENER_IPC'
     insertafter: '\(PROTOCOL = TCP\)'
     line: '            (ADDRESS = (PROTOCOL = IPC)(KEY = LISTENER_IPC))'
     state: present

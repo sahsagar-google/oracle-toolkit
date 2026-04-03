@@ -384,8 +384,7 @@ resource "tls_cert_request" "oracle_db_csr" {
   }
 
   dns_names = [
-    "${each.key}.${trimsuffix(data.google_dns_managed_zone.selected_zone[0].dns_name, ".")}",
-    each.key
+    "${each.key}.${trimsuffix(data.google_dns_managed_zone.selected_zone[0].dns_name, ".")}"
   ]
 }
 
