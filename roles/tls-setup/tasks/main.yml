@@ -179,18 +179,6 @@
     ORACLE_HOME: "{{ oracle_home }}"
   when: listener_update.changed or sqlnet_update.changed
 
-- name: tls-setup | Configure LOCAL_LISTENER for dynamic service registration
-  shell: |
-    source ~/.bash_profile
-    $ORACLE_HOME/bin/sqlplus -s / as sysdba <<EOF
-    ALTER SYSTEM SET LOCAL_LISTENER='(ADDRESS_LIST=(ADDRESS=(PROTOCOL=IPC)(KEY=LISTENER_IPC))(ADDRESS=(PROTOCOL=IPC)(KEY=TCPS_IPC)))' SCOPE=BOTH;
-    ALTER SYSTEM REGISTER;
-    EXIT;
-    EOF
-  become: true
-  become_user: "{{ oracle_user }}"
-  when: listener_update.changed or sqlnet_update.changed
-
 - name: tls-setup | Capture TCPS Listener Status
   shell: "{{ oracle_home }}/bin/lsnrctl status LISTENER_TCPS"
   become: true
