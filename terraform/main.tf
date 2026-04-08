@@ -283,9 +283,10 @@ locals {
     var.install_workload_agent ? "--install-workload-agent" : "",
     var.skip_database_config ? "--skip-database-config" : "",
     var.ora_pga_target_mb != "" ? "--ora-pga-target-mb ${var.ora_pga_target_mb}" : "",
-    var.ora_sga_target_mb != "" ? "--ora-sga-target-mb ${var.ora_pga_target_mb}" : "",
+    var.ora_sga_target_mb != "" ? "--ora-sga-target-mb ${var.ora_sga_target_mb}" : "",
     var.data_guard_protection_mode != "" ? "--data-guard-protection-mode '${var.data_guard_protection_mode}'" : "",
     var.enable_tls ? "--tls-secret DYNAMIC_MAPPED" : "",
+    var.enable_tls && var.tls_listener_port != "" ? "--tls-listener-port ${var.tls_listener_port}" : "",
     local.ar_repo_url_prefix != "" ? "--ar-repo-url '${local.ar_repo_url_prefix}'" : ""
   ]))
 }
