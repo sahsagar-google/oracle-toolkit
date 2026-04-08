@@ -36,8 +36,9 @@ resource "google_privateca_ca_pool" "db_ca_pool" {
       allow_subject_alt_names_passthrough = false
 
       cel_expression {
-        expression = "subject_alt_names.all(san, san.type == DNS && san.value.endsWith('.internal.corp.com'))"
-        title      = "Restrict to internal.corp.com"
+        # Strip the trailing dot for the SAN string comparison
+        expression = "subject_alt_names.all(san, san.type == DNS && san.value.endsWith('.${trim(var.dns_domain_name, ".")}'))"
+        title      = "Restrict to internal domain"
       }
     }
   }
@@ -87,8 +88,8 @@ resource "google_privateca_certificate_authority" "db_root_ca" {
 # ------------------------------------------------------------------------
 
 resource "google_dns_managed_zone" "db_private_zone" {
-  name        = "oracle-internal-dns-zone"
-  dns_name    = "internal.corp.com."
+  name        = var.dns_zone_resource_name
+  dns_name    = var.dns_domain_name
   description = "Private DNS zone for Oracle Database endpoints"
   project     = var.project_id
   visibility  = "private"
@@ -117,6 +118,11 @@ variable "region" {
 
 variable "vpc_network_self_link" {
   description = "The self_link of the VPC network to attach the private DNS zone to"
+  type        = string
+}
+
+variable "dns_domain_name" {
+  description = "The DNS domain suffix (must end with a dot, e.g., 'oracle-db.internal.')"
   type        = string
 }
 

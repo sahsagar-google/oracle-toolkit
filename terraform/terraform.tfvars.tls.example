@@ -5,6 +5,9 @@ project_id                   = "your-gcp-project-id"
 vm_service_account           = "oracle-db-sa@your-gcp-project-id.iam.gserviceaccount.com"
 control_node_service_account = "oracle-control-sa@your-gcp-project-id.iam.gserviceaccount.com"
 
+# Required by variables.tf to fetch the Oracle installation toolkit
+gcs_source                   = "gs://your-toolkit-bucket/oracle-toolkit.zip"
+
 # ------------------------------------------------------------------------
 # Data Guard Architecture (Multi-Instance)
 # ------------------------------------------------------------------------
@@ -37,15 +40,12 @@ ora_swlib_bucket = "gs://your-oracle-swlib-bucket"
 enable_tls        = true
 tls_listener_port = 2484
 
-# You must substitute these with your actual CAS Pool ID and DNS Zone
+# The resource ID for the Private CA pool and the name of the Private DNS zone for database endpoints
 cas_pool_id       = "projects/your-gcp-project-id/locations/us-central1/caPools/oracle-db-ca-pool"
 dns_zone_name     = "oracle-internal-dns-zone"
 
 # ------------------------------------------------------------------------
 # Required Global Variables
 # ------------------------------------------------------------------------
-# Required by main (4).tf for Private DNS Zone visibility
+# Required by main.tf for Private DNS Zone visibility
 vpc_network_self_link = "projects/your-gcp-project-id/global/networks/your-vpc-network"
-
-# Required by variables (4).tf to fetch the Oracle installation toolkit
-gcs_source            = "gs://your-toolkit-bucket/oracle-toolkit.zip"

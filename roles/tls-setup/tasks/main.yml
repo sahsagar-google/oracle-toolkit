@@ -139,7 +139,7 @@
       LISTENER_TCPS =
         (DESCRIPTION =
           (ADDRESS = (PROTOCOL = TCPS)(HOST = {{ ansible_fqdn }})(PORT = {{ tls_listener_port }}))
-          (ADDRESS = (PROTOCOL = IPC)(KEY = TCPS_IPC))
+          (ADDRESS = (PROTOCOL = IPC)(KEY = LISTENER_TCPS_IPC))
         )
       
       WALLET_LOCATION =
@@ -180,6 +180,18 @@
     ORACLE_HOME: "{{ oracle_home }}"
   when: listener_update.changed or sqlnet_update.changed or listener_ipc_update.changed
 
+- name: tls-setup | Update local_listener for dynamic registration
+  shell: |
+    sqlplus -s / as sysdba <<EOF
+    ALTER SYSTEM SET LOCAL_LISTENER='(ADDRESS_LIST=(ADDRESS=(PROTOCOL=IPC)(KEY=LISTENER_IPC))(ADDRESS=(PROTOCOL=IPC)(KEY=LISTENER_TCPS_IPC)))' SCOPE=BOTH;
+    EXIT;
+    EOF
+  become: true
+  become_user: "{{ oracle_user }}"
+  environment:
+    ORACLE_HOME: "{{ oracle_home }}"
+    ORACLE_SID: "{{ ora_db_name }}"
+
 - name: tls-setup | Capture TCPS Listener Status
   shell: "{{ oracle_home }}/bin/lsnrctl status LISTENER_TCPS"
   become: true
@@ -192,3 +204,12 @@
 - name: tls-setup | Show Listener Status
   debug:
     var: listener_status.stdout_lines
+    
+- name: tls-setup | Generate Client Bundle Zip for easy download
+  archive:
+    path: 
+      - "{{ tls_wallet_dir }}/root-ca.pem"
+    dest: "{{ oracle_home }}/client_bundle.zip"
+    format: zip
+    owner: "{{ oracle_user }}"
+    group: "{{ oracle_group }}"

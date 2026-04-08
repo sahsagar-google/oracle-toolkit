@@ -398,7 +398,7 @@ resource "google_privateca_certificate" "oracle_db_cert" {
   # Since certificate IDs are immutable across deployment deletions, add a random suffix
   name     = "${substr(each.key, max(0, length(each.key) - 54), 54)}-${random_id.suffix.hex}"
   pem_csr  = tls_cert_request.oracle_db_csr[each.key].cert_request_pem
-  lifetime = "${47 * 24 * 60 * 60}s"
+  lifetime = "${365 * 24 * 60 * 60}s"
 }
 
 # 4. Create DNS A Records for each node
