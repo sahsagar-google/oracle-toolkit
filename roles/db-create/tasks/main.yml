@@ -152,16 +152,29 @@
         - check_oratab.stdout == "0"
       tags: db-create
   rescue:
+    - name: Check if DBCA log exists
+      stat:
+        path: "{{ oracle_base }}/cfgtoollogs/dbca/{{ db_name }}/{{ db_name }}.log"
+      register: dbca_log_stat
+
     - name: Retrieve DBCA logs
       slurp:
         src: "{{ oracle_base }}/cfgtoollogs/dbca/{{ db_name }}/{{ db_name }}.log"
       register: dbcalog
-    - debug:
-        msg: "{{ dbcalog['content'] | b64decode }}"
-        verbosity: 0
+      when: dbca_log_stat.stat.exists
+
     - name: Fail due to a DBCA failure
       fail:
-        msg: Failing due to a DBCA failure
+        msg: |
+          Database creation failed.
+          Standard output:
+          {{ dbca_output.stdout }}
+          Standard error:
+          {{ dbca_output.stderr }}
+          {% if dbca_log_stat.stat.exists %}
+          DBCA Log Content:
+          {{ dbcalog['content'] | b64decode }}
+          {% endif %}
 
 - name: DBCA output
   debug:

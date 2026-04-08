@@ -89,8 +89,8 @@ variable "ora_db_name" {
   default     = ""
   description = "The Oracle database name. Must be empty or 1-8 characters, using only letters, numbers, or underscores."
   validation {
-    condition     = var.ora_db_name == "" || can(regex("^[a-zA-Z0-9_]{1,8}$", var.ora_db_name))
-    error_message = "The ora_db_name must be empty or contain only letters, numbers, and underscores and be between 1 and 8 characters long."
+    condition     = var.ora_db_name == "" || can(regex("^[a-zA-Z][a-zA-Z0-9_]{0,7}$", var.ora_db_name))
+    error_message = "The ora_db_name must be empty or contain only letters, numbers, and underscores, be between 1 and 8 characters long, and must start with a letter."
   }
 }
 
