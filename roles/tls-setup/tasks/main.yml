@@ -182,7 +182,7 @@
 
 - name: tls-setup | Update local_listener for dynamic registration
   shell: |
-    sqlplus -s / as sysdba <<EOF
+    {{ oracle_home }}/bin/sqlplus -s / as sysdba <<EOF
     ALTER SYSTEM SET LOCAL_LISTENER='(ADDRESS_LIST=(ADDRESS=(PROTOCOL=IPC)(KEY=LISTENER_IPC))(ADDRESS=(PROTOCOL=IPC)(KEY=LISTENER_TCPS_IPC)))' SCOPE=BOTH;
     EXIT;
     EOF
