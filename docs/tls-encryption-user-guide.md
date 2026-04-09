@@ -8,13 +8,9 @@ This solution completely automates TLS encryption for self-managed Oracle worklo
 __Key Benefits:__
 
 -   ***Zero-Touch Configuration:*** No manual orapki commands or wallet management required.
-
 -   ***Root of Trust:*** Certificates are issued by your organization's private Certificate Authority (CAS), ensuring valid identity attestation.
-
 -   ***Cloud-Native Security:*** Private keys are stored securely in Secret Manager and retrieved only by the database VM's authorized identity.
-
 -   ***Client Readiness:*** Automatically generates a downloadable "Client Bundle" containing the necessary truststore and configuration files for immediate connectivity.
-
 -   ***Multi-Node & 26ai Ready:*** Fully supports active Data Guard architectures (minting distinct certificates per node) and seamlessly adapts to Oracle 23ai/26ai WALLET_ROOT architectures alongside legacy 19c deployments.
 
 __Supported Configurations:__
@@ -30,7 +26,8 @@ To enable encryption, you need to explicitly enable TLS and provide your Identit
 
 __Prerequisites:__
 
--   ***Required APIs Enabled on Project:*** * Compute Engine (`compute.googleapis.com`)
+-   ***Required APIs Enabled on Project:***
+    * Compute Engine (`compute.googleapis.com`)
     * Secret Manager (`secretmanager.googleapis.com`)
     * Artifact Registry (`artifactregistry.googleapis.com`)
     * Certificate Authority (`privateca.googleapis.com`)
@@ -46,7 +43,9 @@ __Prerequisites:__
 ~~~
 # 1. Enable TLS explicitly 
 
-enable_tls = true tls_listener_port = "2484" # Optional: Defaults to 2484 if omitted
+enable_tls = true
+
+tls_listener_port = "2484" # Optional: Defaults to 2484 if omitted
 
 # 2. Trust Infrastructure (Must exist in your project)
 
