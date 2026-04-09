@@ -99,10 +99,10 @@ SSL_CLIENT_AUTHENTICATION = FALSE
 
 ***Step 3: Connect***
 
-You can now connect securely using the TCPS protocol:
+You can now connect securely using the TCPS protocol. You will be prompted for your password:
 
 ~~~
-sqlplus system/password@(DESCRIPTION=(ADDRESS=(PROTOCOL=tcps)(HOST=finance-db-01.internal.corp.com)(PORT=2484))(CONNECT_DATA=(SERVICE_NAME=ORCL)))
+sqlplus system@"tcps://finance-db-01.internal.corp.com:2484/ORCL"
 ~~~
 
 4\. Behind the Scenes: How It Works
