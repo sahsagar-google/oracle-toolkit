@@ -104,7 +104,6 @@ variable "ora_db_domain" {
   }
 }
 
-
 variable "ora_edition" {
   type        = string
   default     = "EE"
@@ -116,12 +115,22 @@ variable "ora_edition" {
 }
 
 variable "ora_listener_port" {
-  type        = string
-  default     = "1521"
-  description = "TCP port for Oracle listener."
+  type        = number
+  default     = 1521
+  description = "TCP port for the Oracle default internal listener."
   validation {
-    condition     = var.ora_listener_port == "" || can(regex("^[0-9]+$", var.ora_listener_port))
-    error_message = "Invalid listener port. It must be a numeric value."
+    condition     = var.ora_listener_port >= 1 && var.ora_listener_port <= 65535
+    error_message = "The port number must be between 1 and 65535."
+  }
+}
+
+variable "tls_listener_port" {
+  type        = number
+  default     = 2484
+  description = "TCP port for the encrypted TCPS listener (used if TLS is enabled)."
+  validation {
+    condition     = var.tls_listener_port >= 1 && var.tls_listener_port <= 65535
+    error_message = "The port number must be between 1 and 65535."
   }
 }
 
@@ -391,8 +400,32 @@ variable "create_firewall" {
   default     = false
 }
 
+# -----------------------------------------------------------------------------
+# TLS / SSL Configuration Inputs
+# -----------------------------------------------------------------------------
+
+variable "enable_tls" {
+  description = "Enable TLS encryption for Oracle listener and creating associated Identity/DNS resources."
+  type        = bool
+  default     = false
+}
+
+variable "cas_pool_id" {
+  description = "The ID of the CAS CA Pool to use for issuing the DB certificate (e.g. 'projects/my-proj/locations/us-central1/caPools/my-pool'). Required if enable_tls is true."
+  type        = string
+  default     = ""
+}
+
+variable "dns_zone_name" {
+  description = "The name of the Cloud DNS Managed Zone (Private) where the DB hostname will be registered. Required if enable_tls is true."
+  type        = string
+  default     = ""
+}
+
 variable "enable_ar_repo" {
   description = "Controls whether to create Google Cloud Artifact Registry remote repositories to fetch OS packages."
   type        = bool
   default     = false
 }
+
+

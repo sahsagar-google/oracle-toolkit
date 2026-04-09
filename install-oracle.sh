@@ -68,7 +68,7 @@ GETOPT_OPTIONAL="$GETOPT_OPTIONAL,ora-swlib-type:,ora-swlib-path:,ora-swlib-cred
 GETOPT_OPTIONAL="$GETOPT_OPTIONAL,instance-ssh-key:,instance-hostname:,ntp-pref:,inventory-file:,compatible-rdbms:,instance-ssh-extra-args:"
 GETOPT_OPTIONAL="$GETOPT_OPTIONAL,help,validate,check-instance,prep-host,install-sw,config-db,allow-install-on-vm,skip-database-config,swap-blk-device:"
 GETOPT_OPTIONAL="$GETOPT_OPTIONAL,install-workload-agent,oracle-metrics-secret:,db-password-secret:,data-guard-protection-mode:,skip-platform-compatibility"
-GETOPT_OPTIONAL="$GETOPT_OPTIONAL,ar-repo-url:"
+GETOPT_OPTIONAL="$GETOPT_OPTIONAL,ar-repo-url:,tls-secret:,tls-listener-port:"
 GETOPT_LONG="$GETOPT_MANDATORY,$GETOPT_OPTIONAL"
 GETOPT_SHORT="h"
 
@@ -160,6 +160,15 @@ while true; do
     --compatible-rdbms) YAML_VARS["compatible_rdbms"]="$2"; shift 2 ;;
     --data-guard-protection-mode) YAML_VARS["ora_data_guard_protection_mode"]="$2"; shift 2 ;;
     --ar-repo-url) YAML_VARS["ar_repo_url"]="$2"; shift 2 ;;
+    --tls-secret) 
+      YAML_VARS["tls_secret"]="$2"
+      YAML_VARS["enable_tls"]="true"
+      shift 2 
+      ;;
+    --tls-listener-port)
+      YAML_VARS["tls_listener_port"]="$2"
+      shift 2
+      ;;
     --) shift; ANSIBLE_ARGS+=("$@"); break ;;
     *) echo "Internal error! Unexpected option: $1" >&2; exit 1 ;;
   esac
@@ -208,6 +217,7 @@ PB_VALIDATE="validate-config.yml"
 PB_CHECK_INSTANCE="check-instance.yml"
 PB_PREP_HOST="prep-host.yml"
 PB_INSTALL_SW="install-sw.yml"
+PB_TLS_SETUP="tls-setup.yml"
 PB_CONFIG_DB="config-db.yml"
 PB_CONFIG_RAC_DB="config-rac-db.yml"
 PB_COMPATIBLE="compatibility-tests.yml"
@@ -289,6 +299,8 @@ if [ "$HELP_ONLY" = true ]; then
   echo "  --data-guard-protection-mode Data Guard protection mode (Maximum Performance, Maximum Availability, Maximum Protection)."
   echo "  --inventory-file <file>      Custom Ansible inventory file."
   echo "  --ar-repo-url <url>          Artifact Registry remote repository base URL."
+  echo "  --tls-secret <secret>        GCP Secret Manager short name containing a JSON payload with the TLS key, cert, and wallet password (e.g., 'my-tls-secret', not the fully-qualified URI). Implicitly enables TLS."
+  echo "  --tls-listener-port <port>   TCP port for the encrypted TCPS listener."
   exit 0
 fi
 

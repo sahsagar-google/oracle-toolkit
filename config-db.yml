@@ -39,6 +39,11 @@
         name: lsnr-create
       when: create_listener | bool
       tags: lsnr-create
+      
+    - include_role:
+        name: tls-setup
+      when: enable_tls | default(false) | bool
+      tags: tls-setup
 
     - include_role:
         name: "{{ role_item }}"

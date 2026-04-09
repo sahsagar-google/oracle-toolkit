@@ -198,3 +198,11 @@ os_family_supported: "RedHat"
 os_min_supported_version: "{% if free_edition %}8{% else %}7.3{% endif %}"
 os_minimum_memory_mb: 2560
 os_minimum_swap_mb: 8192
+
+
+################################################################################
+# TLS Encryption
+################################################################################
+
+enable_tls: false
+tls_listener_port: 2484

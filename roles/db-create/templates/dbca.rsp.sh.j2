@@ -44,3 +44,7 @@ else
   sed -i '/^\#\{0,\} \{0,\}recoveryAreaDestination \{0,\}=/I s~\#\{0,\} \{0,\}recoveryAreaDestination \{0,\}=.*~recoveryAreaDestination='{{ reco_destination }}'~I' "${response_file}"
   sed -i '/^\#\{0,\} \{0,\}initParams \{0,\}=/I              s~$~,db_create_file_dest='{{ data_destination }}'~'                                                    "${response_file}"
 fi
+
+{% if enable_tls | default(false) | bool %}
+sed -i '/^\#\{0,\} \{0,\}initParams \{0,\}=/I               s~$~,LOCAL_LISTENER='\''(ADDRESS_LIST=(ADDRESS=(PROTOCOL=IPC)(KEY=LISTENER_IPC))(ADDRESS=(PROTOCOL=IPC)(KEY=TCPS_IPC)))'\''~' "${response_file}"
+{% endif %}
