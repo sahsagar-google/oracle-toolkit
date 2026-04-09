@@ -37,8 +37,8 @@ __Prerequisites:__
 -   ***Google CA Pool:*** A Private CA Pool to issue certificates. You can create this via the Google Cloud Console (Security -> Certificate Authority Service) or using the provided Terraform resources (see the CAS Setup section in the Terraform `.tf` examples).
 -   ***Cloud DNS Zone:*** A private DNS zone configured in your project to route the internal database endpoints (e.g., `internal.corp.com.`).
 
-**Configuration:** Add the following variables to your Terraform deployment: 
-(Note: For a fully working reference deployment, see terraform/terraform.tfvars.tls.example in the repository).
+**Configuration:** Add the following variables to your Terraform deployment:  
+_(Note: For a fully working reference deployment, see [terraform/terraform.tfvars.tls.example](https://github.com/sahsagar-google/oracle-toolkit/tls-setup/terraform/terraform.tfvars.tls.example) in the repository)._
 
 ~~~
 # 1. Enable TLS explicitly 
@@ -135,9 +135,17 @@ To confirm that your database is listening securely:
 
 1.  Log into the database VM.
 
-2.  Switch to the oracle user: sudo su - oracle
+2.  Switch to the oracle user: 
 
-3.  Check the listener status: lsnrctl status
+~~~
+sudo su - oracle
+~~~
+
+3.  Check the listener status: 
+
+~~~
+lsnrctl status
+~~~
 
 ***Success Indicator:*** You will see the secure endpoint listed in the summary: (DESCRIPTION=(ADDRESS=(PROTOCOL=tcps)(HOST=finance-db-01...)(PORT=2484)))
 
