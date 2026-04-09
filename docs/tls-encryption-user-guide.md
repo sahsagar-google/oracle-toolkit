@@ -17,6 +17,12 @@ __Key Benefits:__
 
 -   ***Multi-Node & 26ai Ready:*** Fully supports active Data Guard architectures (minting distinct certificates per node) and seamlessly adapts to Oracle 23ai/26ai WALLET_ROOT architectures alongside legacy 19c deployments.
 
+__Supported Configurations:__
+- Oracle 19c or 23ai/26ai.
+- Google Cloud VMs only.
+- Configuration via Terraform (see `docs/terraform.md`).
+- *Note:* This configuration uses certificates to validate the server, but does not configure client certificates (mTLS).
+
 2\. How to Enable TLS
 ---------------------
 
@@ -24,11 +30,15 @@ To enable encryption, you need to explicitly enable TLS and provide your Identit
 
 __Prerequisites:__
 
--   ***Required APIs Enabled on Project:*** Compute Engine (compute.googleapis.com), Secret Manager (secretmanager.googleapis.com), Artifact Registry (artifactregistry.googleapis.com), and Certificate Authority (privateca.googleapis.com). 
+-   ***Required APIs Enabled on Project:*** * Compute Engine (`compute.googleapis.com`)
+    * Secret Manager (`secretmanager.googleapis.com`)
+    * Artifact Registry (`artifactregistry.googleapis.com`)
+    * Certificate Authority (`privateca.googleapis.com`)
 
 -   ***Required IAM Roles for Deployment:*** roles/dns.admin, roles/privateca.certificateManager, and roles/secretmanager.secretAccessor (or roles/secretmanager.admin if creating secrets dynamically).
 
--   ***Google CA Pool:*** A Private CA Pool to issue certificates.
+-   ***Google CA Pool:*** A Private CA Pool to issue certificates. You can create this via the Google Cloud Console (Security -> Certificate Authority Service) or using the provided Terraform resources (see the CAS Setup section in the Terraform `.tf` examples).
+-   ***Cloud DNS Zone:*** A private DNS zone configured in your project to route the internal database endpoints (e.g., `internal.corp.com.`).
 
 **Configuration:** Add the following variables to your Terraform deployment: 
 (Note: For a fully working reference deployment, see terraform/terraform.tfvars.tls.example in the repository).
@@ -56,7 +66,7 @@ instance_name = "finance-db" # Nodes will automatically be suffixed (e.g., finan
 3\. Connecting Clients
 ----------------------
 
-Since the database now uses a private certificate, standard clients (like SQL*Plus or JDBC) will reject the connection unless they trust your Private CA. We automatically generate a Client Connectivity Bundle to solve this.
+Since the database now uses a private certificate, database clients will require a wallet including your private CA certificate in the trust store. We automatically generate a Client Connectivity Bundle to solve this.
 
 ***Step 1: Retrieve and Secure the Client Bundle*** 
 
