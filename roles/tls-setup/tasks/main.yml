@@ -208,9 +208,8 @@
 - name: tls-setup | Generate Client Bundle Zip for easy download
   archive:
     path: 
-      - "{{ tls_wallet_dir }}/cert.pem"
-      - "{{ tls_wallet_dir }}/cwallet.sso"
-    dest: "{{ oracle_home }}/client_bundle.zip"
+      - "{{ tls_wallet_dir }}/root-ca.pem"
+    dest: "/home/oracle/client_bundle.zip"
     format: zip
     owner: "{{ oracle_user }}"
     group: "{{ oracle_group }}"

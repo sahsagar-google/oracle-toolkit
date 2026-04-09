@@ -299,7 +299,7 @@ if [ "$HELP_ONLY" = true ]; then
   echo "  --data-guard-protection-mode Data Guard protection mode (Maximum Performance, Maximum Availability, Maximum Protection)."
   echo "  --inventory-file <file>      Custom Ansible inventory file."
   echo "  --ar-repo-url <url>          Artifact Registry remote repository base URL."
-  echo "  --tls-secret <secret>        GCP Secret Manager ID containing a JSON payload with the TLS key, cert, and wallet password. Implicitly enables TLS."
+  echo "  --tls-secret <secret>        GCP Secret Manager short name containing a JSON payload with the TLS key, cert, and wallet password (e.g., 'my-tls-secret', not the fully-qualified URI). Implicitly enables TLS."
   echo "  --tls-listener-port <port>   TCP port for the encrypted TCPS listener."
   exit 0
 fi

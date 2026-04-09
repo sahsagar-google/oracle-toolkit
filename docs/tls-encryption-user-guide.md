@@ -67,14 +67,14 @@ instance_name = "finance-db" # Nodes will automatically be suffixed (e.g., finan
 
 Since the database now uses a private certificate, database clients will require a wallet including your private CA certificate in the trust store. We automatically generate a Client Connectivity Bundle to solve this.
 
-***Step 1: Retrieve and Secure the Client Bundle*** 
+***Step 1: Retrieve and Secure the Client Bundle*** 
 
-A zip file containing the Truststore (Root CA) and a pre-configured wallet is generated on the database VM directly in the Oracle Home directory (e.g., /u01/app/oracle/product/26.0.0/dbhome_1/client_bundle.zip). 
+A zip file containing the Truststore (Root CA) and a pre-configured wallet is generated on the database VM directly in the Oracle user's home directory (`/home/oracle/client_bundle.zip`). 
 
-Download it to your client machine (adjust path for your Oracle version):
+Download it to your client machine:
 
 ~~~
-gcloud compute scp oracle@finance-db-1:/u01/app/oracle/product/26.0.0/dbhome_1/client_bundle.zip .
+gcloud compute scp oracle@finance-db-1:/home/oracle/client_bundle.zip .
 ~~~
 
 **Security Requirement:** Because this bundle acts as an authentication token, you must immediately secure it from other users on your client machine:
