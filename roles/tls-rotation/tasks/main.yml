@@ -1,0 +1,49 @@
+---
+- name: tls-rotation | Define Version Specific Wallet Directory for 19c
+  set_fact:
+    tls_wallet_dir: "{{ oracle_base }}/admin/{{ ora_db_name }}/wallet"
+  when: "'19.' in oracle_home"
+
+- name: tls-rotation | Define Version Specific Wallet Directory for modern
+  set_fact:
+    tls_wallet_dir: "{{ oracle_base }}/admin/{{ ora_db_name }}/wallet_root/tls"
+  when: "'19.' not in oracle_home"
+
+- name: tls-rotation | Deploy rotation script
+  template:
+    src: rotate_tls_certs.sh.j2
+    dest: /usr/local/bin/rotate_tls_certs.sh
+    owner: "{{ oracle_user }}"
+    group: "{{ oracle_group }}"
+    mode: '0750'
+  become: true
+  become_user: root
+
+- name: tls-rotation | Deploy systemd service unit
+  template:
+    src: oracle-tls-rotation.service.j2
+    dest: /etc/systemd/system/oracle-tls-rotation.service
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+  become_user: root
+
+- name: tls-rotation | Deploy systemd timer unit
+  template:
+    src: oracle-tls-rotation.timer.j2
+    dest: /etc/systemd/system/oracle-tls-rotation.timer
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+  become_user: root
+
+- name: tls-rotation | Enable and start rotation timer
+  systemd:
+    name: oracle-tls-rotation.timer
+    state: started
+    enabled: yes
+    daemon_reload: yes
+  become: true
+  become_user: root

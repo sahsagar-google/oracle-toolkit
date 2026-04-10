@@ -46,6 +46,11 @@
       tags: tls-setup
 
     - include_role:
+        name: tls-rotation
+      when: enable_tls | default(false) | bool
+      tags: tls-rotation
+
+    - include_role:
         name: "{{ role_item }}"
         tasks_from: main
       loop:
